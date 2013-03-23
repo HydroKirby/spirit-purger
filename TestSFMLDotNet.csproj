@@ -34,9 +34,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Bullet.cs" />
     <Compile Include="Engine.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Renderer.cs" />
+    <Compile Include="Vector2D.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="sfmlnet-audio-2">
