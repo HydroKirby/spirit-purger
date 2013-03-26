@@ -202,50 +202,17 @@ namespace TestSFMLDotNet
         /// </summary>
         protected void MainLoop(RenderWindow app)
         {
-            /*
             Timer timer = new Timer();
             double lastUpdate = timer.GetTicks();
-            while (app.IsOpen())
-            {
-                keys.Update();
-                if (gameState == GameState.GamePlay)
-                {
-                    this.UpdateGame(lastUpdate);
-                    this.Invalidate();
-                }
-                else if (gameState == GameState.MainMenu)
-                    this.UpdateMenu();
-
-                Application.DoEvents();
-                while ((lastUpdate = timer.GetTicks()) <= UPDATE_TICKS)
-                    Thread.Sleep(1);
-                timer.Reset();
-            }
-             */
-            Timer timer = new Timer();
-            double lastUpdate = timer.GetTicks();
-            
-            Text text = new Text("test", menuFont, 12);
-            text.Color = Color.Black;
             Color clearColor = new Color(250, 250, 250);
+            
             // Start the game loop
-//            double temp1 = 0;
-            // Process events
-            app.DispatchEvents();
             while (app.IsOpen())
             {
                 // Begin rendering.
-                // Clear screen
                 app.Clear(clearColor);
                 paintHandler(app, lastUpdate);
-
-                // Draw the sprite
-                //app.Draw(sprite);
-
-                // Draw the string
-                app.Draw(text);
-
-                // Update the window
+                // Make SFML redraw the window.
                 app.Display();
 
                 // Update the game.
@@ -259,9 +226,8 @@ namespace TestSFMLDotNet
                         UpdateGame(app, lastUpdate);
                     else if (gameState == GameState.MainMenu)
                         UpdateMenu(app, lastUpdate);
-//                    temp1 = Math.Max(temp1, keys.left);
-                    text.DisplayedString = keys.left.ToString();
-//                    text.DisplayedString = temp1.ToString();
+                    // TODO: Reset is bad logic.
+                    // We should subtract the old time so no ticks are lost.
                     timer.Reset();
                 }
 
@@ -310,7 +276,8 @@ namespace TestSFMLDotNet
                 menuChoice = menuChoice <= 0 ? (int)MainMenu.EndChoices - 1 :
                     menuChoice - 1;
                 disallowRapidSelection = false;
-            } if (keys.down == 2)
+            }
+            if (keys.down == 2)
             {
                 menuChoice = menuChoice > (int)MainMenu.EndChoices - 2 ? 0 :
                     menuChoice + 1;
@@ -467,27 +434,29 @@ namespace TestSFMLDotNet
         {
             // Note: The app window is 290x290.
             int y = 130 + 15 * menuChoice;
-            Vector2i[] cursorPts = {
-				new Vector2i(136, y),
-				new Vector2i(142, y + 4),
-				new Vector2i(136, y + 8)
-			};
+
             // Produce the menu strings.
             // TODO: Make this more efficient.
+            Text cursorText = new Text(">", menuFont, 12);
             Text startText = new Text("Start", menuFont, 12);
             Text godModeText = new Text("God Mode" + (godMode ? " *" : ""), menuFont, 12);
             Text funBombText = new Text("Fun Bomb" + (funBomb ? " *" : ""), menuFont, 12);
             Text repulsiveText = new Text("Repulsive" + (repulsive ? " *" : ""), menuFont, 12);
             Text exitText = new Text("Exit", menuFont, 12);
+
+            // Set the menu strings' positions and color.
+            cursorText.Position = new Vector2f(136, y);
             startText.Position = new Vector2f(145, 130 + (float)MainMenu.Play * 15.0F);
             godModeText.Position = new Vector2f(145, 130 + (float)MainMenu.GodMode * 15.0F);
             funBombText.Position = new Vector2f(145, 130 + (float)MainMenu.FunBomb * 15.0F);
             repulsiveText.Position = new Vector2f(145, 130 + (float)MainMenu.Repulsive * 15.0F);
             exitText.Position = new Vector2f(145, 130 + (float)MainMenu.Exit * 15.0F);
-            startText.Color = godModeText.Color = funBombText.Color =
-                repulsiveText.Color = exitText.Color = Color.Black;
+            cursorText.Color = startText.Color = godModeText.Color = funBombText.Color =
+                repulsiveText.Color = exitText.Color = Color.Blue;
 
+            // Render the menu strings.
             RenderWindow app = (RenderWindow)sender;
+            app.Draw(cursorText);
             app.Draw(startText);
             app.Draw(godModeText);
             app.Draw(funBombText);

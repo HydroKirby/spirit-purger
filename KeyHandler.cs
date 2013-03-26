@@ -150,33 +150,41 @@ namespace TestSFMLDotNet {
 		public int Vertical() {
 			return up > 0 ? (down > 0 ? 0 : -1) : (down > 0 ? 1 : 0);
 		}
+
+        /// <summary>
+        /// Gives an int's incremented value if it's non-zero.
+        /// </summary>
+        /// <param name="val">The int to increment.</param>
+        /// <returns>The potentially incremented int.</returns>
+        protected int IncrementIfOn(int val)
+        {
+            int ret = val;
+            if (val > 0 && val < Int32.MaxValue)
+                ret += 1;
+            // If val = 0, then ret = 0
+            // If val = MaxInt, then ret = MaxInt
+            return ret;
+        }
 		
 		/// <summary>
 		/// Increments every held key's hold time. In the case of overflow, the
 		/// key hold time becomes 1.
 		/// </summary>
 		public void Update() {
-			if (up > 0) up = Math.Max(up + 1, Int32.MaxValue);
-			if (left > 0) left = left == Int32.MaxValue ? 1 : left + 1;
-			if (right > 0) right = right == Int32.MaxValue ? 1 : right + 1;
-			if (down > 0) down = down == Int32.MaxValue ? 1 : down + 1;
-			if (shoot > 0) shoot = shoot == Int32.MaxValue ? 1 : shoot + 1;
-			if (slow > 0) slow = slow == Int32.MaxValue ? 1 : slow + 1;
-			if (bomb > 0) bomb = bomb == Int32.MaxValue ? 1 : bomb + 1;
-			
-			if (prevUp > 0) prevUp = prevUp == Int32.MaxValue ? 1 : prevUp + 1;
-			if (prevLeft > 0) prevLeft = prevLeft == Int32.MaxValue ? 1 :
-				prevLeft + 1;
-			if (prevRight > 0) prevRight = prevRight == Int32.MaxValue ? 1 :
-				prevRight + 1;
-			if (prevDown > 0) prevDown = prevDown == Int32.MaxValue ? 1 :
-				prevDown + 1;
-			if (prevShoot > 0) prevShoot = prevShoot == Int32.MaxValue ? 1 :
-				prevShoot + 1;
-			if (prevSlow > 0) prevSlow = prevSlow == Int32.MaxValue ? 1 :
-				prevSlow + 1;
-			if (prevBomb > 0) prevBomb = prevBomb == Int32.MaxValue ? 1 :
-				prevBomb + 1;
+			up = IncrementIfOn(up);
+            down = IncrementIfOn(down);
+            left = IncrementIfOn(left);
+            right = IncrementIfOn(right);
+            shoot = IncrementIfOn(shoot);
+            slow = IncrementIfOn(slow);
+            bomb = IncrementIfOn(bomb);
+            prevUp = IncrementIfOn(prevUp);
+            prevDown = IncrementIfOn(prevDown);
+            prevLeft = IncrementIfOn(prevLeft);
+            prevRight = IncrementIfOn(prevRight);
+            prevShoot = IncrementIfOn(prevShoot);
+            prevSlow = IncrementIfOn(prevSlow);
+            prevBomb = IncrementIfOn(prevBomb);
 		}
 	}
 }
