@@ -217,6 +217,8 @@ namespace TestSFMLDotNet
                 timer.Reset();
             }
              */
+            app.SetKeyRepeatEnabled(false);
+            app.KeyPressed += new EventHandler<KeyEventArgs>(app_KeyPressed);
             // Start the game loop
             while (app.IsOpen())
             {
@@ -234,6 +236,15 @@ namespace TestSFMLDotNet
 
                 // Update the window
                 app.Display();
+            }
+        }
+
+        void app_KeyPressed(object sender, KeyEventArgs e)
+        {
+            if (e.Code == Keyboard.Key.Escape)
+            {
+                Window app = (Window) sender;
+                app.Close();
             }
         }
 

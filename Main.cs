@@ -10,7 +10,7 @@ namespace Example
         static void OnClose(object sender, EventArgs e)
         {
             // Close the window when OnClose event is received.
-            RenderWindow window = (RenderWindow)sender;
+            RenderWindow window = (RenderWindow) sender;
             window.Close();
         }
 
