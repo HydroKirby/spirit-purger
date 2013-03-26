@@ -39,6 +39,7 @@
     <Compile Include="KeyHandler.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Renderer.cs" />
+    <Compile Include="Timer.cs" />
     <Compile Include="Vector2D.cs" />
   </ItemGroup>
   <ItemGroup>

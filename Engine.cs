@@ -217,21 +217,31 @@ namespace TestSFMLDotNet
                 timer.Reset();
             }
              */
+            Timer timer = new Timer();
+            double lastUpdate = timer.GetTicks();
             app.SetKeyRepeatEnabled(false);
             app.KeyPressed += new EventHandler<KeyEventArgs>(app_KeyPressed);
             app.KeyReleased += new EventHandler<KeyEventArgs>(app_KeyReleased);
             Font font = new Font("arial.ttf");
             Text text = new Text("test", font);
             // Start the game loop
+//            double temp1 = 0;
             while (app.IsOpen())
             {
                 // Process events
                 app.DispatchEvents();
 
-                // DispatchEvents made all key states up-to-date.
-                // Now, increment the time they were held down.
-                keys.Update();
-                text.DisplayedString = keys.left.ToString();
+                // If it is time for a game update, update all gameplay.
+                if ((lastUpdate = timer.GetTicks()) >= UPDATE_TICKS)
+                {
+                    // DispatchEvents made all key states up-to-date.
+                    // Now, increment the time they were held down.
+                    keys.Update();
+//                    temp1 = Math.Max(temp1, keys.left);
+                    text.DisplayedString = keys.left.ToString();
+//                    text.DisplayedString = temp1.ToString();
+                    timer.Reset();
+                }
 
                 // Begin rendering.
                 // Clear screen
