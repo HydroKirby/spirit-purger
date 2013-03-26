@@ -36,6 +36,7 @@
   <ItemGroup>
     <Compile Include="Bullet.cs" />
     <Compile Include="Engine.cs" />
+    <Compile Include="KeyHandler.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Renderer.cs" />
     <Compile Include="Vector2D.cs" />

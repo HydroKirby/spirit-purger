@@ -36,7 +36,7 @@ namespace TestSFMLDotNet
         // High-level stuff.
         protected delegate void PaintHandler(object sender);
         protected PaintHandler paintHandler = null;
-//        public KeyHandler keys = new KeyHandler();
+        public KeyHandler keys = new KeyHandler();
         public Random rand = new Random();
         public enum MainMenu
         {
@@ -219,12 +219,21 @@ namespace TestSFMLDotNet
              */
             app.SetKeyRepeatEnabled(false);
             app.KeyPressed += new EventHandler<KeyEventArgs>(app_KeyPressed);
+            app.KeyReleased += new EventHandler<KeyEventArgs>(app_KeyReleased);
+            Font font = new Font("arial.ttf");
+            Text text = new Text("test", font);
             // Start the game loop
             while (app.IsOpen())
             {
                 // Process events
                 app.DispatchEvents();
 
+                // DispatchEvents made all key states up-to-date.
+                // Now, increment the time they were held down.
+                keys.Update();
+                text.DisplayedString = keys.left.ToString();
+
+                // Begin rendering.
                 // Clear screen
                 app.Clear();
 
@@ -232,7 +241,7 @@ namespace TestSFMLDotNet
                 //app.Draw(sprite);
 
                 // Draw the string
-                //app.Draw(text);
+                app.Draw(text);
 
                 // Update the window
                 app.Display();
@@ -243,9 +252,18 @@ namespace TestSFMLDotNet
         {
             if (e.Code == Keyboard.Key.Escape)
             {
-                Window app = (Window) sender;
+                Window app = (Window)sender;
                 app.Close();
             }
+            else
+            {
+                keys.KeyDown(e.Code);
+            }
+        }
+
+        void app_KeyReleased(object sender, KeyEventArgs e)
+        {
+            keys.KeyUp(e.Code);
         }
 
         protected void PaintMenu(object sender)
