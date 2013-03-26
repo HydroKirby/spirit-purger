@@ -88,6 +88,7 @@ namespace TestSFMLDotNet
         // This is displayed when the player slows down; it's an identifier.
         protected Image hitCircleImage;
         protected Image bg;
+        protected Font menuFont;
 
         // Current-game variables.
         // This is the number of seconds left to complete a pattern.
@@ -109,12 +110,6 @@ namespace TestSFMLDotNet
         protected long score = 0;
         protected short lives = 2;
         protected short bombs = 3;
-
-        // TODO: Move to Renderer; possibly eradicate
-        protected void OnPaint(object sender)
-        {
-            paintHandler(sender);
-        }
 
         // TODO: Move to Renderer
         /// <summary>
@@ -139,14 +134,8 @@ namespace TestSFMLDotNet
         public void Run(RenderWindow app)
         {
             // Load all resources.
+            menuFont = new Font("arial.ttf");
             bg = LoadImage("bg.png");
-            // Load a sprite to display
-            //            Image image = new Image("cute_image.jpg");
-            //            Sprite sprite = new Sprite(image);
-
-            // Create a graphical string to display
-            Font arial = new Font("arial.ttf");
-            Text text = new Text("Hello SFML.Net", arial);
 
             // Prepare the game to be run.
             Reset();
@@ -222,15 +211,15 @@ namespace TestSFMLDotNet
             app.SetKeyRepeatEnabled(false);
             app.KeyPressed += new EventHandler<KeyEventArgs>(app_KeyPressed);
             app.KeyReleased += new EventHandler<KeyEventArgs>(app_KeyReleased);
-            Font font = new Font("arial.ttf");
-            Text text = new Text("test", font);
+            Text text = new Text("test", menuFont, 12);
+            text.Color = Color.Black;
+            Color clearColor = new Color(250, 250, 250);
             // Start the game loop
 //            double temp1 = 0;
+            // Process events
+            app.DispatchEvents();
             while (app.IsOpen())
             {
-                // Process events
-                app.DispatchEvents();
-
                 // If it is time for a game update, update all gameplay.
                 if ((lastUpdate = timer.GetTicks()) >= UPDATE_TICKS)
                 {
@@ -245,7 +234,8 @@ namespace TestSFMLDotNet
 
                 // Begin rendering.
                 // Clear screen
-                app.Clear();
+                app.Clear(clearColor);
+                paintHandler(app);
 
                 // Draw the sprite
                 //app.Draw(sprite);
@@ -255,6 +245,10 @@ namespace TestSFMLDotNet
 
                 // Update the window
                 app.Display();
+
+                // Process events.
+                // If we are done, exit the loop immediately.
+                app.DispatchEvents();
             }
         }
 
@@ -279,36 +273,33 @@ namespace TestSFMLDotNet
         protected void PaintMenu(object sender)
         {
             // Note: The app window is 290x290.
-            /*
-            float y = 130.0F + 15.0F * menuChoice;
-            PointF[] cursorPts = {
-				new PointF(136.0F, y),
-				new PointF(142.0F, y + 4.0F),
-				new PointF(136.0F, y + 8.0F)
+            int y = 130 + 15 * menuChoice;
+            Vector2i[] cursorPts = {
+				new Vector2i(136, y),
+				new Vector2i(142, y + 4),
+				new Vector2i(136, y + 8)
 			};
+            // Produce the menu strings.
+            // TODO: Make this more efficient.
+            Text startText = new Text("Start", menuFont, 12);
+            Text godModeText = new Text("God Mode" + (godMode ? " *" : ""), menuFont, 12);
+            Text funBombText = new Text("Fun Bomb" + (funBomb ? " *" : ""), menuFont, 12);
+            Text repulsiveText = new Text("Repulsive" + (repulsive ? " *" : ""), menuFont, 12);
+            Text exitText = new Text("Exit", menuFont, 12);
+            startText.Position = new Vector2f(145, 130 + (float)MainMenu.Play * 15.0F);
+            godModeText.Position = new Vector2f(145, 130 + (float)MainMenu.GodMode * 15.0F);
+            funBombText.Position = new Vector2f(145, 130 + (float)MainMenu.FunBomb * 15.0F);
+            repulsiveText.Position = new Vector2f(145, 130 + (float)MainMenu.Repulsive * 15.0F);
+            exitText.Position = new Vector2f(145, 130 + (float)MainMenu.Exit * 15.0F);
+            startText.Color = godModeText.Color = funBombText.Color =
+                repulsiveText.Color = exitText.Color = Color.Black;
 
-            // Draw the menu items.
-            SolidBrush solidBrush = new SolidBrush(Color.Blue);
-            // The position of the menu items is based on their enum value.
-            e.Graphics.DrawString("Start", Font, solidBrush, 145.0F,
-                130.0F + (int)MainMenu.Play * 15.0F);
-            e.Graphics.DrawString("God Mode" + (godMode ? " *" : ""),
-                Font, solidBrush, 145.0F,
-                130.0F + (int)MainMenu.GodMode * 15.0F);
-            e.Graphics.DrawString("Fun Bomb" + (funBomb ? " *" : ""), Font,
-                solidBrush, 145.0F, 130.0F + (int)MainMenu.FunBomb * 15.0F);
-            e.Graphics.DrawString("Repulsive" + (repulsive ? " *" : ""),
-                Font, solidBrush, 145.0F,
-                130.0F + (int)MainMenu.Repulsive * 15.0F);
-            e.Graphics.DrawString("Exit", Font, solidBrush, 145.0F,
-                130.0F + (int)MainMenu.Exit * 15.0F);
-            solidBrush.Dispose();
-
-            // Draw the cursor.
-            solidBrush = new SolidBrush(Color.Red);
-            e.Graphics.FillPolygon(solidBrush, cursorPts);
-            solidBrush.Dispose();
-             */
+            RenderWindow app = (RenderWindow)sender;
+            app.Draw(startText);
+            app.Draw(godModeText);
+            app.Draw(funBombText);
+            app.Draw(repulsiveText);
+            app.Draw(exitText);
         }
     }
 }

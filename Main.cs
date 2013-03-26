@@ -17,7 +17,7 @@ namespace Example
         static void Main(string[] args)
         {
             // Create the main window.
-            RenderWindow app = new RenderWindow(new VideoMode(800, 600), "SFML window");
+            RenderWindow app = new RenderWindow(new VideoMode(290, 290), "SFML window");
             app.Closed += new EventHandler(OnClose);
             // Create the game and run it.
             TestSFMLDotNet.Engine engine = new TestSFMLDotNet.Engine();
