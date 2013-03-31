@@ -10,6 +10,8 @@
  */
 
 using System;
+using SFML.Window;
+using SFML.Graphics;
 
 namespace TestSFMLDotNet
 {
@@ -140,7 +142,7 @@ namespace TestSFMLDotNet
 		/// <param name="fromPt">The point to begin from.</param>
 		/// <param name="destPt">The destination point.</param>
 		/// <returns>A angle between dest to fromPt.</returns>
-		public static double GetDirection(Vector2D fromPt, Vector2D destPt) {
+		public static double GetDirection(Vector2f fromPt, Vector2f destPt) {
 			double distance = GetDistance(fromPt, destPt);
 			double radians = 0;
 			if (distance != 0)
@@ -149,19 +151,20 @@ namespace TestSFMLDotNet
 				radians = -radians;
 			return radians;
 		}
-		
-		public static Vector2D GetDirectionVector(Vector2D fromPt,
-		                                           Vector2D destPt) {
-			double radians = GetDirection(fromPt, destPt);
-			return new Vector2D(Math.Cos(radians), Math.Sin(radians));
-		}
+
+        public static Vector2f GetDirectionVector(Vector2f fromPt,
+                                                   Vector2f destPt)
+        {
+            double radians = GetDirection(fromPt, destPt);
+            return new Vector2f((float)Math.Cos(radians), (float)Math.Sin(radians));
+        }
 		
 		public static double GetDistance(Point pt1, Point pt2) {
 			return Math.Sqrt((pt1.X - pt2.X) * (pt1.X - pt2.X) +
 			                 (pt1.Y - pt2.Y) * (pt1.Y - pt2.Y));
 		}
 		
-		public static double GetDistance(Vector2D pt1, Vector2D pt2) {
+		public static double GetDistance(Vector2f pt1, Vector2f pt2) {
 			return Math.Sqrt((pt1.X - pt2.X) * (pt1.X - pt2.X) +
 			                 (pt1.Y - pt2.Y) * (pt1.Y - pt2.Y));
 		}
@@ -170,6 +173,11 @@ namespace TestSFMLDotNet
 			X = Math.Cos(radians);
 			Y = Math.Sin(radians);
 		}
+
+        public static Vector2f VectorFromAngle(double radians)
+        {
+            return new Vector2f((float)Math.Cos(radians), (float)Math.Sin(radians));
+        }
 		
 		public double GetAngle() {
 			return Math.Atan2(Y, X);
@@ -183,6 +191,16 @@ namespace TestSFMLDotNet
 			X /= magnitude;
 			Y /= magnitude;
 		}
+
+        public static void Normalize(Vector2f v)
+        {
+            double magnitude = Math.Sqrt(v.X * v.X + v.Y * v.Y);
+            if (magnitude >= -0.00001 || magnitude <= 0.00001)
+                // It is dangerously close to 0. Do not try division by 0.
+                return;
+            v.X /= (float)magnitude;
+            v.Y /= (float)magnitude;
+        }
 		
 		/// <summary>
 		/// Returns this vector as a Point with integer coordinates.

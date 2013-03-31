@@ -10,6 +10,7 @@
  */
 
 using System;
+using SFML.Window;
 using SFML.Graphics;
 
 namespace TestSFMLDotNet
@@ -22,13 +23,13 @@ namespace TestSFMLDotNet
 		public int colorIndex = 0;
 		protected int sizeIndex = 0;
 		protected int radius = 2;
-		public Vector2D location;
-		protected Vector2D direction;
+		public Vector2f location;
+		protected Vector2f direction;
 		protected double speed = 1.0;
 		// dx and dy are the result of the direction vector magnified by the
 		// speed. They're altered when the Speed accessor is assigned.
-		protected double dx = 0.0;
-		protected double dy = 1.0;
+		protected float dx = 0.0F;
+		protected float dy = 1.0F;
 		// Refers to if the bullet touched the player's hitbox,
 		// but not the player's hitcircle.
 		public bool grazed = false;
@@ -58,11 +59,11 @@ namespace TestSFMLDotNet
 			get { return radius + radius; }
 		}
 		
-		public Vector2D Direction {
+		public Vector2f Direction {
 			get { return direction; }
 			set {
 				direction = value;
-				direction.Normalize();
+                Vector2D.Normalize(direction);
 				this.RefreshVelocity();
 			}
 		}
@@ -81,41 +82,41 @@ namespace TestSFMLDotNet
 		}
 		
 		public Bullet() {
-			location = new Vector2D();
-			direction = new Vector2D(dx, dy);
+			location = new Vector2f();
+			direction = new Vector2f(dx, dy);
 		}
 		
 		public Bullet(int colorIndex, int sizeIndex) {
 			this.colorIndex = colorIndex;
 			this.sizeIndex = sizeIndex;
-			location = new Vector2D();
-			Direction = new Vector2D(dx, dy);
+			location = new Vector2f();
+			Direction = new Vector2f(dx, dy);
 			Radius = RADII[sizeIndex];
 		}
 		
-		public Bullet(int colorIndex, int sizeIndex, Vector2D location) {
+		public Bullet(int colorIndex, int sizeIndex, Vector2f location) {
 			this.colorIndex = colorIndex;
 			this.sizeIndex = sizeIndex;
-			this.location = new Vector2D(location);
-			Direction = new Vector2D(dx, dy);
+			this.location = new Vector2f(location.X, location.Y);
+			Direction = new Vector2f(dx, dy);
 			Radius = RADII[sizeIndex];
 		}
 		
-		public Bullet(int colorIndex, int sizeIndex, Vector2D location,
-		              Vector2D direction) {
+		public Bullet(int colorIndex, int sizeIndex, Vector2f location,
+		              Vector2f direction) {
 			this.colorIndex = colorIndex;
 			this.sizeIndex = sizeIndex;
-			this.location = new Vector2D(location);
-			Direction = new Vector2D(direction);
+			this.location = new Vector2f(location.X, location.Y);
+			Direction = new Vector2f(direction.X, direction.Y);
 			Radius = RADII[sizeIndex];
 		}
 		
-		public Bullet(int colorIndex, int sizeIndex, Vector2D location,
-		              Vector2D direction, double speed) {
+		public Bullet(int colorIndex, int sizeIndex, Vector2f location,
+		              Vector2f direction, double speed) {
 			this.colorIndex = colorIndex;
 			this.sizeIndex = sizeIndex;
-			this.location = new Vector2D(location);
-			Direction = new Vector2D(direction);
+            this.location = new Vector2f(location.X, location.Y);
+            Direction = new Vector2f(direction.X, direction.Y);
 			Radius = RADII[sizeIndex];
 			Speed = speed;
 		}
@@ -123,11 +124,11 @@ namespace TestSFMLDotNet
 		public Bullet(Bullet bullet) {
 			colorIndex = bullet.colorIndex;
 			sizeIndex = bullet.sizeIndex;
-			location = new Vector2D(bullet.location);
+			location = new Vector2f(bullet.location.X, bullet.location.Y);
 			// Don't use the accessor Size - refresh dx/dy once with the
 			// assignment to Direction.
 			speed = bullet.speed;
-			Direction = new Vector2D(bullet.direction);
+			Direction = new Vector2f(bullet.direction.X, bullet.direction.Y);
 			Radius = bullet.radius;
 		}
 		
@@ -137,14 +138,14 @@ namespace TestSFMLDotNet
 		/// </summary>
 		/// <param name="bullet">The Bullet to mirror.</param>
 		/// <param name="direction">The new direction vector.</param>
-		public Bullet(Bullet bullet, Vector2D direction) {
+		public Bullet(Bullet bullet, Vector2f direction) {
 			colorIndex = bullet.colorIndex;
 			sizeIndex = bullet.sizeIndex;
-			location = new Vector2D(bullet.location);
+			location = new Vector2f(bullet.location.X, bullet.location.Y);
 			// Don't use the accessor Size - refresh dx/dy once with the
 			// assignment to Direction.
 			speed = bullet.speed;
-			Direction = new Vector2D(direction);
+			Direction = new Vector2f(direction.X, direction.Y);
 			Radius = bullet.radius;
 		}
 		
@@ -153,8 +154,8 @@ namespace TestSFMLDotNet
 		/// accordance with the direction vector and the speed.
 		/// </summary>
 		public void RefreshVelocity() {
-			dx = direction.X * speed;
-			dy = direction.Y * speed;
+			dx = (float)(direction.X * speed);
+            dy = (float)(direction.Y * speed);
 		}
 		
 		/// <summary>
@@ -187,7 +188,7 @@ namespace TestSFMLDotNet
 		/// <param name="pt">The center of the passed circle.</param>
 		/// <param name="radius">The radius of the passed circle.</param>
 		/// <returns>Whether or not the circles have collided.</returns>
-		public bool HitTest(Vector2D pt, int radius) {
+		public bool HitTest(Vector2f pt, int radius) {
 			int a = (this.radius + radius) * (this.radius + radius);
 			double dx = location.X - pt.X;
 			double dy = location.Y - pt.Y;
@@ -244,7 +245,7 @@ namespace TestSFMLDotNet
 		// At full size, this is the bomb's radius.
 		public const int FULL_RADIUS = 50;
 		
-		public Bomb(Vector2D pt) : base(0, 0, pt) {}
+		public Bomb(Vector2f pt) : base(0, 0, pt) {}
 		
 		public override void Update() {
 			lifetime++;

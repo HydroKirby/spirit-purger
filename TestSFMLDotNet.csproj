@@ -38,6 +38,7 @@
     <Compile Include="Engine.cs" />
     <Compile Include="KeyHandler.cs" />
     <Compile Include="Main.cs" />
+    <Compile Include="Player.cs" />
     <Compile Include="Renderer.cs" />
     <Compile Include="Timer.cs" />
     <Compile Include="Vector2D.cs" />
