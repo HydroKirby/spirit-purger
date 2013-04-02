@@ -67,7 +67,7 @@ namespace TestSFMLDotNet
 
         // Boss-related variables.
         public enum BossState { NotArrived, Intro, Active, Killed };
-//        protected Enemy boss = new Enemy();
+        protected Enemy boss = new Enemy();
         protected BossState bossState = BossState.Intro;
         // How long the boss has been doing the intro sequence.
         protected int bossIntroTime = 0;
@@ -79,26 +79,14 @@ namespace TestSFMLDotNet
         // Gives points when true. Becomes false if the players dies or bombs.
         protected bool beatThisPattern = true;
         protected bool paused = false;
-//        protected Player player = new Player();
+        protected Player player = new Player();
         protected ArrayList enemies = new ArrayList();
         protected ArrayList enemyBullets = new ArrayList();
         protected ArrayList playerBullets = new ArrayList();
         protected ArrayList hitSparks = new ArrayList();
 
         // Game images.
-        // TODO: Move to resource handling class?
-        // This variable holds the images shared between all bullets. It's
-        //   organized by [color_code][size_index].
-        protected Image[][] bulletImages;
-        protected Image playerBulletImage;
-        // This goes to the spark that flies out of the player when a
-        // bullet passes by the player's hitbox.
-        protected Image grazeSparkImage;
-        // This goes to the spark the flies out when an enemy is shot.
-        protected Image bullseyeSparkImage;
-        // This is displayed when the player slows down; it's an identifier.
-        protected Image hitCircleImage;
-        protected Image bg;
+        protected Renderer renderer;
         protected Font menuFont;
 
         // Current-game variables.
@@ -122,26 +110,6 @@ namespace TestSFMLDotNet
         protected short lives = 2;
         protected short bombs = 3;
 
-        // TODO: Move to Renderer
-        /// <summary>
-        /// Loads an image and gives a replacement on failure.
-        /// </summary>
-        /// <param name="filename">Where the image is.</param>
-        /// <returns>The loaded image on success or a 1x1 Image otherwise.</returns>
-        private Image LoadImage(String filename)
-        {
-            Image bitmap;
-            try
-            {
-                bitmap = new Image("res/" + filename);
-            }
-            catch (ArgumentException)
-            {
-                bitmap = new Image(1, 1);
-            }
-            return bitmap;
-        }
-
         public void Run(RenderWindow app)
         {
             // Apply extra things to the window.
@@ -150,40 +118,27 @@ namespace TestSFMLDotNet
             app.KeyReleased += new EventHandler<KeyEventArgs>(app_KeyReleased);
 
             // Load all resources.
+            renderer = new Renderer();
             menuFont = new Font("arial.ttf");
-            bg = LoadImage("bg.png");
+            renderer.bg = renderer.LoadImage("bg.png");
+            renderer.playerImage = renderer.LoadImage("p_fly.png");
+            // TODO: Deprecate need for player.SetImage(playerImage);
+            renderer.bossImage = renderer.LoadImage("boss_fly.png");
+            renderer.playerBulletImage = renderer.LoadImage("b_player.png");
+            renderer.hitCircleImage = renderer.LoadImage("hitbox.png");
+            renderer.grazeSparkImage = renderer.LoadImage("spark_graze.png");
+            renderer.bullseyeSparkImage = renderer.LoadImage("spark_nailed_foe.png");
+            renderer.MakeBulletImages();
 
             // Prepare the game to be run.
             Reset();
             // Disable the patch because the annoyance is only when going from
             //   the game to the menu - not during startup.
             disallowRapidSelection = false;
-            MakeBulletImages();
             gameState = GameState.MainMenu;
             paintHandler = new PaintHandler(PaintMenu);
 
             MainLoop(app);
-        }
-
-        /// <summary>
-        /// Makes all bullet images for the first time.
-        /// All images are put into the bulletImages array.
-        /// </summary>
-        protected void MakeBulletImages()
-        {
-            bulletImages = new Image[Bullet.RADII.Length][];
-            for (int atSize = 0; atSize < Bullet.RADII.Length; atSize++)
-            {
-                bulletImages[atSize] =
-                    new Image[(int)Bullet.BulletColors.EndColors];
-                for (int color = 0; color < bulletImages[atSize].Length; color++)
-                {
-                    int radius = Bullet.RADII[atSize];
-                    bulletImages[atSize][color] = LoadImage("b_" +
-                        (radius + radius).ToString() + "x" + (radius + radius).ToString() +
-                        Bullet.GetColorByName(color) + ".png");
-                }
-            }
         }
 
         /// <summary>
