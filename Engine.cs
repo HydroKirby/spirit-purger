@@ -9,6 +9,12 @@ using SFML.Graphics;
 
 namespace TestSFMLDotNet
 {
+	public enum MainMenu
+	{
+		Play, GodMode, FunBomb, Repulsive, Exit,
+		EndChoices
+	};
+
     /// <summary>
     /// IComparer class for sorting integers backwards.
     /// </summary>
@@ -49,12 +55,7 @@ namespace TestSFMLDotNet
         protected PaintHandler paintHandler = null;
         public KeyHandler keys = new KeyHandler();
         public Random rand = new Random();
-        public enum MainMenu
-        {
-            Play, GodMode, FunBomb, Repulsive, Exit,
-            EndChoices
-        };
-        protected int menuChoice = 0;
+        protected MainMenu menuChoice = (MainMenu)0;
         protected bool godMode = false;
         protected bool funBomb = false;
         protected bool repulsive = false;
@@ -85,9 +86,10 @@ namespace TestSFMLDotNet
         protected ArrayList playerBullets = new ArrayList();
         protected ArrayList hitSparks = new ArrayList();
 
-        // Game images.
+        // Rendering variables.
         protected Renderer renderer;
-        protected Font menuFont;
+		protected MenuRenderer menuRenderer;
+        protected Vector2u appSize;
 
         // Current-game variables.
         // This is the number of seconds left to complete a pattern.
@@ -105,7 +107,7 @@ namespace TestSFMLDotNet
         protected int bombComboTimeCountdown = 0;
         // The accumulated score of the current bomb combo.
         protected double bombComboScore = 0;
-//        protected Bomb bombBlast;
+        protected Bomb bombBlast;
         protected long score = 0;
         protected short lives = 2;
         protected short bombs = 3;
@@ -118,8 +120,8 @@ namespace TestSFMLDotNet
             app.KeyReleased += new EventHandler<KeyEventArgs>(app_KeyReleased);
 
             // Load all resources.
+            appSize = app.Size;
             renderer = new Renderer();
-            menuFont = new Font("arial.ttf");
             renderer.bg = renderer.LoadImage("bg.png");
             renderer.playerImage = renderer.LoadImage("p_fly.png");
             // TODO: Deprecate need for player.SetImage(playerImage);
@@ -128,7 +130,7 @@ namespace TestSFMLDotNet
             renderer.hitCircleImage = renderer.LoadImage("hitbox.png");
             renderer.grazeSparkImage = renderer.LoadImage("spark_graze.png");
             renderer.bullseyeSparkImage = renderer.LoadImage("spark_nailed_foe.png");
-            renderer.MakeBulletImages();
+			menuRenderer = new MenuRenderer();
 
             // Prepare the game to be run.
             Reset();
@@ -147,6 +149,46 @@ namespace TestSFMLDotNet
         /// </summary>
         protected void Reset()
         {
+            player.location = new Vector2f(appSize.X / 2,
+                appSize.Y / 4 * 3);
+            player.deathCountdown = 0;
+            player.reentryCountdown = 0;
+            player.invincibleCountdown = 0;
+            boss.location = new Vector2f(appSize.X / 2,
+                appSize.Y / 4);
+            boss.currentPattern = -1;
+            boss.NextPattern();
+            patternTime = Enemy.patternDuration[boss.currentPattern];
+            bossState = BossState.Intro;
+            disallowRapidSelection = true;
+            playerBullets.Clear();
+            enemyBullets.Clear();
+            hitSparks.Clear();
+            enemies.Clear();
+            beatThisPattern = true;
+            gameOver = false;
+            paused = false;
+            transitionFrames = 0;
+            bossIntroTime = 0;
+            bombBlast = null;
+            bombCombo = 0;
+            bombComboTimeCountdown = 0;
+            bombComboScore = 0;
+            grazeCount = 0;
+            lives = 2;
+            bombs = 3;
+            score = 0;
+            /*
+            this.labelBombs.Visible = false;
+            this.labelBombs.Text = "☆☆☆";
+            this.labelLives.Visible = false;
+            this.labelLives.Text = "◎◎";
+            this.labelScore.Visible = false;
+            this.labelScore.Text = "0";
+            this.labelPaused.Visible = false;
+            this.labelPausedToEnd.Visible = false;
+            this.labelPausedToPlay.Visible = false;
+             */
         }
 
         /// <summary>
@@ -228,14 +270,16 @@ namespace TestSFMLDotNet
             // The logic looks backwards for up/down, but it works.
             if (keys.up == 2)
             {
-                menuChoice = menuChoice <= 0 ? (int)MainMenu.EndChoices - 1 :
+                menuChoice = menuChoice <= 0 ? MainMenu.EndChoices - 1 :
                     menuChoice - 1;
+				menuRenderer.SetSelection(menuChoice);
                 disallowRapidSelection = false;
             }
             if (keys.down == 2)
             {
-                menuChoice = menuChoice > (int)MainMenu.EndChoices - 2 ? 0 :
+                menuChoice = menuChoice > MainMenu.EndChoices - 2 ? 0 :
                     menuChoice + 1;
+				menuRenderer.SetSelection(menuChoice);
                 disallowRapidSelection = false;
             }
             // Disallow rapid selection while patch flag is on.
@@ -255,12 +299,15 @@ namespace TestSFMLDotNet
                         break;
                     case MainMenu.GodMode:
                         godMode = !godMode;
+						menuRenderer.SetOptGodMode(godMode);
                         break;
                     case MainMenu.FunBomb:
                         funBomb = !funBomb;
+						menuRenderer.SetOptFunBomb(funBomb);
                         break;
                     case MainMenu.Repulsive:
                         repulsive = !repulsive;
+						menuRenderer.SetOptRepulsive(repulsive);
                         break;
                     case MainMenu.Exit:
                         ((RenderWindow)sender).Close();
@@ -387,36 +434,7 @@ namespace TestSFMLDotNet
         /// <param name="ticks">The ticks since the last call to this.</param>
         protected void PaintMenu(object sender, double ticks)
         {
-            // Note: The app window is 290x290.
-            int y = 130 + 15 * menuChoice;
-
-            // Produce the menu strings.
-            // TODO: Make this more efficient.
-            Text cursorText = new Text(">", menuFont, 12);
-            Text startText = new Text("Start", menuFont, 12);
-            Text godModeText = new Text("God Mode" + (godMode ? " *" : ""), menuFont, 12);
-            Text funBombText = new Text("Fun Bomb" + (funBomb ? " *" : ""), menuFont, 12);
-            Text repulsiveText = new Text("Repulsive" + (repulsive ? " *" : ""), menuFont, 12);
-            Text exitText = new Text("Exit", menuFont, 12);
-
-            // Set the menu strings' positions and color.
-            cursorText.Position = new Vector2f(136, y);
-            startText.Position = new Vector2f(145, 130 + (float)MainMenu.Play * 15.0F);
-            godModeText.Position = new Vector2f(145, 130 + (float)MainMenu.GodMode * 15.0F);
-            funBombText.Position = new Vector2f(145, 130 + (float)MainMenu.FunBomb * 15.0F);
-            repulsiveText.Position = new Vector2f(145, 130 + (float)MainMenu.Repulsive * 15.0F);
-            exitText.Position = new Vector2f(145, 130 + (float)MainMenu.Exit * 15.0F);
-            cursorText.Color = startText.Color = godModeText.Color = funBombText.Color =
-                repulsiveText.Color = exitText.Color = Color.Blue;
-
-            // Render the menu strings.
-            RenderWindow app = (RenderWindow)sender;
-            app.Draw(cursorText);
-            app.Draw(startText);
-            app.Draw(godModeText);
-            app.Draw(funBombText);
-            app.Draw(repulsiveText);
-            app.Draw(exitText);
+            menuRenderer.Paint(sender);
         }
 
         /// <summary>
