@@ -89,6 +89,7 @@ namespace TestSFMLDotNet
         // Rendering variables.
         protected Renderer renderer;
 		protected MenuRenderer menuRenderer;
+		protected GameRenderer gameRenderer;
         protected Vector2u appSize;
 
         // Current-game variables.
@@ -131,6 +132,7 @@ namespace TestSFMLDotNet
             renderer.grazeSparkImage = renderer.LoadImage("spark_graze.png");
             renderer.bullseyeSparkImage = renderer.LoadImage("spark_nailed_foe.png");
 			menuRenderer = new MenuRenderer();
+			gameRenderer = new GameRenderer();
 
             // Prepare the game to be run.
             Reset();
@@ -178,17 +180,7 @@ namespace TestSFMLDotNet
             lives = 2;
             bombs = 3;
             score = 0;
-            /*
-            this.labelBombs.Visible = false;
-            this.labelBombs.Text = "☆☆☆";
-            this.labelLives.Visible = false;
-            this.labelLives.Text = "◎◎";
-            this.labelScore.Visible = false;
-            this.labelScore.Text = "0";
-            this.labelPaused.Visible = false;
-            this.labelPausedToEnd.Visible = false;
-            this.labelPausedToPlay.Visible = false;
-             */
+			// TODO: Reset gameRenderer and menuRenderer.
         }
 
         /// <summary>
@@ -232,6 +224,27 @@ namespace TestSFMLDotNet
                 // If we are done, exit the loop immediately.
                 app.DispatchEvents();
             }
+			/*
+			 * TODO: Cleanup? This cleanup code was in the old engine.
+			 * 
+			   for (int i = 0; i < bulletImages.Length; i++)
+					if (bulletImages[i] != null)
+						for (int j = 0; j < bulletImages[i].Length; j++)
+							if (bulletImages[i][j] != null)
+								bulletImages[i][j].Dispose();
+				if (playerBulletImage != null)
+					playerBulletImage.Dispose();
+				if (grazeSparkImage != null)
+					grazeSparkImage.Dispose();
+				if (bullseyeSparkImage != null)
+					bullseyeSparkImage.Dispose();
+				if (hitCircleImage != null)
+					hitCircleImage.Dispose();
+				playerBullets.Clear();
+				enemyBullets.Clear();
+				hitSparks.Clear();
+				enemies.Clear();
+			 */
         }
 
         void app_KeyPressed(object sender, KeyEventArgs e)
@@ -444,6 +457,7 @@ namespace TestSFMLDotNet
         /// <param name="ticks">The ticks since the last call to this.</param>
         protected void PaintGame(object sender, double ticks)
         {
+			gameRenderer.Paint(sender);
             /*
             e.Graphics.DrawImage(bg, 0, 0);
             // Draw the player, boss, and enemies.

@@ -30,12 +30,6 @@ namespace TestSFMLDotNet
 
         // Fonts and images generated solely to display text.
         protected Font menuFont;
-        public Texture labelBombs;
-        public Texture labelLives;
-        public Texture labelScore;
-        public Texture labelPaused;
-        public Texture labelPausedToEnd;
-        public Texture labelPausedToPlay;
 
         public Renderer()
         {
@@ -96,7 +90,7 @@ namespace TestSFMLDotNet
 
     public class MenuRenderer : Renderer
     {
-		protected Color commonColor;
+		protected Color commonTextColor;
         protected Text cursorText;
 		protected Text startText;
 		protected Text godModeText;
@@ -110,7 +104,7 @@ namespace TestSFMLDotNet
 		/// <param name="selection">Which menu item is currently focused.</param>
         public MenuRenderer(MainMenu selection=0)
         {
-			commonColor = Color.Blue;
+			commonTextColor = Color.Blue;
 
             cursorText = new Text(">", menuFont, 12);
             startText = new Text("Start", menuFont, 12);
@@ -128,7 +122,7 @@ namespace TestSFMLDotNet
 			exitText.Position = new Vector2f(145, 130 + (float)MainMenu.Exit * 15.0F);
 			
 			// Set the color of the remaining text images.
-			startText.Color = exitText.Color = commonColor;
+			startText.Color = exitText.Color = commonTextColor;
         }
 
 		/// <summary>
@@ -138,28 +132,28 @@ namespace TestSFMLDotNet
 		public void SetSelection(MainMenu selection)
 		{
 			cursorText.Position = new Vector2f(136, 130 + 15 * (int)selection);
-			cursorText.Color = commonColor;
+			cursorText.Color = commonTextColor;
 		}
 
 		public void SetOptGodMode(bool isOn)
 		{
 			godModeText = new Text("God Mode" + (isOn ? " *" : ""), menuFont, 12);
 			godModeText.Position = new Vector2f(145, 130 + (float)MainMenu.GodMode * 15.0F);
-			godModeText.Color = commonColor;
+			godModeText.Color = commonTextColor;
 		}
 
 		public void SetOptFunBomb(bool isOn)
 		{
 			funBombText = new Text("Fun Bomb" + (isOn ? " *" : ""), menuFont, 12);
 			funBombText.Position = new Vector2f(145, 130 + (float)MainMenu.FunBomb * 15.0F);
-			funBombText.Color = commonColor;
+			funBombText.Color = commonTextColor;
 		}
 
 		public void SetOptRepulsive(bool isOn)
 		{
 			repulsiveText = new Text("Repulsive" + (isOn ? " *" : ""), menuFont, 12);
 			repulsiveText.Position = new Vector2f(145, 130 + (float)MainMenu.Repulsive * 15.0F);
-			repulsiveText.Color = commonColor;
+			repulsiveText.Color = commonTextColor;
 		}
 
 		public void Paint(object sender)
@@ -173,4 +167,66 @@ namespace TestSFMLDotNet
 			app.Draw(exitText);
 		}
     }
+
+	public class GameRenderer : Renderer
+	{
+		// Text/font variables.
+		protected Color commonTextColor;
+		protected Text labelBombs;
+        protected Text labelLives;
+        protected Text labelScore;
+		protected Vector2f labelScorePos;
+        protected Text labelPaused;
+        protected Text labelPausedToEnd;
+        protected Text labelPausedToPlay;
+		protected bool isPaused;
+
+		public GameRenderer()
+		{
+			commonTextColor = Color.Black;
+
+			// These functions generate their own texts.
+			SetScore(0);
+
+			labelBombs = new Text("☆☆☆", menuFont, 12);
+			labelLives = new Text("◎◎", menuFont, 12);
+			labelPaused = new Text("Paused", menuFont, 12);
+			labelPausedToPlay = new Text("Press Escape to Play", menuFont, 12);
+			labelPausedToEnd = new Text("Tap Bomb to End", menuFont, 12);
+
+			labelBombs.Position = new Vector2f(229, 236);
+			labelScorePos = new Vector2f(113, 9);
+			labelLives.Position = new Vector2f(229, 217);
+			labelPaused.Position = new Vector2f(92, 98);
+			labelPausedToPlay.Position = new Vector2f(79, 121);
+			labelPausedToEnd.Position = new Vector2f(92, 144);
+
+			labelBombs.Color = labelLives.Color = labelPaused.Color =
+				labelPausedToEnd.Color = labelPausedToPlay.Color = commonTextColor;
+		}
+
+		public bool IsPaused
+		{
+			get { return isPaused; }
+			set { isPaused = value; }
+		}
+
+		public void SetScore(int val)
+		{
+			labelScore = new Text(val.ToString(), menuFont, 12);
+			labelScore.Position = labelScorePos;
+			labelScore.Color = commonTextColor;
+		}
+
+		public void Paint(object sender)
+		{
+			RenderWindow app = (RenderWindow)sender;
+			app.Draw(labelScore);
+			app.Draw(labelBombs);
+			app.Draw(labelLives);
+			app.Draw(labelPaused);
+			app.Draw(labelPausedToPlay);
+			app.Draw(labelPausedToEnd);
+		}
+	}
 }
