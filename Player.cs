@@ -142,8 +142,8 @@ namespace TestSFMLDotNet {
 	}
 
 	public class Player : Square {
-		public const double HI_SPEED = 4.0;
-		public const double LO_SPEED = 2.0;
+		public const float HI_SPEED = 4.0F;
+		public const float LO_SPEED = 2.0F;
 		// This is how long the player waits after being hit until being sent
 		// outside of the screen.
 		public const int DEATH_SEQUENCE_FRAMES = 30;

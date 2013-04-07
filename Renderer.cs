@@ -186,20 +186,16 @@ namespace TestSFMLDotNet
 			// These functions generate their own texts.
 			SetScore(0);
 
-			labelBombs = new Text("☆☆☆", menuFont, 12);
-			labelLives = new Text("◎◎", menuFont, 12);
 			labelPaused = new Text("Paused", menuFont, 12);
 			labelPausedToPlay = new Text("Press Escape to Play", menuFont, 12);
 			labelPausedToEnd = new Text("Tap Bomb to End", menuFont, 12);
 
-			labelBombs.Position = new Vector2f(229, 236);
 			labelScorePos = new Vector2f(113, 9);
-			labelLives.Position = new Vector2f(229, 217);
 			labelPaused.Position = new Vector2f(92, 98);
 			labelPausedToPlay.Position = new Vector2f(79, 121);
 			labelPausedToEnd.Position = new Vector2f(92, 144);
 
-			labelBombs.Color = labelLives.Color = labelPaused.Color =
+			labelPaused.Color =
 				labelPausedToEnd.Color = labelPausedToPlay.Color = commonTextColor;
 		}
 
@@ -214,6 +210,26 @@ namespace TestSFMLDotNet
 			labelScore = new Text(val.ToString(), menuFont, 12);
 			labelScore.Position = labelScorePos;
 			labelScore.Color = commonTextColor;
+		}
+
+		public void SetLives(int val)
+		{
+			String livesString = "";
+			for (int i = 0; i < val; i++)
+				livesString += "◎";
+			labelLives = new Text(livesString, menuFont, 12);
+			labelLives.Position = new Vector2f(229, 217);
+			labelLives.Color = commonTextColor;
+		}
+
+		public void SetBombs(int val)
+		{
+			String bombsString = "";
+			for (int i = 0; i < val; i++)
+				bombsString += "☆";
+			labelBombs = new Text(bombsString, menuFont, 12);
+			labelBombs.Position = new Vector2f(229, 236);
+			labelBombs.Color = commonTextColor;
 		}
 
 		/// <summary>

@@ -176,6 +176,8 @@ namespace TestSFMLDotNet
             bombs = 3;
             score = 0;
 			// TODO: Reset gameRenderer and menuRenderer.
+			gameRenderer.SetLives(lives);
+			gameRenderer.SetBombs(bombs);
         }
 
         /// <summary>
@@ -327,7 +329,70 @@ namespace TestSFMLDotNet
 
 
         /* --- Game Logic Code --- */
-        
+
+
+		public void MovePlayer()
+		{
+			// Act on states that disable player movement first.
+			if (player.deathCountdown > 0)
+				if (player.deathCountdown == 1)
+				{
+					lives--;
+					if (lives < 0)
+						gameOver = true;
+					gameRenderer.SetLives(lives);
+					player.reentryCountdown = REENTRY_FRAMES;
+					player.location = new Vector2f(145.0F, 320.0F);
+				}
+				else
+					return;
+			if (lives < 0)
+				return;
+			if (player.reentryCountdown > 0)
+			{
+				player.location.Y -= Player.LO_SPEED;
+				gameRenderer.playerSprite.Position = player.location;
+				return;
+			}
+
+			if (keys.Horizontal() != 0)
+			{
+				if (keys.left > 0)
+				{
+					player.location.X -= keys.slow > 0 || bombBlast != null ?
+						Player.LO_SPEED : Player.HI_SPEED;
+					if (player.location.X - player.HalfSize.X < 0)
+						player.location.X = player.HalfSize.X;
+				}
+				else
+				{
+					player.location.X += keys.slow > 0 || bombBlast != null ?
+						Player.LO_SPEED : Player.HI_SPEED;
+					if (player.location.X + player.Size.X > appSize.X)
+						player.location.X = appSize.X - player.Size.X;
+				}
+				gameRenderer.playerSprite.Position = player.location;
+			}
+
+			if (keys.Vertical() != 0)
+			{
+				if (keys.up > 0)
+				{
+					player.location.Y -= keys.slow > 0 || bombBlast != null ?
+						Player.LO_SPEED : Player.HI_SPEED;
+					if (player.location.Y - player.HalfSize.Y < 0)
+						player.location.Y = player.HalfSize.Y;
+				}
+				else
+				{
+					player.location.Y += keys.slow > 0 || bombBlast != null ?
+						Player.LO_SPEED : Player.HI_SPEED;
+					if (player.location.Y + player.Size.Y > appSize.Y)
+						player.location.Y = appSize.Y - player.Size.Y;
+				}
+				gameRenderer.playerSprite.Position = player.location;
+			}
+		}
         
         /// <summary>
         /// Updates the game.
@@ -348,7 +413,6 @@ namespace TestSFMLDotNet
                 return;
             }
 
-            /*
             if (patternTime > 0 && transitionFrames <= 0)
             {
                 prevSecondUpdateFraction += ticks;
@@ -393,10 +457,10 @@ namespace TestSFMLDotNet
                     if (player.TryShoot())
                     {
                         // The color (index) doesn't matter.
-                        Bullet bullet = new Bullet(0, 1, new Vector2D(
+                        Bullet bullet = new Bullet(0, 1, new Vector2f(
                             player.location.X - Bullet.RADII[1],
                             player.DrawLocation.Y),
-                            new Vector2D(Vector2D.DegreesToRadians(270)),
+                            Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(270)),
                             9.0);
                         playerBullets.Add(bullet);
                         bullet = new Bullet(bullet);
@@ -409,26 +473,24 @@ namespace TestSFMLDotNet
                     bombs > 0 && player.reentryCountdown <= 0 &&
                     player.deathCountdown <= 0))
                 {
+					// Fire a bomb.
                     player.invincibleCountdown = Bomb.ACTIVE_FRAMES;
                     bombBlast = new Bomb(player.location);
                     bombCombo = 0;
                     bombComboTimeCountdown = BOMB_COMBO_DISPLAY_FRAMES;
                     bombs--;
                     beatThisPattern = false;
-                    String leftoverBombs = "";
-                    for (int i = 0; i < bombs; i++)
-                        leftoverBombs += "☆";
-                    this.labelBombs.Text = leftoverBombs;
+					gameRenderer.SetBombs(bombs);
                 }
             }
 
             if (bombComboTimeCountdown >= 0)
                 bombComboTimeCountdown--;
-
+/*
             UpdateBullets();
             UpdateEnemies();
             player.Update();
-             */
+            // */
         }
 
 
