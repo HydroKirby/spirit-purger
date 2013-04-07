@@ -122,17 +122,12 @@ namespace TestSFMLDotNet
 
             // Load all resources.
             appSize = app.Size;
-            renderer = new Renderer();
-            renderer.bg = renderer.LoadImage("bg.png");
-            renderer.playerImage = renderer.LoadImage("p_fly.png");
-            // TODO: Deprecate need for player.SetImage(playerImage);
-            renderer.bossImage = renderer.LoadImage("boss_fly.png");
-            renderer.playerBulletImage = renderer.LoadImage("b_player.png");
-            renderer.hitCircleImage = renderer.LoadImage("hitbox.png");
-            renderer.grazeSparkImage = renderer.LoadImage("spark_graze.png");
-            renderer.bullseyeSparkImage = renderer.LoadImage("spark_nailed_foe.png");
-			menuRenderer = new MenuRenderer();
+			renderer = new Renderer();
+            menuRenderer = new MenuRenderer();
 			gameRenderer = new GameRenderer();
+
+			// Assign sprites.
+			player.SetImage(gameRenderer.playerSprite);
 
             // Prepare the game to be run.
             Reset();
@@ -457,9 +452,23 @@ namespace TestSFMLDotNet
         /// <param name="ticks">The ticks since the last call to this.</param>
         protected void PaintGame(object sender, double ticks)
         {
+			RenderWindow app = (RenderWindow)sender;
+
+			app.Draw(gameRenderer.bgSprite);
+			// Draw the player, boss, and enemies.
+			if (lives >= 0)
+				app.Draw(gameRenderer.playerSprite);
+			// Draw the bullets and hitsparks.
+			// Draw the HUD.
+			// Draw the boss' health bar.
+			// Draw the boss pattern time.
+			// Draw the bomb combo.
+			// Show the end-pattern result.
+			// Show Game Over result.
+
 			gameRenderer.Paint(sender);
-            /*
-            e.Graphics.DrawImage(bg, 0, 0);
+			/*
+			e.Graphics.DrawImage(bg, 0, 0);
             // Draw the player, boss, and enemies.
             if (lives >= 0)
                 player.Draw(e.Graphics);
@@ -561,7 +570,7 @@ namespace TestSFMLDotNet
                     110.0F, 95.0F);
                 solidBrush.Dispose();
             }
-             */
+			 */
         }
     }
 }
