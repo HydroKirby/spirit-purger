@@ -163,7 +163,8 @@ namespace TestSFMLDotNet
 		// Game Sprites. Let the objects have (not own) the sprites so that
 		// the objects can request drawing, swapping, and alterations of sprites.
 		public Sprite bgSprite;
-		public Sprite playerSprite;
+		public Sprite playerSprite, hitCircleSprite;
+        public Sprite bossSprite;
 
 		public GameRenderer()
 		{
@@ -177,8 +178,10 @@ namespace TestSFMLDotNet
 			playerSprite = GetSprite(playerImage);
 			// TODO: Deprecate need for player.SetImage(playerImage);
 			bossImage = LoadImage("boss_fly.png");
+            bossSprite = GetSprite(bossImage);
 			playerBulletImage = LoadImage("b_player.png");
 			hitCircleImage = LoadImage("hitbox.png");
+            hitCircleSprite = GetSprite(hitCircleImage);
 			grazeSparkImage = LoadImage("spark_graze.png");
 			bullseyeSparkImage = LoadImage("spark_nailed_foe.png");
 
@@ -262,111 +265,6 @@ namespace TestSFMLDotNet
 			app.Draw(labelPaused);
 			app.Draw(labelPausedToPlay);
 			app.Draw(labelPausedToEnd);
-
-			/*
-			 * e.Graphics.DrawImage(bg, 0, 0);
-            // Draw the player, boss, and enemies.
-            if (lives >= 0)
-                player.Draw(e.Graphics);
-            if (bossState == BossState.Active)
-                boss.Draw(e.Graphics);
-            else if (bossState == BossState.Intro &&
-                     bossIntroTime > BOSS_PRE_INTRO_FRAMES)
-                // The boss is invisible unless it has waited more than
-                // BOSS_PRE_INTRO_FRAMES at which it then fades-in gradually.
-                // The visibility is the proprtion of time waited compared
-                // to BOSS_INTRO_FRAMES.
-                boss.Draw(e.Graphics,
-                    (int)((bossIntroTime - BOSS_PRE_INTRO_FRAMES) /
-                    (float)BOSS_INTRO_FRAMES * 255.0F));
-
-            // Draw the bullets and hitsparks.
-            foreach (Bullet spark in hitSparks)
-                if (spark.colorIndex == GRAZE_SPARK_INDEX)
-                    e.Graphics.DrawImage(grazeSparkImage, spark.DrawLocation);
-                else
-                    e.Graphics.DrawImage(bullseyeSparkImage,
-                                         spark.DrawLocation);
-            foreach (Bullet bullet in playerBullets)
-                e.Graphics.DrawImage(playerBulletImage, bullet.DrawLocation);
-            foreach (Bullet bullet in enemyBullets)
-                e.Graphics.DrawImage(
-                    bulletImages[bullet.SizeIndex][bullet.colorIndex],
-                    bullet.DrawLocation);
-
-            if (bombBlast != null)
-                bombBlast.Draw(e.Graphics);
-
-            if (keys.slow > 0)
-                e.Graphics.DrawImage(hitCircleImage,
-                    (int)((player.location.X - hitCircleImage.Width * 0.5)),
-                    (int)((player.location.Y - hitCircleImage.Height * 0.5)));
-
-            // Draw the HUD.
-            SolidBrush solidBrush = new SolidBrush(Color.Black);
-            // TODO: Fade-out when close-by.
-            e.Graphics.DrawString("Bullets:" +
-                (playerBullets.Count + enemyBullets.Count).ToString(),
-                Font, solidBrush, 0, this.ClientRectangle.Bottom - 14);
-            e.Graphics.DrawString("Grazed: " + grazeCount.ToString(), Font,
-                solidBrush, 0, this.ClientRectangle.Bottom - 25);
-            solidBrush.Dispose();
-
-            // Draw the boss' health bar.
-            if (!gameOver)
-            {
-                solidBrush = new SolidBrush(Color.Red);
-                e.Graphics.FillRectangle(solidBrush, 10, 28,
-                    (float)boss.health /
-                    Enemy.fullHealth[boss.currentPattern] *
-                    (this.ClientRectangle.Width - 20), 13);
-                solidBrush.Dispose();
-            }
-
-            // Draw the boss pattern time.
-            if (patternTime > 0)
-            {
-                solidBrush = new SolidBrush(Color.Red);
-                e.Graphics.DrawString(patternTime.ToString(), Font,
-                    solidBrush, 265.0F, 1.0F);
-                solidBrush.Dispose();
-            }
-
-            // Draw the bomb combo.
-            if (bombCombo > 0 && bombComboTimeCountdown >= 0)
-            {
-                solidBrush = new SolidBrush(Color.Firebrick);
-                e.Graphics.DrawString(String.Format("{0} Combo!", bombCombo),
-                    Font, solidBrush, 15.0F, 45.0F);
-                e.Graphics.DrawString(String.Format("{0}", bombComboScore),
-                    Font, solidBrush, 19.0F, 57.0F);
-                solidBrush.Dispose();
-            }
-
-            // Show the end-pattern result.
-            if (transitionFrames > 0 && !gameOver)
-            {
-                Font bigFont = new Font("Courier", 16, FontStyle.Bold);
-                solidBrush = new SolidBrush(Color.RoyalBlue);
-                e.Graphics.DrawString(beatThisPattern ? "Pattern Success!" :
-                    "Survival Failure...", bigFont, solidBrush, 60.0F, 50.0F);
-                e.Graphics.DrawString(beatThisPattern ? "30,000" : "5,000",
-                    bigFont, solidBrush, 100.0F, 70.0F);
-                solidBrush.Dispose();
-            }
-
-            // Show Game Over Result.
-            if (gameOver)
-            {
-                Font bigFont = new Font("Courier", 16, FontStyle.Bold);
-                solidBrush = new SolidBrush(Color.Crimson);
-                e.Graphics.DrawString("Game Over", bigFont, solidBrush,
-                    90.0F, 70.0F);
-                e.Graphics.DrawString("Please Press Shoot", Font, solidBrush,
-                    110.0F, 95.0F);
-                solidBrush.Dispose();
-            }
-			 */
 		}
 	}
 }

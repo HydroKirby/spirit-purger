@@ -34,6 +34,13 @@ namespace TestSFMLDotNet
 		// but not the player's hitcircle.
 		public bool grazed = false;
 		public int lifetime = 0;
+        protected Sprite sprite;
+
+        public Sprite Sprite
+        {
+            get { return sprite; }
+            set { sprite = value; }
+        }
 		
 		public int SizeIndex {
 			get { return sizeIndex; }
@@ -131,6 +138,12 @@ namespace TestSFMLDotNet
 			Direction = new Vector2f(bullet.direction.X, bullet.direction.Y);
 			Radius = bullet.radius;
 		}
+
+        ~Bullet()
+        {
+            if (sprite != null)
+                sprite.Dispose();
+        }
 		
 		/// <summary>
 		/// Makes a copy of the passed Bullet, but uses the passed direction
@@ -234,6 +247,10 @@ namespace TestSFMLDotNet
 			location.X += dx;
 			location.Y += dy;
 			lifetime++;
+            if (sprite != null)
+            {
+                sprite.Position = location;
+            }
 		}
 	}
 	

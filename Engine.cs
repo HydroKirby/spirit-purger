@@ -488,10 +488,64 @@ namespace TestSFMLDotNet
             if (bombComboTimeCountdown >= 0)
                 bombComboTimeCountdown--;
 
-            UpdateBullets();/*
+            UpdateBullets();
             UpdateEnemies();
             player.Update();
-            // */
+        }
+
+        public void UpdateEnemies()
+        {
+            foreach (Enemy enemy in enemies)
+            {
+                if (enemy.health <= 0)
+                    // TODO: Make enemies go pop.
+                    break;
+                enemy.Update(ref enemyBullets, player.location, rand);
+                if (player.invincibleCountdown <= 0 && !godMode &&
+                    lives >= 0 && enemy.HitTest(player.Size, player.location))
+                {
+                    player.invincibleCountdown = POST_DEATH_INVINC_FRAMES;
+                    player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
+                    beatThisPattern = false;
+                }
+            }
+
+            if (bossState == BossState.Active)
+            {
+                if (player.invincibleCountdown <= 0 && !godMode &&
+                    lives >= 0 && boss.HitTest(player.Size, player.location))
+                {
+                    player.invincibleCountdown = POST_DEATH_INVINC_FRAMES;
+                    player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
+                    beatThisPattern = false;
+                }
+
+                if (boss.health > 0)
+                    boss.Update(ref enemyBullets, player.location, rand);
+                else
+                {
+                    transitionFrames++;
+                    if (transitionFrames >= PATTERN_TRANSITION_PAUSE)
+                    {
+                        transitionFrames = 0;
+                        beatThisPattern = true;
+                        if (!boss.NextPattern())
+                        {
+                            bossState = BossState.Killed;
+                            gameOver = true;
+                        }
+                        else
+                            patternTime =
+                                Enemy.patternDuration[boss.currentPattern];
+                    }
+                }
+            }
+            else if (bossState == BossState.Intro)
+            {
+                bossIntroTime++;
+                if (bossIntroTime > BOSS_INTRO_FRAMES + BOSS_PRE_INTRO_FRAMES)
+                    bossState = BossState.Active;
+            }
         }
 
         public void UpdateBullets()
@@ -625,11 +679,14 @@ namespace TestSFMLDotNet
                             {
                                 // Show feedback of a graze with a hitspark.
                                 // The size index does not matter.
-                                hitSparks.Add(new Bullet(GRAZE_SPARK_INDEX,
+                                Bullet h = new Bullet(GRAZE_SPARK_INDEX,
                                     0, new Vector2f(bullet.location.X, bullet.location.Y),
                                     Vector2D.GetDirectionVector(
                                         bullet.location, player.location),
-                                    5.0));
+                                    5.0);
+                                h.Sprite = gameRenderer.GetSprite(
+                                    gameRenderer.grazeSparkImage);
+                                hitSparks.Add(h);
                                 score += 50;
                             }
                             bullet.grazed = true;
@@ -688,11 +745,16 @@ namespace TestSFMLDotNet
                         toRemove.Add(i);
                         // Make 2 hitsparks to show that the enemy was hit.
                         for (int k = 0; k < 2; k++)
-                            hitSparks.Add(new Bullet(BULLSEYE_SPARK_INDEX, 0,
+                        {
+                            Bullet h = new Bullet(BULLSEYE_SPARK_INDEX, 0,
                                 new Vector2f(bullet.location.X,
                                     boss.DrawLocation.Y + boss.Size.Y),
                                 Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(
-                                    60.0 + rand.NextDouble() * 60.0)), 2.5));
+                                    60.0 + rand.NextDouble() * 60.0)), 2.5);
+                            h.Sprite = gameRenderer.GetSprite(
+                                gameRenderer.bullseyeSparkImage);
+                            hitSparks.Add(h);
+                        }
                         score += 20;
                         scoreUp = true;
                     }
@@ -733,7 +795,41 @@ namespace TestSFMLDotNet
 			// Draw the player, boss, and enemies.
 			if (lives >= 0)
 				app.Draw(gameRenderer.playerSprite);
+            if (bossState == BossState.Active)
+                app.Draw(gameRenderer.bossSprite);
+            else if (bossState == BossState.Intro &&
+                     bossIntroTime > BOSS_PRE_INTRO_FRAMES)
+            {
+                // The boss is invisible unless it has waited more than
+                // BOSS_PRE_INTRO_FRAMES at which it then fades-in gradually.
+                // The visibility is the proprtion of time waited compared
+                // to BOSS_INTRO_FRAMES.
+                /*
+                boss.Draw(e.Graphics,
+                    (int)((bossIntroTime - BOSS_PRE_INTRO_FRAMES) /
+                    (float)BOSS_INTRO_FRAMES * 255.0F));
+                 */
+                // TODO: Temporary code is below. Swap for the above.
+                app.Draw(gameRenderer.bossSprite);
+            }
+
 			// Draw the bullets and hitsparks.
+            foreach (Bullet spark in hitSparks)
+                app.Draw(spark.Sprite);
+            /*
+                if (spark.colorIndex == GRAZE_SPARK_INDEX)
+                    app.Draw(spark.Sprite);
+                    //e.Graphics.DrawImage(grazeSparkImage, spark.DrawLocation);
+                else
+                    e.Graphics.DrawImage(bullseyeSparkImage,
+                                         spark.DrawLocation);
+            foreach (Bullet bullet in playerBullets)
+                e.Graphics.DrawImage(playerBulletImage, bullet.DrawLocation);
+            foreach (Bullet bullet in enemyBullets)
+                e.Graphics.DrawImage(
+                    bulletImages[bullet.SizeIndex][bullet.colorIndex],
+                    bullet.DrawLocation);*/
+
 			// Draw the HUD.
 			// Draw the boss' health bar.
 			// Draw the boss pattern time.
@@ -743,22 +839,6 @@ namespace TestSFMLDotNet
 
 			gameRenderer.Paint(sender);
 			/*
-			e.Graphics.DrawImage(bg, 0, 0);
-            // Draw the player, boss, and enemies.
-            if (lives >= 0)
-                player.Draw(e.Graphics);
-            if (bossState == BossState.Active)
-                boss.Draw(e.Graphics);
-            else if (bossState == BossState.Intro &&
-                     bossIntroTime > BOSS_PRE_INTRO_FRAMES)
-                // The boss is invisible unless it has waited more than
-                // BOSS_PRE_INTRO_FRAMES at which it then fades-in gradually.
-                // The visibility is the proprtion of time waited compared
-                // to BOSS_INTRO_FRAMES.
-                boss.Draw(e.Graphics,
-                    (int)((bossIntroTime - BOSS_PRE_INTRO_FRAMES) /
-                    (float)BOSS_INTRO_FRAMES * 255.0F));
-
             // Draw the bullets and hitsparks.
             foreach (Bullet spark in hitSparks)
                 if (spark.colorIndex == GRAZE_SPARK_INDEX)
