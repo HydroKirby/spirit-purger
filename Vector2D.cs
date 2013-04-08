@@ -179,8 +179,8 @@ namespace TestSFMLDotNet
             return new Vector2f((float)Math.Cos(radians), (float)Math.Sin(radians));
         }
 		
-		public double GetAngle() {
-			return Math.Atan2(Y, X);
+		public static double GetAngle(Vector2f v) {
+			return Math.Atan2(v.Y, v.X);
 		}
 		
 		public void Normalize() {

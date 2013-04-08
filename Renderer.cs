@@ -205,7 +205,7 @@ namespace TestSFMLDotNet
 			set { isPaused = value; }
 		}
 
-		public void SetScore(int val)
+		public void SetScore(long val)
 		{
 			labelScore = new Text(val.ToString(), menuFont, 12);
 			labelScore.Position = labelScorePos;

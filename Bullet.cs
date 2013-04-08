@@ -166,11 +166,11 @@ namespace TestSFMLDotNet
 		/// outside of the Rectangle. When positive, it extends the Bullet's
 		/// range of life. When negative, it shortens the Bullet's lifespan.</param>
 		/// <returns></returns>
-		public bool isOutside(Rectangle rect, int lenience) {
+		public bool isOutside(SFML.Graphics.IntRect rect, int lenience) {
 			return location.X - radius + lenience <= rect.Left ||
-				location.X + radius - lenience >= rect.Right ||
+				location.X + radius - lenience >= rect.Width ||
 				location.Y - radius + lenience <= rect.Top ||
-				location.Y + radius - lenience >= rect.Bottom;
+				location.Y + radius - lenience >= rect.Height;
 		}
 		
 		/// <summary>

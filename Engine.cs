@@ -35,8 +35,8 @@ namespace TestSFMLDotNet
         // After dying, this is how long the player automatically moves back
         // up to the playfield.
         public const int REENTRY_FRAMES = 50;
-//        public const int POST_DEATH_INVINC_FRAMES =
-//            REENTRY_FRAMES + Player.DEATH_SEQUENCE_FRAMES + 40;
+        public const int POST_DEATH_INVINC_FRAMES =
+            REENTRY_FRAMES + Player.DEATH_SEQUENCE_FRAMES + 40;
         // Refers to when a boss pattern has completed. It's the time to wait
         // until initiating the next pattern.
         public const int PATTERN_TRANSITION_PAUSE = 80;
@@ -90,7 +90,7 @@ namespace TestSFMLDotNet
         protected Renderer renderer;
 		protected MenuRenderer menuRenderer;
 		protected GameRenderer gameRenderer;
-        protected Vector2u appSize;
+        protected IntRect appSize;
 
         // Current-game variables.
         // This is the number of seconds left to complete a pattern.
@@ -121,7 +121,8 @@ namespace TestSFMLDotNet
             app.KeyReleased += new EventHandler<KeyEventArgs>(app_KeyReleased);
 
             // Load all resources.
-            appSize = app.Size;
+            appSize.Width = (int)app.Size.X;
+            appSize.Height = (int)app.Size.Y;
 			renderer = new Renderer();
             menuRenderer = new MenuRenderer();
 			gameRenderer = new GameRenderer();
@@ -146,13 +147,13 @@ namespace TestSFMLDotNet
         /// </summary>
         protected void Reset()
         {
-            player.location = new Vector2f(appSize.X / 2,
-                appSize.Y / 4 * 3);
+            player.location = new Vector2f(appSize.Width / 2,
+                appSize.Height / 4 * 3);
             player.deathCountdown = 0;
             player.reentryCountdown = 0;
             player.invincibleCountdown = 0;
-            boss.location = new Vector2f(appSize.X / 2,
-                appSize.Y / 4);
+            boss.location = new Vector2f(appSize.Width / 2,
+                appSize.Height / 4);
             boss.currentPattern = -1;
             boss.NextPattern();
             patternTime = Enemy.patternDuration[boss.currentPattern];
@@ -368,8 +369,8 @@ namespace TestSFMLDotNet
 				{
 					player.location.X += keys.slow > 0 || bombBlast != null ?
 						Player.LO_SPEED : Player.HI_SPEED;
-					if (player.location.X + player.Size.X > appSize.X)
-						player.location.X = appSize.X - player.Size.X;
+					if (player.location.X + player.Size.X > appSize.Width)
+						player.location.X = appSize.Width - player.Size.X;
 				}
 				gameRenderer.playerSprite.Position = player.location;
 			}
@@ -387,8 +388,8 @@ namespace TestSFMLDotNet
 				{
 					player.location.Y += keys.slow > 0 || bombBlast != null ?
 						Player.LO_SPEED : Player.HI_SPEED;
-					if (player.location.Y + player.Size.Y > appSize.Y)
-						player.location.Y = appSize.Y - player.Size.Y;
+					if (player.location.Y + player.Size.Y > appSize.Height)
+						player.location.Y = appSize.Height - player.Size.Y;
 				}
 				gameRenderer.playerSprite.Position = player.location;
 			}
@@ -486,11 +487,223 @@ namespace TestSFMLDotNet
 
             if (bombComboTimeCountdown >= 0)
                 bombComboTimeCountdown--;
-/*
-            UpdateBullets();
+
+            UpdateBullets();/*
             UpdateEnemies();
             player.Update();
             // */
+        }
+
+        public void UpdateBullets()
+        {
+            ArrayList toRemove = new ArrayList();
+
+            for (int i = 0; i < hitSparks.Count; i++)
+            {
+                Bullet spark = (Bullet)hitSparks[i];
+                spark.Update();
+                if (spark.lifetime >= 5)
+                    toRemove.Add(i);
+            }
+            // Sort the list from biggest to smallest index.
+            // Logically this is unnecessary, but I'd rather be safe.
+            if (toRemove.Count > 1)
+                toRemove.Sort(new ReversedSortInt());
+            // Remove each "dead" bullet sequentially from back to front.
+            // The separate, parallel toRemove list is used because the list
+            // with elements being removed shrinks during deletion and the
+            // wrong stuff gets removed since the indexes would change.
+            foreach (int i in toRemove)
+                hitSparks.RemoveAt(i);
+            // Clear the removal list so that it doesn't affect the next batch
+            // of bullets that will need removal.
+            toRemove.Clear();
+
+            if (bombBlast != null)
+            {
+                bombBlast.Update();
+                bool finalFrame = bombBlast.lifetime >= Bomb.ACTIVE_FRAMES;
+                for (int i = 0; i < enemyBullets.Count; i++)
+                {
+                    if (bombBlast.HitTest((Bullet)enemyBullets[i]))
+                    {
+                        if (!funBomb && finalFrame)
+                        {
+                            // Just remove everything in the blast radius.
+                            toRemove.Add(i);
+                            bombCombo++;
+                            score += 5;
+                            bombComboScore += 5;
+                            continue;
+                        }
+
+                        Bullet enemyBullet = (Bullet)enemyBullets[i];
+                        if (!funBomb && Math.Abs(Vector2D.GetDistance(
+                            enemyBullet.location, bombBlast.location)) <=
+                            enemyBullet.Speed + 0.1)
+                        {
+                            // It's within the center of the bomb.
+                            toRemove.Add(i);
+                            bombCombo++;
+                            score += 5;
+                            bombComboScore += 5;
+                            continue;
+                        }
+
+                        // Get the angles to compare.
+                        double towardBombAngle = Vector2D.GetDirection(
+                            bombBlast.location, enemyBullet.location);
+                        double currentAngle = Vector2D.GetAngle(enemyBullet.Direction);
+
+                        // If the angle is far (more than 90 degrees), then
+                        //   decrease the speed.
+                        if (Math.Abs(towardBombAngle - currentAngle) >=
+                            Math.PI / 2.0)
+                        {
+                            enemyBullet.Speed -= 0.5;
+                            if (enemyBullet.Speed <= 0.0)
+                            {
+                                // This speed change would give a negative
+                                // speed. Instead, change the angle.
+                                enemyBullet.Speed =
+                                    Math.Max(Math.Abs(enemyBullet.Speed), 0.1);
+                                currentAngle = towardBombAngle;
+                            }
+                        }
+                        else
+                            // The angle is small, so increase speed.
+                            enemyBullet.Speed = Math.Min(4.0,
+                                enemyBullet.Speed + 0.5);
+
+                        // Alter the bullet's current trrajectory by a
+                        //   maximum of 0.1 radians.
+                        enemyBullet.Direction = Vector2D.VectorFromAngle(
+                            currentAngle + Math.Max(-0.1, Math.Min(0.1,
+                            towardBombAngle - currentAngle)));
+                    }
+                }
+
+                if (finalFrame)
+                {
+                    // Disable the bomb.
+                    bombBlast = null;
+                    // Give the player a little leeway after the blast.
+                    player.invincibleCountdown = 20;
+                }
+
+                gameRenderer.SetScore(score);
+                if (toRemove.Count > 1)
+                    toRemove.Sort(new ReversedSortInt());
+                foreach (int i in toRemove)
+                    enemyBullets.RemoveAt(i);
+                toRemove.Clear();
+            }
+
+            for (int i = 0; i < enemyBullets.Count; i++)
+            {
+                Bullet bullet = (Bullet)enemyBullets[i];
+                bullet.Update();
+                if (bullet.isOutside(appSize, 30))
+                    // Build a list of "dead" bullets.
+                    toRemove.Add(i);
+                else if (player.invincibleCountdown <= 0 && lives >= 0 &&
+                         Math.Abs(player.location.Y - bullet.location.Y) <=
+                         player.Size.X + bullet.Radius)
+                    // It is kind of close to the player. Check for collison.
+                    if (player.HitTest(bullet))
+                    {
+                        if (!bullet.grazed)
+                        {
+                            grazeCount++;
+                            if (repulsive)
+                                // Make the bullet point directly away from
+                                // the player.
+                                bullet.Direction =
+                                    Vector2D.GetDirectionVector(
+                                    bullet.location, player.location);
+                            else
+                            {
+                                // Show feedback of a graze with a hitspark.
+                                // The size index does not matter.
+                                hitSparks.Add(new Bullet(GRAZE_SPARK_INDEX,
+                                    0, new Vector2f(bullet.location.X, bullet.location.Y),
+                                    Vector2D.GetDirectionVector(
+                                        bullet.location, player.location),
+                                    5.0));
+                                score += 50;
+                            }
+                            bullet.grazed = true;
+                        }
+                        if (!godMode && !repulsive &&
+                            bullet.HitTest(player.location, player.Radius))
+                        {
+                            player.invincibleCountdown =
+                                POST_DEATH_INVINC_FRAMES;
+                            player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
+                            beatThisPattern = false;
+                        }
+                    }
+            }
+            if (toRemove.Count > 1)
+                toRemove.Sort(new ReversedSortInt());
+            foreach (int i in toRemove)
+                enemyBullets.RemoveAt(i);
+            toRemove.Clear();
+
+            // TODO: Cram both bullets together.
+            for (int i = 0; i < playerBullets.Count; i++)
+            {
+                Bullet bullet = (Bullet)playerBullets[i];
+                bullet.Update();
+                if (bullet.isOutside(appSize, 0))
+                    toRemove.Add(i);
+                else
+                {
+                    bool scoreUp = false;
+                    foreach (Enemy enemy in enemies)
+                        if (enemy.HitTest(bullet))
+                        {
+                            enemy.health -= 2;
+                            toRemove.Add(i);
+                            // Make 2 hitsparks to show that the enemy was hit.
+                            for (int k = 0; k < 2; k++)
+                                // Makes a hitspark shoot downwards at an angle
+                                // between 210 and 330 degrees.
+                                hitSparks.Add(new Bullet(BULLSEYE_SPARK_INDEX,
+                                    0, new Vector2f(bullet.location.X,
+                                        boss.DrawLocation.Y + boss.Size.Y),
+                                    Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(
+                                        60.0 + rand.NextDouble() * 60.0)),
+                                    2.5));
+                            score += 20;
+                            scoreUp = true;
+                        }
+                    if (bossState == BossState.Active && boss.HitTest(bullet))
+                    {
+                        if (boss.Damage(2))
+                        {
+                            enemyBullets.Clear();
+                            score += (beatThisPattern ? 30000 : 5000);
+                        }
+                        toRemove.Add(i);
+                        // Make 2 hitsparks to show that the enemy was hit.
+                        for (int k = 0; k < 2; k++)
+                            hitSparks.Add(new Bullet(BULLSEYE_SPARK_INDEX, 0,
+                                new Vector2f(bullet.location.X,
+                                    boss.DrawLocation.Y + boss.Size.Y),
+                                Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(
+                                    60.0 + rand.NextDouble() * 60.0)), 2.5));
+                        score += 20;
+                        scoreUp = true;
+                    }
+                    if (scoreUp)
+                        gameRenderer.SetScore(score);
+                }
+            }
+            if (toRemove.Count > 1)
+                toRemove.Sort(new ReversedSortInt());
+            foreach (int i in toRemove)
+                playerBullets.RemoveAt(i);
         }
 
 
