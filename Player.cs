@@ -434,8 +434,8 @@ namespace TestSFMLDotNet {
         /// the player. The line has a half-dozen pairs of adjacent bullets
         /// to punish reckless running around.
         /// </summary>
-        protected bool UpdatePtrn0(ref ArrayList bullets, Vector2f playerPos,
-                                  Random rand)
+        protected bool UpdatePtrn0(ref ArrayList bullets, GameRenderer renderer,
+            Vector2f playerPos, Random rand)
         {
             bool movedToDest = false;
             if (moveStyle != MoveStyle.NoMove)
@@ -450,19 +450,30 @@ namespace TestSFMLDotNet {
                 // Moves clockwise from 0 to 180 degrees.
                 Bullet b = new Bullet(3, 0, location,
                     Vector2D.VectorFromAngle(baseDegree), 1.5);
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
 
                 // Moves clockwise from 180 to 0 degrees.
-                bullets.Add(new Bullet(b, Vector2D.VectorFromAngle(baseDegree +
-                    Math.PI)));
+                b = new Bullet(b, Vector2D.VectorFromAngle(baseDegree +
+                    Math.PI));
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                bullets.Add(b);
 
                 // Moves counter-clockwise from 180 to 0 degrees.
-                bullets.Add(new Bullet(b, Vector2D.VectorFromAngle(baseDegree +
-                    Math.PI - 2 * baseDegree)));
+                b = new Bullet(b, Vector2D.VectorFromAngle(baseDegree +
+                    Math.PI - 2 * baseDegree));
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                bullets.Add(b);
 
                 // Moves CCW from 0 to 180 degrees.
-                bullets.Add(new Bullet(b, Vector2D.VectorFromAngle(baseDegree +
-                    Math.PI * 2 - 2 * baseDegree)));
+                b = new Bullet(b, Vector2D.VectorFromAngle(baseDegree +
+                    Math.PI * 2 - 2 * baseDegree));
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                bullets.Add(b);
             }
             if ((updateCount >= 0 && updateCount <= 6) ||
                 (updateCount >= 30 && updateCount <= 36) ||
@@ -472,19 +483,28 @@ namespace TestSFMLDotNet {
                     // Store the angle towards the player in vard1.
                     vard1 = Vector2D.GetDirection(playerPos, location);
                 // Make a line of bullets aimed at the player.
-                bullets.Add(new Bullet((int)Bullet.BulletColors.Orange, 1,
-                    location, Vector2D.VectorFromAngle(vard1), 1.7));
+                Bullet b = new Bullet((int)Bullet.BulletColors.Orange, 1,
+                    location, Vector2D.VectorFromAngle(vard1), 1.7);
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                bullets.Add(b);
                 if (updateCount % 10 == 3)
                 {
                     for (double angle = 0.07; angle < 0.13; angle += 0.01)
                     {
                         // Make 2 bullets aimed at the player's sides.
-                        bullets.Add(new Bullet(
+                        b = new Bullet(
                             (int)Bullet.BulletColors.Red, 1, location,
-                            Vector2D.VectorFromAngle(vard1 + Math.PI * angle), 2.0));
-                        bullets.Add(new Bullet(
+                            Vector2D.VectorFromAngle(vard1 + Math.PI * angle), 2.0);
+                        b.Sprite = renderer.GetSprite(
+                            renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                        bullets.Add(b);
+                        b = new Bullet(
                             (int)Bullet.BulletColors.Red, 1, location,
-                            Vector2D.VectorFromAngle(vard1 - Math.PI * angle), 2.0));
+                            Vector2D.VectorFromAngle(vard1 - Math.PI * angle), 2.0);
+                        b.Sprite = renderer.GetSprite(
+                            renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                        bullets.Add(b);
                     }
                 }
             }
@@ -497,8 +517,8 @@ namespace TestSFMLDotNet {
         /// Stays in place and fires everywhere randomly. Occasionally shoots
         /// a line of large bullets aimed at the player.
         /// </summary>
-        protected bool UpdatePtrn1(ref ArrayList bullets, Vector2f playerPos,
-                                  Random rand)
+        protected bool UpdatePtrn1(ref ArrayList bullets, GameRenderer renderer,
+            Vector2f playerPos, Random rand)
         {
             bool movedToDest = false;
             if (moveStyle != MoveStyle.NoMove)
@@ -510,9 +530,12 @@ namespace TestSFMLDotNet {
                 // refreshed to 1.
                 if (updateCount == 30)
                     varv1 = Vector2D.GetDirectionVector(playerPos, location);
-                bullets.Add(new Bullet(
+                Bullet b = new Bullet(
                     (int)Bullet.BulletColors.EndColors - 1, 2, location,
-                    varv1, 3.0));
+                    varv1, 3.0);
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                bullets.Add(b);
             }
             if (updateCount % 5.0 == 0.0)
             {
@@ -526,6 +549,8 @@ namespace TestSFMLDotNet {
                     b.Direction = Vector2D.VectorFromAngle(
                         Vector2D.DegreesToRadians(rand.Next(360)));
                     b.RefreshVelocity();
+                    b.Sprite = renderer.GetSprite(
+                        renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                     bullets.Add(b);
                 }
             }
@@ -540,8 +565,8 @@ namespace TestSFMLDotNet {
         /// player's safety zone. A twisting cross of bullets is made
         /// continuously.
         /// </summary>
-        protected bool UpdatePtrn2(ref ArrayList bullets, Vector2f playerPos,
-                                  Random rand)
+        protected bool UpdatePtrn2(ref ArrayList bullets, GameRenderer renderer,
+            Vector2f playerPos, Random rand)
         {
             bool movedToDest = false;
             if (moveStyle != MoveStyle.NoMove)
@@ -574,15 +599,26 @@ namespace TestSFMLDotNet {
                     updateCount / 4.0 * 9.0);
                 Bullet b = new Bullet((int)Bullet.BulletColors.Orange, 1,
                     location, Vector2D.VectorFromAngle(baseRadian), 2.0);
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
                 // Add 90 degrees.
-                bullets.Add(new Bullet(b, Vector2D.VectorFromAngle(baseRadian -
-                    Math.PI / 2.0)));
+                b = new Bullet(b, Vector2D.VectorFromAngle(baseRadian -
+                    Math.PI / 2.0));
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                bullets.Add(b);
                 // Add 180 degrees.
-                bullets.Add(new Bullet(b, Vector2D.VectorFromAngle(baseRadian - Math.PI)));
+                b = new Bullet(b, Vector2D.VectorFromAngle(baseRadian - Math.PI));
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                bullets.Add(b);
                 // Add 270 degrees.
-                bullets.Add(new Bullet(b, Vector2D.VectorFromAngle(baseRadian +
-                    Math.PI / 2.0)));
+                b = new Bullet(b, Vector2D.VectorFromAngle(baseRadian +
+                    Math.PI / 2.0));
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                bullets.Add(b);
             }
             else if (updateCount == 40)
             {
@@ -596,6 +632,8 @@ namespace TestSFMLDotNet {
                         new Vector2f((float)(towardsPlayer +
                                      Vector2D.DegreesToRadians(i / 10.0 * 360)),
                         3.0F));
+                    b.Sprite = renderer.GetSprite(
+                        renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                     bullets.Add(b);
                 }
             }
@@ -609,9 +647,14 @@ namespace TestSFMLDotNet {
                     (int)Bullet.BulletColors.Violet, 1, location,
                     new Vector2f((float)(towardsPlayer +
                         Vector2D.DegreesToRadians(30)), 3.0F));
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
-                bullets.Add(new Bullet(b, Vector2D.VectorFromAngle(towardsPlayer -
-                    Vector2D.DegreesToRadians(30))));
+                b = new Bullet(b, Vector2D.VectorFromAngle(towardsPlayer -
+                    Vector2D.DegreesToRadians(30)));
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                bullets.Add(b);
             }
             else if (updateCount >= 60)
                 updateCount = 1;
@@ -624,8 +667,8 @@ namespace TestSFMLDotNet {
         /// angles. Upon stopping, a string of bullets is aimed at the player.
         /// While idle, a cross of slow, tiny bullets are fired continuously.
         /// </summary>
-        protected bool UpdatePtrn3(ref ArrayList bullets, Vector2f playerPos,
-                                  Random rand)
+        protected bool UpdatePtrn3(ref ArrayList bullets, GameRenderer renderer,
+            Vector2f playerPos, Random rand)
         {
             bool movedToDest = false;
             if (moveStyle != MoveStyle.NoMove)
@@ -659,21 +702,33 @@ namespace TestSFMLDotNet {
                 {
                     // vari1 types 0 and 1 have colorIndex 0.
                     // vari1 type 2 has a colorIndex of 1.
-                    bullets.Add(new Bullet(Math.Max(vari1 - 1, 0), 1,
-                        location, Vector2D.VectorFromAngle(angle), i + 0.5));
+                    Bullet b = new Bullet(Math.Max(vari1 - 1, 0), 1,
+                        location, Vector2D.VectorFromAngle(angle), i + 0.5);
+                    b.Sprite = renderer.GetSprite(
+                        renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                    bullets.Add(b);
                     // Make a small trailing bullet.
-                    bullets.Add(new Bullet(Math.Max(vari1 - 1, 0), 0,
-                        location, Vector2D.VectorFromAngle(angle), i + 1));
+                    b = new Bullet(Math.Max(vari1 - 1, 0), 0,
+                        location, Vector2D.VectorFromAngle(angle), i + 1);
+                    b.Sprite = renderer.GetSprite(
+                        renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                    bullets.Add(b);
                 }
                 if (vari1 < 2)
                     // It's aimed diagonally.
                     // Shoot along the opposite diagonal.
                     for (int i = 2; i < 5; i++)
                     {
-                        bullets.Add(new Bullet(0, 1, location,
-                            Vector2D.VectorFromAngle(angle + Math.PI), i));
-                        bullets.Add(new Bullet(0, 0, location,
-                            Vector2D.VectorFromAngle(angle + Math.PI), i - 0.5));
+                        Bullet b = new Bullet(0, 1, location,
+                            Vector2D.VectorFromAngle(angle + Math.PI), i);
+                        b.Sprite = renderer.GetSprite(
+                            renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                        bullets.Add(b);
+                        b = new Bullet(0, 0, location,
+                            Vector2D.VectorFromAngle(angle + Math.PI), i - 0.5);
+                        b.Sprite = renderer.GetSprite(
+                            renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                        bullets.Add(b);
                     }
                 vari1++;
                 if (vari1 >= 3)
@@ -687,13 +742,24 @@ namespace TestSFMLDotNet {
                 //   into grazing.
                 Bullet b = new Bullet((int)Bullet.BulletColors.Violet, 0,
                     location, Vector2D.VectorFromAngle(0), 1.5);
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
                 // Aimed down.
-                bullets.Add(new Bullet(b, Vector2D.VectorFromAngle(Math.PI / 2.0)));
+                b = new Bullet(b, Vector2D.VectorFromAngle(Math.PI / 2.0));
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                bullets.Add(b);
                 // Aimed right.
-                bullets.Add(new Bullet(b, Vector2D.VectorFromAngle(Math.PI)));
+                b = new Bullet(b, Vector2D.VectorFromAngle(Math.PI));
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                bullets.Add(b);
                 // Aimed up.
-                bullets.Add(new Bullet(b, Vector2D.VectorFromAngle(Math.PI * 1.5)));
+                b = new Bullet(b, Vector2D.VectorFromAngle(Math.PI * 1.5));
+                b.Sprite = renderer.GetSprite(
+                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                bullets.Add(b);
             }
 
             if (updateCount >= 51)
@@ -701,20 +767,20 @@ namespace TestSFMLDotNet {
             return movedToDest;
         }
 
-        public bool Update(ref ArrayList bullets, Vector2f playerPos,
-                          Random rand)
+        public bool Update(ref ArrayList bullets, GameRenderer renderer,
+            Vector2f playerPos, Random rand)
         {
             bool finishedMoving = false;
             if (startedPattern)
             {
                 if (currentPattern == 0)
-                    finishedMoving = UpdatePtrn0(ref bullets, playerPos, rand);
+                    finishedMoving = UpdatePtrn0(ref bullets, renderer, playerPos, rand);
                 else if (currentPattern == 1)
-                    finishedMoving = UpdatePtrn1(ref bullets, playerPos, rand);
+                    finishedMoving = UpdatePtrn1(ref bullets, renderer, playerPos, rand);
                 else if (currentPattern == 2)
-                    finishedMoving = UpdatePtrn2(ref bullets, playerPos, rand);
+                    finishedMoving = UpdatePtrn2(ref bullets, renderer, playerPos, rand);
                 else if (currentPattern == 3)
-                    finishedMoving = UpdatePtrn3(ref bullets, playerPos, rand);
+                    finishedMoving = UpdatePtrn3(ref bullets, renderer, playerPos, rand);
             }
             else
             {

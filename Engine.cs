@@ -463,10 +463,14 @@ namespace TestSFMLDotNet
                             player.DrawLocation.Y),
                             Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(270)),
                             9.0);
+                        bullet.Sprite = gameRenderer.GetSprite(
+                            gameRenderer.playerBulletImage);
                         playerBullets.Add(bullet);
                         bullet = new Bullet(bullet);
                         bullet.location.X = player.location.X +
                             Bullet.RADII[1];
+                        bullet.Sprite = gameRenderer.GetSprite(
+                            gameRenderer.playerBulletImage);
                         playerBullets.Add(bullet);
                     }
                 }
@@ -500,7 +504,7 @@ namespace TestSFMLDotNet
                 if (enemy.health <= 0)
                     // TODO: Make enemies go pop.
                     break;
-                enemy.Update(ref enemyBullets, player.location, rand);
+                enemy.Update(ref enemyBullets, gameRenderer, player.location, rand);
                 if (player.invincibleCountdown <= 0 && !godMode &&
                     lives >= 0 && enemy.HitTest(player.Size, player.location))
                 {
@@ -521,7 +525,7 @@ namespace TestSFMLDotNet
                 }
 
                 if (boss.health > 0)
-                    boss.Update(ref enemyBullets, player.location, rand);
+                    boss.Update(ref enemyBullets, gameRenderer, player.location, rand);
                 else
                 {
                     transitionFrames++;
@@ -816,17 +820,12 @@ namespace TestSFMLDotNet
 			// Draw the bullets and hitsparks.
             foreach (Bullet spark in hitSparks)
                 app.Draw(spark.Sprite);
-            /*
-                if (spark.colorIndex == GRAZE_SPARK_INDEX)
-                    app.Draw(spark.Sprite);
-                    //e.Graphics.DrawImage(grazeSparkImage, spark.DrawLocation);
-                else
-                    e.Graphics.DrawImage(bullseyeSparkImage,
-                                         spark.DrawLocation);
             foreach (Bullet bullet in playerBullets)
-                e.Graphics.DrawImage(playerBulletImage, bullet.DrawLocation);
+                app.Draw(bullet.Sprite);
+                //e.Graphics.DrawImage(playerBulletImage, bullet.DrawLocation);
             foreach (Bullet bullet in enemyBullets)
-                e.Graphics.DrawImage(
+                app.Draw(bullet.Sprite);
+                /*e.Graphics.DrawImage(
                     bulletImages[bullet.SizeIndex][bullet.colorIndex],
                     bullet.DrawLocation);*/
 
