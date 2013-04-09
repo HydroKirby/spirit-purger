@@ -129,6 +129,10 @@ namespace TestSFMLDotNet
 
 			// Assign sprites.
 			player.SetImage(gameRenderer.playerSprite);
+			player.SetHitboxSprite(gameRenderer.hitCircleSprite);
+			player.UpdateDisplayPos();
+			boss.SetImage(gameRenderer.bossSprite);
+			boss.UpdateDisplayPos();
 
             // Prepare the game to be run.
             Reset();
@@ -344,6 +348,7 @@ namespace TestSFMLDotNet
 					gameRenderer.SetLives(lives);
 					player.reentryCountdown = REENTRY_FRAMES;
 					player.location = new Vector2f(145.0F, 320.0F);
+					player.UpdateDisplayPos();
 				}
 				else
 					return;
@@ -352,7 +357,7 @@ namespace TestSFMLDotNet
 			if (player.reentryCountdown > 0)
 			{
 				player.location.Y -= Player.LO_SPEED;
-				gameRenderer.playerSprite.Position = player.location;
+				player.UpdateDisplayPos();
 				return;
 			}
 
@@ -372,7 +377,7 @@ namespace TestSFMLDotNet
 					if (player.location.X + player.Size.X > appSize.Width)
 						player.location.X = appSize.Width - player.Size.X;
 				}
-				gameRenderer.playerSprite.Position = player.location;
+				player.UpdateDisplayPos();
 			}
 
 			if (keys.Vertical() != 0)
@@ -391,7 +396,7 @@ namespace TestSFMLDotNet
 					if (player.location.Y + player.Size.Y > appSize.Height)
 						player.location.Y = appSize.Height - player.Size.Y;
 				}
-				gameRenderer.playerSprite.Position = player.location;
+				player.UpdateDisplayPos();
 			}
 		}
         
@@ -463,13 +468,13 @@ namespace TestSFMLDotNet
                             player.DrawLocation.Y),
                             Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(270)),
                             9.0);
-                        bullet.Sprite = gameRenderer.GetSprite(
+                        bullet.Sprite = gameRenderer.GetCenterSprite(
                             gameRenderer.playerBulletImage);
                         playerBullets.Add(bullet);
                         bullet = new Bullet(bullet);
                         bullet.location.X = player.location.X +
                             Bullet.RADII[1];
-                        bullet.Sprite = gameRenderer.GetSprite(
+                        bullet.Sprite = gameRenderer.GetCenterSprite(
                             gameRenderer.playerBulletImage);
                         playerBullets.Add(bullet);
                     }
@@ -688,7 +693,7 @@ namespace TestSFMLDotNet
                                     Vector2D.GetDirectionVector(
                                         bullet.location, player.location),
                                     5.0);
-                                h.Sprite = gameRenderer.GetSprite(
+                                h.Sprite = gameRenderer.GetCenterSprite(
                                     gameRenderer.grazeSparkImage);
                                 hitSparks.Add(h);
                                 score += 50;
@@ -755,7 +760,7 @@ namespace TestSFMLDotNet
                                     boss.DrawLocation.Y + boss.Size.Y),
                                 Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(
                                     60.0 + rand.NextDouble() * 60.0)), 2.5);
-                            h.Sprite = gameRenderer.GetSprite(
+                            h.Sprite = gameRenderer.GetCenterSprite(
                                 gameRenderer.bullseyeSparkImage);
                             hitSparks.Add(h);
                         }
@@ -829,6 +834,17 @@ namespace TestSFMLDotNet
                     bulletImages[bullet.SizeIndex][bullet.colorIndex],
                     bullet.DrawLocation);*/
 
+			if (bombBlast != null)
+			{
+				//bombBlast.Draw(e.Graphics);
+			}
+
+			if (keys.slow > 0)
+				app.Draw(gameRenderer.hitCircleSprite);
+/*				e.Graphics.DrawImage(hitCircleImage,
+					(int)((player.location.X - hitCircleImage.Width * 0.5)),
+					(int)((player.location.Y - hitCircleImage.Height * 0.5)));*/
+
 			// Draw the HUD.
 			// Draw the boss' health bar.
 			// Draw the boss pattern time.
@@ -838,28 +854,6 @@ namespace TestSFMLDotNet
 
 			gameRenderer.Paint(sender);
 			/*
-            // Draw the bullets and hitsparks.
-            foreach (Bullet spark in hitSparks)
-                if (spark.colorIndex == GRAZE_SPARK_INDEX)
-                    e.Graphics.DrawImage(grazeSparkImage, spark.DrawLocation);
-                else
-                    e.Graphics.DrawImage(bullseyeSparkImage,
-                                         spark.DrawLocation);
-            foreach (Bullet bullet in playerBullets)
-                e.Graphics.DrawImage(playerBulletImage, bullet.DrawLocation);
-            foreach (Bullet bullet in enemyBullets)
-                e.Graphics.DrawImage(
-                    bulletImages[bullet.SizeIndex][bullet.colorIndex],
-                    bullet.DrawLocation);
-
-            if (bombBlast != null)
-                bombBlast.Draw(e.Graphics);
-
-            if (keys.slow > 0)
-                e.Graphics.DrawImage(hitCircleImage,
-                    (int)((player.location.X - hitCircleImage.Width * 0.5)),
-                    (int)((player.location.Y - hitCircleImage.Height * 0.5)));
-
             // Draw the HUD.
             SolidBrush solidBrush = new SolidBrush(Color.Black);
             // TODO: Fade-out when close-by.

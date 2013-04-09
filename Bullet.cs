@@ -34,9 +34,9 @@ namespace TestSFMLDotNet
 		// but not the player's hitcircle.
 		public bool grazed = false;
 		public int lifetime = 0;
-        protected Sprite sprite;
+        protected CenterSprite sprite;
 
-        public Sprite Sprite
+        public CenterSprite Sprite
         {
             get { return sprite; }
             set { sprite = value; }
@@ -249,7 +249,7 @@ namespace TestSFMLDotNet
 			lifetime++;
             if (sprite != null)
             {
-                sprite.Position = location;
+				sprite.setPosition(location);
             }
 		}
 	}

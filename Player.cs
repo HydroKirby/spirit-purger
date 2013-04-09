@@ -52,7 +52,6 @@ namespace TestSFMLDotNet {
 			Size = new Vector2i(1, 1);
 		}
 
-        //*
 		public Square(Vector2f location) {
 			this.location = new Vector2f(location.X, location.Y);
 			Size = new Vector2i(1, 1);
@@ -163,7 +162,8 @@ namespace TestSFMLDotNet {
 		// bottom of the screen after dying. The player can't move during
 		// the reentry sequence.
 		public int reentryCountdown = 0;
-		protected Sprite sprite;
+		protected CenterSprite sprite;
+		protected CenterSprite hitBoxSprite;
 
 		public int Radius {
 			get { return radius; }
@@ -176,7 +176,22 @@ namespace TestSFMLDotNet {
 
 		public Player() : base(new Vector2f(), new Vector2i(20, 20)) {}
 
-		public void SetImage(Sprite b) { sprite = b; }
+		public void SetImage(CenterSprite s) {
+			s.setPosition(location);
+			sprite = s;
+		}
+
+		public void SetHitboxSprite(CenterSprite s)
+		{
+			s.setPosition(location);
+			hitBoxSprite = s;
+		}
+
+		public void UpdateDisplayPos()
+		{
+			sprite.setPosition(location);
+			hitBoxSprite.setPosition(location);
+		}
 
 		/// <summary>
 		/// Checks if a shot can be fired based on the pause imposed by the
@@ -295,7 +310,7 @@ namespace TestSFMLDotNet {
         protected double dy = 1.0;
         // Refers to moving towards aimFor.
         protected MoveStyle moveStyle = MoveStyle.NoMove;
-        protected Sprite sprite;
+        protected CenterSprite sprite;
 
         public Enemy()
             : base(new Vector2f(), new Vector2i(25, 25))
@@ -324,7 +339,7 @@ namespace TestSFMLDotNet {
             }
         }
 
-        public void SetImage(Sprite b) { sprite = b; }
+        public void SetImage(CenterSprite b) { sprite = b; }
 
         /// <summary>
         /// Resets dx and dy so that the overall velocity is correct in
@@ -450,28 +465,28 @@ namespace TestSFMLDotNet {
                 // Moves clockwise from 0 to 180 degrees.
                 Bullet b = new Bullet(3, 0, location,
                     Vector2D.VectorFromAngle(baseDegree), 1.5);
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
 
                 // Moves clockwise from 180 to 0 degrees.
                 b = new Bullet(b, Vector2D.VectorFromAngle(baseDegree +
                     Math.PI));
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
 
                 // Moves counter-clockwise from 180 to 0 degrees.
                 b = new Bullet(b, Vector2D.VectorFromAngle(baseDegree +
                     Math.PI - 2 * baseDegree));
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
 
                 // Moves CCW from 0 to 180 degrees.
                 b = new Bullet(b, Vector2D.VectorFromAngle(baseDegree +
                     Math.PI * 2 - 2 * baseDegree));
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
             }
@@ -485,7 +500,7 @@ namespace TestSFMLDotNet {
                 // Make a line of bullets aimed at the player.
                 Bullet b = new Bullet((int)Bullet.BulletColors.Orange, 1,
                     location, Vector2D.VectorFromAngle(vard1), 1.7);
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
                 if (updateCount % 10 == 3)
@@ -496,13 +511,13 @@ namespace TestSFMLDotNet {
                         b = new Bullet(
                             (int)Bullet.BulletColors.Red, 1, location,
                             Vector2D.VectorFromAngle(vard1 + Math.PI * angle), 2.0);
-                        b.Sprite = renderer.GetSprite(
+                        b.Sprite = renderer.GetCenterSprite(
                             renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                         bullets.Add(b);
                         b = new Bullet(
                             (int)Bullet.BulletColors.Red, 1, location,
                             Vector2D.VectorFromAngle(vard1 - Math.PI * angle), 2.0);
-                        b.Sprite = renderer.GetSprite(
+                        b.Sprite = renderer.GetCenterSprite(
                             renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                         bullets.Add(b);
                     }
@@ -533,7 +548,7 @@ namespace TestSFMLDotNet {
                 Bullet b = new Bullet(
                     (int)Bullet.BulletColors.EndColors - 1, 2, location,
                     varv1, 3.0);
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
             }
@@ -549,7 +564,7 @@ namespace TestSFMLDotNet {
                     b.Direction = Vector2D.VectorFromAngle(
                         Vector2D.DegreesToRadians(rand.Next(360)));
                     b.RefreshVelocity();
-                    b.Sprite = renderer.GetSprite(
+                    b.Sprite = renderer.GetCenterSprite(
                         renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                     bullets.Add(b);
                 }
@@ -599,24 +614,24 @@ namespace TestSFMLDotNet {
                     updateCount / 4.0 * 9.0);
                 Bullet b = new Bullet((int)Bullet.BulletColors.Orange, 1,
                     location, Vector2D.VectorFromAngle(baseRadian), 2.0);
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
                 // Add 90 degrees.
                 b = new Bullet(b, Vector2D.VectorFromAngle(baseRadian -
                     Math.PI / 2.0));
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
                 // Add 180 degrees.
                 b = new Bullet(b, Vector2D.VectorFromAngle(baseRadian - Math.PI));
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
                 // Add 270 degrees.
                 b = new Bullet(b, Vector2D.VectorFromAngle(baseRadian +
                     Math.PI / 2.0));
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
             }
@@ -632,7 +647,7 @@ namespace TestSFMLDotNet {
                         new Vector2f((float)(towardsPlayer +
                                      Vector2D.DegreesToRadians(i / 10.0 * 360)),
                         3.0F));
-                    b.Sprite = renderer.GetSprite(
+                    b.Sprite = renderer.GetCenterSprite(
                         renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                     bullets.Add(b);
                 }
@@ -647,12 +662,12 @@ namespace TestSFMLDotNet {
                     (int)Bullet.BulletColors.Violet, 1, location,
                     new Vector2f((float)(towardsPlayer +
                         Vector2D.DegreesToRadians(30)), 3.0F));
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
                 b = new Bullet(b, Vector2D.VectorFromAngle(towardsPlayer -
                     Vector2D.DegreesToRadians(30)));
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
             }
@@ -704,13 +719,13 @@ namespace TestSFMLDotNet {
                     // vari1 type 2 has a colorIndex of 1.
                     Bullet b = new Bullet(Math.Max(vari1 - 1, 0), 1,
                         location, Vector2D.VectorFromAngle(angle), i + 0.5);
-                    b.Sprite = renderer.GetSprite(
+                    b.Sprite = renderer.GetCenterSprite(
                         renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                     bullets.Add(b);
                     // Make a small trailing bullet.
                     b = new Bullet(Math.Max(vari1 - 1, 0), 0,
                         location, Vector2D.VectorFromAngle(angle), i + 1);
-                    b.Sprite = renderer.GetSprite(
+                    b.Sprite = renderer.GetCenterSprite(
                         renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                     bullets.Add(b);
                 }
@@ -721,12 +736,12 @@ namespace TestSFMLDotNet {
                     {
                         Bullet b = new Bullet(0, 1, location,
                             Vector2D.VectorFromAngle(angle + Math.PI), i);
-                        b.Sprite = renderer.GetSprite(
+                        b.Sprite = renderer.GetCenterSprite(
                             renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                         bullets.Add(b);
                         b = new Bullet(0, 0, location,
                             Vector2D.VectorFromAngle(angle + Math.PI), i - 0.5);
-                        b.Sprite = renderer.GetSprite(
+                        b.Sprite = renderer.GetCenterSprite(
                             renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                         bullets.Add(b);
                     }
@@ -742,22 +757,22 @@ namespace TestSFMLDotNet {
                 //   into grazing.
                 Bullet b = new Bullet((int)Bullet.BulletColors.Violet, 0,
                     location, Vector2D.VectorFromAngle(0), 1.5);
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
                 // Aimed down.
                 b = new Bullet(b, Vector2D.VectorFromAngle(Math.PI / 2.0));
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
                 // Aimed right.
                 b = new Bullet(b, Vector2D.VectorFromAngle(Math.PI));
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
                 // Aimed up.
                 b = new Bullet(b, Vector2D.VectorFromAngle(Math.PI * 1.5));
-                b.Sprite = renderer.GetSprite(
+                b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
             }
@@ -784,17 +799,25 @@ namespace TestSFMLDotNet {
             }
             else
             {
-                if (moveStyle != MoveStyle.NoMove)
-                    finishedMoving = MoveTowardsDestination();
+				if (moveStyle != MoveStyle.NoMove)
+				{
+					finishedMoving = MoveTowardsDestination();
+				}
                 if (updateCount > startupFrames[currentPattern])
                 {
                     startedPattern = true;
                     updateCount = -1;
                 }
             }
+			UpdateDisplayPos();
             updateCount++;
             return finishedMoving;
         }
+
+		public void UpdateDisplayPos()
+		{
+			sprite.setPosition(location);
+		}
 
         public void Draw()
         {

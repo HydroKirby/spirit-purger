@@ -8,6 +8,20 @@ using SFML.Graphics;
 
 namespace TestSFMLDotNet
 {
+	public class CenterSprite : Sprite
+	{
+		public CenterSprite(Texture img)
+		{
+			Texture = img;
+		}
+
+		public void setPosition(Vector2f v)
+		{
+			Position = new Vector2f(v.X - Texture.Size.X * 0.5F,
+				v.Y - Texture.Size.Y * 0.5F);
+		}
+	}
+
     /// <summary>
     /// Holds all images in the game.
     /// It should provide sprites for objects.
@@ -50,6 +64,11 @@ namespace TestSFMLDotNet
         {
             return new Sprite(img);
         }
+
+		public CenterSprite GetCenterSprite(Texture img)
+		{
+			return new CenterSprite(img);
+		}
     }
 
     public class MenuRenderer : Renderer
@@ -163,8 +182,8 @@ namespace TestSFMLDotNet
 		// Game Sprites. Let the objects have (not own) the sprites so that
 		// the objects can request drawing, swapping, and alterations of sprites.
 		public Sprite bgSprite;
-		public Sprite playerSprite, hitCircleSprite;
-        public Sprite bossSprite;
+		public CenterSprite playerSprite, hitCircleSprite;
+        public CenterSprite bossSprite;
 
 		public GameRenderer()
 		{
@@ -175,13 +194,13 @@ namespace TestSFMLDotNet
 			bg = LoadImage("bg.png");
 			bgSprite = GetSprite(bg);
 			playerImage = LoadImage("p_fly.png");
-			playerSprite = GetSprite(playerImage);
+			playerSprite = GetCenterSprite(playerImage);
 			// TODO: Deprecate need for player.SetImage(playerImage);
 			bossImage = LoadImage("boss_fly.png");
-            bossSprite = GetSprite(bossImage);
+            bossSprite = GetCenterSprite(bossImage);
 			playerBulletImage = LoadImage("b_player.png");
 			hitCircleImage = LoadImage("hitbox.png");
-            hitCircleSprite = GetSprite(hitCircleImage);
+            hitCircleSprite = GetCenterSprite(hitCircleImage);
 			grazeSparkImage = LoadImage("spark_graze.png");
 			bullseyeSparkImage = LoadImage("spark_nailed_foe.png");
 
