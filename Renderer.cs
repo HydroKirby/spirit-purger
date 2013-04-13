@@ -153,6 +153,10 @@ namespace TestSFMLDotNet
 
 	public class GameRenderer : Renderer
 	{
+        // Refers to when a boss pattern has completed. It's the time to wait
+        // until initiating the next pattern.
+        public const int PATTERN_TRANSITION_PAUSE = 80;
+
 		// Text/font variables.
 		protected Color commonTextColor;
 		protected Text labelBombs;
@@ -168,14 +172,22 @@ namespace TestSFMLDotNet
 		protected Vector2f labelBulletsPos;
         protected Text labelBombCombo;
         protected Vector2f labelBombComboPos;
+        protected Text labelBossHealth;
+        protected Vector2f labelBossHealthPos;
         // How long a boss has before terminating a pattern on its own.
         protected Text labelPatternTime;
         protected Vector2f labelPatternTimePos;
+        // The result of a finishing a boss pattern.
+        protected Text labelPatternResult;
+        protected Vector2f labelPatternResultPos;
+        protected Text labelGameOver;
 		
         protected bool isPaused;
         protected bool isInBossPattern;
         protected bool isBombComboShown;
+        protected bool isGameOver;
         protected int _bombComboTimeCountdown;
+        protected int timeLeftToShowPatternResult;
 
 		// Game Textures.
 		// This variable holds the images shared between all bullets. It's
@@ -223,26 +235,33 @@ namespace TestSFMLDotNet
             labelBulletsPos = new Vector2f(0, 276);
             labelBombsPos = new Vector2f(210, 236);
             labelBombComboPos = new Vector2f(15.0F, 45.0F);
+            labelBossHealthPos = new Vector2f(30, 28);
             labelPatternTimePos = new Vector2f(235.0F, 1.0F);
+            labelPatternResultPos = new Vector2f(25.0F, 55.0F);
 
 			// Create the labels that are constantly regenerated.
 			SetScore(0);
 			SetBullets(0);
             SetBombs(0);
             SetBombCombo(0, 0);
+            SetBossHealth(0);
             SetPatternTime(0);
+            SetPatternResult(false, 0);
+            timeLeftToShowPatternResult = 0;
 
             // Create the labels that are only created once.
 			labelPaused = new Text("Paused", menuFont, 12);
 			labelPausedToPlay = new Text("Press Escape to Play", menuFont, 12);
 			labelPausedToEnd = new Text("Tap Bomb to End", menuFont, 12);
+            labelGameOver = new Text("Game Over... Press Shoot", menuFont, 16);
 
             // Set the positions for labels that are made only one time.
 			labelPaused.Position = new Vector2f(92, 98);
 			labelPausedToPlay.Position = new Vector2f(79, 121);
 			labelPausedToEnd.Position = new Vector2f(92, 144);
+            labelGameOver.Position = new Vector2f(70, 70);
 
-			labelPaused.Color =
+			labelPaused.Color = labelGameOver.Color =
 				labelPausedToEnd.Color = labelPausedToPlay.Color = commonTextColor;
 		}
 
@@ -263,6 +282,12 @@ namespace TestSFMLDotNet
 			set { isPaused = value; }
 		}
 
+        public bool IsGameOver
+        {
+            get { return isGameOver; }
+            set { isGameOver = value; }
+        }
+
 		public void SetScore(long val)
 		{
 			labelScore = new Text("Score: " + val.ToString(), menuFont, 12);
@@ -272,9 +297,12 @@ namespace TestSFMLDotNet
 
 		public void SetLives(int val)
 		{
-			String livesString = "Lives: ";
-			for (int i = 0; i < val; i++)
-				livesString += "◎";
+            // The last life is life 0. When lives = -1, it's game over.
+            if (val < 0)
+                val = 0;
+            else
+                isGameOver = false;
+			String livesString = "Lives: " + val;
 			labelLives = new Text(livesString, menuFont, 12);
 			labelLives.Position = labelLivesPos;
 			labelLives.Color = commonTextColor;
@@ -282,9 +310,7 @@ namespace TestSFMLDotNet
 
 		public void SetBombs(int val)
 		{
-			String bombsString = "Bombs: ";
-			for (int i = 0; i < val; i++)
-				bombsString += "☆";
+			String bombsString = "Bombs: " + val;
 			labelBombs = new Text(bombsString, menuFont, 12);
 			labelBombs.Position = labelBombsPos;
 			labelBombs.Color = commonTextColor;
@@ -310,6 +336,13 @@ namespace TestSFMLDotNet
             labelBullets.Color = commonTextColor;
 		}
 
+        public void SetBossHealth(int val)
+        {
+            labelBossHealth = new Text("Health: " + val.ToString(), menuFont, 16);
+            labelBossHealth.Color = commonTextColor;
+            labelBossHealth.Position = labelBossHealthPos;
+        }
+
         public void SetPatternTime(int val)
         {
             isInBossPattern = val > 0;
@@ -319,6 +352,16 @@ namespace TestSFMLDotNet
                 labelPatternTime.Position = labelPatternTimePos;
                 labelPatternTime.Color = commonTextColor;
             }
+        }
+
+        public void SetPatternResult(bool success, long score)
+        {
+            // Reset the amount of time to show the pattern result.
+            timeLeftToShowPatternResult = PATTERN_TRANSITION_PAUSE;
+            labelPatternResult = new Text((success ? "Pattern Success! Score + " :
+                "Survival Failure... Score + ") + score.ToString(), menuFont, 16);
+            labelPatternResult.Color = commonTextColor;
+            labelPatternResult.Position = labelPatternResultPos;
         }
 
 		/// <summary>
@@ -342,9 +385,18 @@ namespace TestSFMLDotNet
 			}
 		}
 
+        public void Update(double dt)
+        {
+            timeLeftToShowPatternResult--;
+            if (timeLeftToShowPatternResult < 0)
+                timeLeftToShowPatternResult = 0;
+        }
+
 		public void Paint(object sender)
 		{
 			RenderWindow app = (RenderWindow)sender;
+            // TODO: Fade-out elements when close-by?
+            // Alternatively, make element outside of the play field.
 			app.Draw(labelScore);
 			app.Draw(labelBombs);
 			app.Draw(labelLives);
@@ -353,9 +405,14 @@ namespace TestSFMLDotNet
                 app.Draw(labelBombCombo);
 
             if (isInBossPattern)
-			    app.Draw(labelPatternTime);
+            {
+                app.Draw(labelPatternTime);
+                app.Draw(labelBossHealth);
+            }
 
-			// TODO: Fade-out when close-by.
+            if (timeLeftToShowPatternResult > 0)
+                app.Draw(labelPatternResult);
+
 			app.Draw(labelBullets);
 
             if (isPaused)
@@ -364,6 +421,9 @@ namespace TestSFMLDotNet
                 app.Draw(labelPausedToPlay);
                 app.Draw(labelPausedToEnd);
             }
+
+            if (isGameOver)
+                app.Draw(labelGameOver);
 		}
 	}
 }

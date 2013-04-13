@@ -343,8 +343,8 @@ namespace TestSFMLDotNet
 				if (player.deathCountdown == 1)
 				{
 					lives--;
-					if (lives < 0)
-						gameOver = true;
+                    if (lives < 0)
+                        gameOver = gameRenderer.IsGameOver = true;
 					gameRenderer.SetLives(lives);
 					player.reentryCountdown = REENTRY_FRAMES;
 					player.location = new Vector2f(145.0F, 320.0F);
@@ -509,6 +509,7 @@ namespace TestSFMLDotNet
             UpdateBullets();
             UpdateEnemies();
             player.Update();
+            gameRenderer.Update(ticks);
         }
 
         public void UpdateEnemies()
@@ -735,6 +736,7 @@ namespace TestSFMLDotNet
             toRemove.Clear();
 
             // TODO: Cram both bullets together.
+            bool hitBoss = false;
             for (int i = 0; i < playerBullets.Count; i++)
             {
                 Bullet bullet = (Bullet)playerBullets[i];
@@ -764,13 +766,17 @@ namespace TestSFMLDotNet
                         }
                     if (bossState == BossState.Active && boss.HitTest(bullet))
                     {
+                        hitBoss = true;
                         if (boss.DealDamage(2))
                         {
                             // The boss has no more health.
                             enemyBullets.Clear();
-                            score += (beatThisPattern ? 30000 : 5000);
+                            long addScore = beatThisPattern ? 30000 : 5000;
+                            score += addScore;
                             // Remove the pattern time label from the HUD.
                             gameRenderer.SetPatternTime(0);
+                            // Show the pattern result.
+                            gameRenderer.SetPatternResult(beatThisPattern, addScore);
                         }
                         toRemove.Add(i);
                         // Make 2 hitsparks to show that the enemy was hit.
@@ -792,6 +798,10 @@ namespace TestSFMLDotNet
                         gameRenderer.SetScore(score);
                 }
             }
+            if (hitBoss)
+                // Tell the renderer that the boss' health changed.
+                gameRenderer.SetBossHealth(boss.health);
+
             if (toRemove.Count > 1)
                 toRemove.Sort(new ReversedSortInt());
             foreach (int i in toRemove)
@@ -821,7 +831,7 @@ namespace TestSFMLDotNet
         protected void PaintGame(object sender, double ticks)
         {
 			RenderWindow app = (RenderWindow)sender;
-
+            
 			app.Draw(gameRenderer.bgSprite);
 			// Draw the player, boss, and enemies.
 			if (lives >= 0)
@@ -849,12 +859,8 @@ namespace TestSFMLDotNet
                 app.Draw(spark.Sprite);
             foreach (Bullet bullet in playerBullets)
                 app.Draw(bullet.Sprite);
-                //e.Graphics.DrawImage(playerBulletImage, bullet.DrawLocation);
             foreach (Bullet bullet in enemyBullets)
                 app.Draw(bullet.Sprite);
-                /*e.Graphics.DrawImage(
-                    bulletImages[bullet.SizeIndex][bullet.colorIndex],
-                    bullet.DrawLocation);*/
 
 			if (bombBlast != null)
 			{
@@ -865,52 +871,7 @@ namespace TestSFMLDotNet
 				app.Draw(gameRenderer.hitCircleSprite);
 
 			// Draw the HUD.
-            // NOTE: Drawn by gameRenderer.
-            // TODO: Fade-out when close-by.
-			
-			// Draw the boss' health bar.
-			// Draw the boss pattern time.
-			// Draw the bomb combo.
-			// Show the end-pattern result.
-			// Show Game Over result.
-
 			gameRenderer.Paint(sender);
-			/*
-            // Draw the boss' health bar.
-            if (!gameOver)
-            {
-                solidBrush = new SolidBrush(Color.Red);
-                e.Graphics.FillRectangle(solidBrush, 10, 28,
-                    (float)boss.health /
-                    Enemy.fullHealth[boss.currentPattern] *
-                    (this.ClientRectangle.Width - 20), 13);
-                solidBrush.Dispose();
-            }
-
-            // Show the end-pattern result.
-            if (transitionFrames > 0 && !gameOver)
-            {
-                Font bigFont = new Font("Courier", 16, FontStyle.Bold);
-                solidBrush = new SolidBrush(Color.RoyalBlue);
-                e.Graphics.DrawString(beatThisPattern ? "Pattern Success!" :
-                    "Survival Failure...", bigFont, solidBrush, 60.0F, 50.0F);
-                e.Graphics.DrawString(beatThisPattern ? "30,000" : "5,000",
-                    bigFont, solidBrush, 100.0F, 70.0F);
-                solidBrush.Dispose();
-            }
-
-            // Show Game Over Result.
-            if (gameOver)
-            {
-                Font bigFont = new Font("Courier", 16, FontStyle.Bold);
-                solidBrush = new SolidBrush(Color.Crimson);
-                e.Graphics.DrawString("Game Over", bigFont, solidBrush,
-                    90.0F, 70.0F);
-                e.Graphics.DrawString("Please Press Shoot", Font, solidBrush,
-                    110.0F, 95.0F);
-                solidBrush.Dispose();
-            }
-			 */
         }
     }
 }
