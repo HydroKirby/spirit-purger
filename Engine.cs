@@ -107,7 +107,7 @@ namespace TestSFMLDotNet
         // The timer for how long the combo has been displayed.
         protected int bombComboTimeCountdown = 0;
         // The accumulated score of the current bomb combo.
-        protected double bombComboScore = 0;
+        protected int bombComboScore = 0;
         protected Bomb bombBlast;
         protected long score = 0;
         protected short lives = 2;
@@ -424,10 +424,16 @@ namespace TestSFMLDotNet
                 prevSecondUpdateFraction += ticks;
                 if (prevSecondUpdateFraction >= 1.0)
                 {
+                    // Decrease the amount of time the pattern will be run for.
                     patternTime--;
+                    // To prevent timing errors, follow a real clock time.
+                    // patternTime is only an integer representation for
+                    // easy coding and displaying.
                     prevSecondUpdateFraction -= 1.0;
+                    gameRenderer.SetPatternTime(patternTime);
                     if (patternTime == 0)
                     {
+                        // Ran out of time trying to beat the pattern.
                         beatThisPattern = false;
                         if (!boss.NextPattern())
                         {
@@ -495,7 +501,10 @@ namespace TestSFMLDotNet
             }
 
             if (bombComboTimeCountdown >= 0)
+            {
                 bombComboTimeCountdown--;
+                gameRenderer.BombComboTimeCountdown = bombComboTimeCountdown;
+            }
 
             UpdateBullets();
             UpdateEnemies();
@@ -530,9 +539,13 @@ namespace TestSFMLDotNet
                 }
 
                 if (boss.health > 0)
+                {
+                    // Increment the time the boss is in its pattern.
                     boss.Update(ref enemyBullets, gameRenderer, player.location, rand);
+                }
                 else
                 {
+                    // Increment the boss' time transitioning between patterns.
                     transitionFrames++;
                     if (transitionFrames >= PATTERN_TRANSITION_PAUSE)
                     {
@@ -584,12 +597,14 @@ namespace TestSFMLDotNet
 
             if (bombBlast != null)
             {
+                bool bombMadeCombo = true;
                 bombBlast.Update();
                 bool finalFrame = bombBlast.lifetime >= Bomb.ACTIVE_FRAMES;
                 for (int i = 0; i < enemyBullets.Count; i++)
                 {
                     if (bombBlast.HitTest((Bullet)enemyBullets[i]))
                     {
+                        bombMadeCombo = true;
                         if (!funBomb && finalFrame)
                         {
                             // Just remove everything in the blast radius.
@@ -645,6 +660,9 @@ namespace TestSFMLDotNet
                             towardBombAngle - currentAngle)));
                     }
                 }
+
+                if (bombMadeCombo)
+                    gameRenderer.SetBombCombo(bombCombo, bombComboScore);
 
                 if (finalFrame)
                 {
@@ -746,10 +764,13 @@ namespace TestSFMLDotNet
                         }
                     if (bossState == BossState.Active && boss.HitTest(bullet))
                     {
-                        if (boss.Damage(2))
+                        if (boss.DealDamage(2))
                         {
+                            // The boss has no more health.
                             enemyBullets.Clear();
                             score += (beatThisPattern ? 30000 : 5000);
+                            // Remove the pattern time label from the HUD.
+                            gameRenderer.SetPatternTime(0);
                         }
                         toRemove.Add(i);
                         // Make 2 hitsparks to show that the enemy was hit.
@@ -775,6 +796,7 @@ namespace TestSFMLDotNet
                 toRemove.Sort(new ReversedSortInt());
             foreach (int i in toRemove)
                 playerBullets.RemoveAt(i);
+            gameRenderer.SetBullets(playerBullets.Count + enemyBullets.Count);
         }
 
 
@@ -841,11 +863,11 @@ namespace TestSFMLDotNet
 
 			if (keys.slow > 0)
 				app.Draw(gameRenderer.hitCircleSprite);
-/*				e.Graphics.DrawImage(hitCircleImage,
-					(int)((player.location.X - hitCircleImage.Width * 0.5)),
-					(int)((player.location.Y - hitCircleImage.Height * 0.5)));*/
 
 			// Draw the HUD.
+            // NOTE: Drawn by gameRenderer.
+            // TODO: Fade-out when close-by.
+			
 			// Draw the boss' health bar.
 			// Draw the boss pattern time.
 			// Draw the bomb combo.
@@ -854,16 +876,6 @@ namespace TestSFMLDotNet
 
 			gameRenderer.Paint(sender);
 			/*
-            // Draw the HUD.
-            SolidBrush solidBrush = new SolidBrush(Color.Black);
-            // TODO: Fade-out when close-by.
-            e.Graphics.DrawString("Bullets:" +
-                (playerBullets.Count + enemyBullets.Count).ToString(),
-                Font, solidBrush, 0, this.ClientRectangle.Bottom - 14);
-            e.Graphics.DrawString("Grazed: " + grazeCount.ToString(), Font,
-                solidBrush, 0, this.ClientRectangle.Bottom - 25);
-            solidBrush.Dispose();
-
             // Draw the boss' health bar.
             if (!gameOver)
             {
@@ -872,26 +884,6 @@ namespace TestSFMLDotNet
                     (float)boss.health /
                     Enemy.fullHealth[boss.currentPattern] *
                     (this.ClientRectangle.Width - 20), 13);
-                solidBrush.Dispose();
-            }
-
-            // Draw the boss pattern time.
-            if (patternTime > 0)
-            {
-                solidBrush = new SolidBrush(Color.Red);
-                e.Graphics.DrawString(patternTime.ToString(), Font,
-                    solidBrush, 265.0F, 1.0F);
-                solidBrush.Dispose();
-            }
-
-            // Draw the bomb combo.
-            if (bombCombo > 0 && bombComboTimeCountdown >= 0)
-            {
-                solidBrush = new SolidBrush(Color.Firebrick);
-                e.Graphics.DrawString(String.Format("{0} Combo!", bombCombo),
-                    Font, solidBrush, 15.0F, 45.0F);
-                e.Graphics.DrawString(String.Format("{0}", bombComboScore),
-                    Font, solidBrush, 19.0F, 57.0F);
                 solidBrush.Dispose();
             }
 

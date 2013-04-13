@@ -435,7 +435,7 @@ namespace TestSFMLDotNet {
         /// </summary>
         /// <param name="damage">The value to remove from health.</param>
         /// <returns>If the damage dealt was the final blow.</returns>
-        public bool Damage(int damage)
+        public bool DealDamage(int damage)
         {
             if (health <= 0)
                 return false;

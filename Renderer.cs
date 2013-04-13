@@ -80,7 +80,7 @@ namespace TestSFMLDotNet
 		protected Text funBombText;
 		protected Text repulsiveText;
 		protected Text exitText;
-
+		
 		/// <summary>
 		/// Makes a MenuRenderer and optionally sets the intial selected menu item.
 		/// </summary>
@@ -156,13 +156,26 @@ namespace TestSFMLDotNet
 		// Text/font variables.
 		protected Color commonTextColor;
 		protected Text labelBombs;
+		protected Vector2f labelBombsPos;
         protected Text labelLives;
+		protected Vector2f labelLivesPos;
         protected Text labelScore;
 		protected Vector2f labelScorePos;
         protected Text labelPaused;
         protected Text labelPausedToEnd;
         protected Text labelPausedToPlay;
-		protected bool isPaused;
+		protected Text labelBullets;
+		protected Vector2f labelBulletsPos;
+        protected Text labelBombCombo;
+        protected Vector2f labelBombComboPos;
+        // How long a boss has before terminating a pattern on its own.
+        protected Text labelPatternTime;
+        protected Vector2f labelPatternTimePos;
+		
+        protected bool isPaused;
+        protected bool isInBossPattern;
+        protected bool isBombComboShown;
+        protected int _bombComboTimeCountdown;
 
 		// Game Textures.
 		// This variable holds the images shared between all bullets. It's
@@ -178,7 +191,7 @@ namespace TestSFMLDotNet
 		public Texture bg;
 		public Texture bossImage;
 		public Texture playerBulletImage;
-
+        
 		// Game Sprites. Let the objects have (not own) the sprites so that
 		// the objects can request drawing, swapping, and alterations of sprites.
 		public Sprite bgSprite;
@@ -204,15 +217,27 @@ namespace TestSFMLDotNet
 			grazeSparkImage = LoadImage("spark_graze.png");
 			bullseyeSparkImage = LoadImage("spark_nailed_foe.png");
 
-			// Create labels.
-			// These functions generate their own texts.
-			SetScore(0);
+            // Set the positions for constantly regenerating labels.
+            labelScorePos = new Vector2f(113, 9);
+            labelLivesPos = new Vector2f(210, 217);
+            labelBulletsPos = new Vector2f(0, 276);
+            labelBombsPos = new Vector2f(210, 236);
+            labelBombComboPos = new Vector2f(15.0F, 45.0F);
+            labelPatternTimePos = new Vector2f(235.0F, 1.0F);
 
+			// Create the labels that are constantly regenerated.
+			SetScore(0);
+			SetBullets(0);
+            SetBombs(0);
+            SetBombCombo(0, 0);
+            SetPatternTime(0);
+
+            // Create the labels that are only created once.
 			labelPaused = new Text("Paused", menuFont, 12);
 			labelPausedToPlay = new Text("Press Escape to Play", menuFont, 12);
 			labelPausedToEnd = new Text("Tap Bomb to End", menuFont, 12);
 
-			labelScorePos = new Vector2f(113, 9);
+            // Set the positions for labels that are made only one time.
 			labelPaused.Position = new Vector2f(92, 98);
 			labelPausedToPlay.Position = new Vector2f(79, 121);
 			labelPausedToEnd.Position = new Vector2f(92, 144);
@@ -220,6 +245,17 @@ namespace TestSFMLDotNet
 			labelPaused.Color =
 				labelPausedToEnd.Color = labelPausedToPlay.Color = commonTextColor;
 		}
+
+        public int BombComboTimeCountdown
+        {
+            get { return _bombComboTimeCountdown; }
+            set
+            {
+                _bombComboTimeCountdown = value;
+                if (value <= 0)
+                    isBombComboShown = false;
+            }
+        }
 
 		public bool IsPaused
 		{
@@ -229,30 +265,61 @@ namespace TestSFMLDotNet
 
 		public void SetScore(long val)
 		{
-			labelScore = new Text(val.ToString(), menuFont, 12);
+			labelScore = new Text("Score: " + val.ToString(), menuFont, 12);
 			labelScore.Position = labelScorePos;
 			labelScore.Color = commonTextColor;
 		}
 
 		public void SetLives(int val)
 		{
-			String livesString = "";
+			String livesString = "Lives: ";
 			for (int i = 0; i < val; i++)
 				livesString += "◎";
 			labelLives = new Text(livesString, menuFont, 12);
-			labelLives.Position = new Vector2f(229, 217);
+			labelLives.Position = labelLivesPos;
 			labelLives.Color = commonTextColor;
 		}
 
 		public void SetBombs(int val)
 		{
-			String bombsString = "";
+			String bombsString = "Bombs: ";
 			for (int i = 0; i < val; i++)
 				bombsString += "☆";
 			labelBombs = new Text(bombsString, menuFont, 12);
-			labelBombs.Position = new Vector2f(229, 236);
+			labelBombs.Position = labelBombsPos;
 			labelBombs.Color = commonTextColor;
 		}
+
+        public void SetBombCombo(int combo, int score)
+        {
+            isBombComboShown = combo > 0;
+            if (isBombComboShown)
+            {
+                labelBombCombo = new Text(
+                    combo.ToString() + " Bomb Combo! Score + " + score.ToString(),
+                    menuFont, 12);
+                labelBombCombo.Position = labelBombComboPos;
+                labelBombCombo.Color = commonTextColor;
+            }
+        }
+
+		public void SetBullets(int val)
+		{
+			labelBullets = new Text("Bullets: " + val.ToString(), menuFont, 12);
+            labelBullets.Position = labelBulletsPos;
+            labelBullets.Color = commonTextColor;
+		}
+
+        public void SetPatternTime(int val)
+        {
+            isInBossPattern = val > 0;
+            if (isInBossPattern)
+            {
+                labelPatternTime = new Text("Time: " + val.ToString(), menuFont, 12);
+                labelPatternTime.Position = labelPatternTimePos;
+                labelPatternTime.Color = commonTextColor;
+            }
+        }
 
 		/// <summary>
 		/// Makes all bullet images for the first time.
@@ -281,9 +348,22 @@ namespace TestSFMLDotNet
 			app.Draw(labelScore);
 			app.Draw(labelBombs);
 			app.Draw(labelLives);
-			app.Draw(labelPaused);
-			app.Draw(labelPausedToPlay);
-			app.Draw(labelPausedToEnd);
+
+            if (isBombComboShown)
+                app.Draw(labelBombCombo);
+
+            if (isInBossPattern)
+			    app.Draw(labelPatternTime);
+
+			// TODO: Fade-out when close-by.
+			app.Draw(labelBullets);
+
+            if (isPaused)
+            {
+                app.Draw(labelPaused);
+                app.Draw(labelPausedToPlay);
+                app.Draw(labelPausedToEnd);
+            }
 		}
 	}
 }
