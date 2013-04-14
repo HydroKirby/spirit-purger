@@ -39,7 +39,11 @@ namespace TestSFMLDotNet
         public CenterSprite Sprite
         {
             get { return sprite; }
-            set { sprite = value; }
+            set
+			{
+				sprite = value;
+				UpdateDisplayPos();
+			}
         }
 		
 		public int SizeIndex {
@@ -242,15 +246,20 @@ namespace TestSFMLDotNet
                 default: return "black";
             }
         }
+
+		public void UpdateDisplayPos()
+		{
+			if (sprite != null)
+			{
+				sprite.setPosition(location);
+			}
+		}
 		
 		public virtual void Update() {
 			location.X += dx;
 			location.Y += dy;
 			lifetime++;
-            if (sprite != null)
-            {
-				sprite.setPosition(location);
-            }
+			UpdateDisplayPos();
 		}
 	}
 	

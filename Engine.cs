@@ -153,11 +153,13 @@ namespace TestSFMLDotNet
         {
             player.location = new Vector2f(appSize.Width / 2,
                 appSize.Height / 4 * 3);
+			player.UpdateDisplayPos();
             player.deathCountdown = 0;
-            player.reentryCountdown = 0;
+			player.reentryCountdown = 0;
             player.invincibleCountdown = 0;
             boss.location = new Vector2f(appSize.Width / 2,
                 appSize.Height / 4);
+			boss.UpdateDisplayPos();
             boss.currentPattern = -1;
             boss.NextPattern();
             patternTime = Enemy.patternDuration[boss.currentPattern];
@@ -441,7 +443,7 @@ namespace TestSFMLDotNet
                             gameOver = true;
                         }
                         else
-                            patternTime =
+                            patternTime = 1 +
                                 Enemy.patternDuration[boss.currentPattern];
                     }
                 }
@@ -550,24 +552,36 @@ namespace TestSFMLDotNet
                     transitionFrames++;
                     if (transitionFrames >= PATTERN_TRANSITION_PAUSE)
                     {
+						// Reset the transition frames for the next time.
                         transitionFrames = 0;
                         beatThisPattern = true;
-                        if (!boss.NextPattern())
-                        {
-                            bossState = BossState.Killed;
-                            gameOver = true;
-                        }
-                        else
-                            patternTime =
-                                Enemy.patternDuration[boss.currentPattern];
+						if (!boss.NextPattern())
+						{
+							bossState = BossState.Killed;
+							gameOver = true;
+						}
+						else
+						{
+							// Activate the next pattern.
+							patternTime =
+								Enemy.patternDuration[boss.currentPattern];
+							// Tell the renderer the new health value.
+							gameRenderer.SetBossHealth(boss.health);
+						}
                     }
                 }
             }
             else if (bossState == BossState.Intro)
             {
                 bossIntroTime++;
-                if (bossIntroTime > BOSS_INTRO_FRAMES + BOSS_PRE_INTRO_FRAMES)
-                    bossState = BossState.Active;
+				if (bossIntroTime > BOSS_INTRO_FRAMES + BOSS_PRE_INTRO_FRAMES)
+				{
+					// The boss is no longer in the intro sequence.
+					bossState = BossState.Active;
+					// Tell the renderer the health of the first pattern.
+					// Tell the renderer the new health value.
+					gameRenderer.SetBossHealth(boss.health);
+				}
             }
         }
 

@@ -269,7 +269,8 @@ namespace TestSFMLDotNet {
         // Ideally, I imagine the next 4 parameters would be in a single
         // script or structure because they each relate to a pattern.
         // This is how much health the boss has during a pattern.
-        public static int[] fullHealth = { 400, 500, 350, 350 };
+        //public static int[] fullHealth = { 400, 500, 350, 350 };
+		public static int[] fullHealth = { 400, 500, 350, 350 };
         // This is where the boss begins firing from. If the boss is not in
         // this point when the pattern begins, the boss rushes to there.
         // If the point is null, then the boss keeps its position.
@@ -375,7 +376,7 @@ namespace TestSFMLDotNet {
                 return false;
             health = fullHealth[currentPattern];
             moveStyle = MoveStyle.NoMove;
-            if (startPoints[currentPattern].X == 0 && startPoints[currentPattern].Y == 0)
+            if (startPoints[currentPattern].X != 0 && startPoints[currentPattern].Y != 0)
                 if (Math.Abs(Vector2D.GetDistance(
                     startPoints[currentPattern], location)) > 0.5)
                 {
@@ -642,11 +643,11 @@ namespace TestSFMLDotNet {
                 // Make a ring of 10 bullets. One bullet is aimed at the player.
                 for (int i = 0; i < 11; i++)
                 {
+					Vector2f v = Vector2D.VectorFromAngle(towardsPlayer + Vector2D.DegreesToRadians(i / 10.0 * 360));
                     Bullet b = new Bullet(
                         (int)Bullet.BulletColors.Green, 2, location,
-                        new Vector2f((float)(towardsPlayer +
-                                     Vector2D.DegreesToRadians(i / 10.0 * 360)),
-                        3.0F));
+                        v,
+                        3.0F);
                     b.Sprite = renderer.GetCenterSprite(
                         renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                     bullets.Add(b);
@@ -654,19 +655,25 @@ namespace TestSFMLDotNet {
             }
             else if (updateCount >= 45 && updateCount % 4 == 0)
             {
-                double towardsPlayer = Vector2D.GetDirection(playerPos,
-                                                             location);
-                // Make 2 bullets aimed adjacent to the player. They both
+                double towardsPlayer = Vector2D.GetDirection(
+					playerPos, location);
+				// Make 2 bullets aimed adjacent to the player. They both
                 // miss by 30 degrees on each side.
+				double offsetedAngle = towardsPlayer +
+					Vector2D.DegreesToRadians(15);
+				Vector2f offsetedVector = Vector2D.VectorFromAngle(offsetedAngle);
                 Bullet b = new Bullet(
                     (int)Bullet.BulletColors.Violet, 1, location,
-                    new Vector2f((float)(towardsPlayer +
-                        Vector2D.DegreesToRadians(30)), 3.0F));
+                    offsetedVector, 3.0);
                 b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
-                b = new Bullet(b, Vector2D.VectorFromAngle(towardsPlayer -
-                    Vector2D.DegreesToRadians(30)));
+
+				offsetedAngle = towardsPlayer -
+					Vector2D.DegreesToRadians(15);
+				offsetedVector = Vector2D.VectorFromAngle(offsetedAngle);
+                b = new Bullet(b, offsetedVector);
+				b.Speed = 3.0;
                 b.Sprite = renderer.GetCenterSprite(
                     renderer.bulletImages[b.SizeIndex][b.colorIndex]);
                 bullets.Add(b);
