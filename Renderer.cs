@@ -79,6 +79,7 @@ namespace TestSFMLDotNet
 		protected Text godModeText;
 		protected Text funBombText;
 		protected Text repulsiveText;
+		protected Text scaleText;
 		protected Text exitText;
 		
 		/// <summary>
@@ -97,6 +98,7 @@ namespace TestSFMLDotNet
 			SetOptGodMode(false);
 			SetOptFunBomb(false);
 			SetOptRepulsive(false);
+			SetOptScale(1.0);
 
 			// Set the remaining menu strings' positions.
 			// Note: The app window is 290x290.
@@ -139,6 +141,13 @@ namespace TestSFMLDotNet
 			repulsiveText.Color = commonTextColor;
 		}
 
+		public void SetOptScale(double scale)
+		{
+			scaleText = new Text("Scale: " + scale.ToString(), menuFont, 12);
+			scaleText.Position = new Vector2f(145, 130 + (float)MainMenu.Scale * 15.0F);
+			scaleText.Color = commonTextColor;
+		}
+
 		public void Paint(object sender)
 		{
 			RenderWindow app = (RenderWindow)sender;
@@ -147,6 +156,7 @@ namespace TestSFMLDotNet
 			app.Draw(godModeText);
 			app.Draw(funBombText);
 			app.Draw(repulsiveText);
+			app.Draw(scaleText);
 			app.Draw(exitText);
 		}
     }

@@ -3,7 +3,7 @@ using SFML.Audio;
 using SFML.Window;
 using SFML.Graphics;
 
-namespace Example
+namespace TestSFMLDotNet
 {
     class Program
     {
@@ -16,11 +16,11 @@ namespace Example
 
         static void Main(string[] args)
         {
+            // Create the game and run it.
+            TestSFMLDotNet.Engine engine = new TestSFMLDotNet.Engine();
             // Create the main window.
             RenderWindow app = new RenderWindow(new VideoMode(290, 290), "SFML window");
             app.Closed += new EventHandler(OnClose);
-            // Create the game and run it.
-            TestSFMLDotNet.Engine engine = new TestSFMLDotNet.Engine();
             engine.Run(app);
         }
     }

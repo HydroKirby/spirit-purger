@@ -11,7 +11,7 @@ namespace TestSFMLDotNet
 {
 	public enum MainMenu
 	{
-		Play, GodMode, FunBomb, Repulsive, Exit,
+		Play, GodMode, FunBomb, Repulsive, Scale, Exit,
 		EndChoices
 	};
 
@@ -87,10 +87,13 @@ namespace TestSFMLDotNet
         protected ArrayList hitSparks = new ArrayList();
 
         // Rendering variables.
+        public static uint APP_BASE_WIDTH = 290;
+        public static uint APP_BASE_HEIGHT = 290;
         protected Renderer renderer;
 		protected MenuRenderer menuRenderer;
 		protected GameRenderer gameRenderer;
         protected IntRect appSize;
+        protected double appScale = 1.0;
 
         // Current-game variables.
         // This is the number of seconds left to complete a pattern.
@@ -326,6 +329,16 @@ namespace TestSFMLDotNet
                         repulsive = !repulsive;
 						menuRenderer.SetOptRepulsive(repulsive);
                         break;
+					case MainMenu.Scale:
+						if (appScale == 1.0)
+							appScale = 2.0;
+						else if (appScale == 2.0)
+							appScale = 1.0;
+						RenderWindow app = (RenderWindow)sender;
+						app.Size = new Vector2u((uint)(APP_BASE_WIDTH * appScale),
+							(uint)(APP_BASE_HEIGHT * appScale));
+						menuRenderer.SetOptScale(appScale);
+						break;
                     case MainMenu.Exit:
                         ((RenderWindow)sender).Close();
                         break;
