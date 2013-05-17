@@ -87,12 +87,9 @@ namespace TestSFMLDotNet
         protected ArrayList hitSparks = new ArrayList();
 
         // Rendering variables.
-        public static uint APP_BASE_WIDTH = 290;
-        public static uint APP_BASE_HEIGHT = 290;
         protected Renderer renderer;
 		protected MenuRenderer menuRenderer;
 		protected GameRenderer gameRenderer;
-        protected IntRect appSize;
         protected double appScale = 1.0;
 
         // Current-game variables.
@@ -124,8 +121,6 @@ namespace TestSFMLDotNet
             app.KeyReleased += new EventHandler<KeyEventArgs>(app_KeyReleased);
 
             // Load all resources.
-            appSize.Width = (int)app.Size.X;
-            appSize.Height = (int)app.Size.Y;
 			renderer = new Renderer();
             menuRenderer = new MenuRenderer();
 			gameRenderer = new GameRenderer();
@@ -154,14 +149,14 @@ namespace TestSFMLDotNet
         /// </summary>
         protected void Reset()
         {
-            player.location = new Vector2f(appSize.Width / 2,
-                appSize.Height / 4 * 3);
+            player.location = new Vector2f(Renderer.FIELD_WIDTH / 2,
+				Renderer.FIELD_WIDTH / 4 * 3);
 			player.UpdateDisplayPos();
             player.deathCountdown = 0;
 			player.reentryCountdown = 0;
             player.invincibleCountdown = 0;
-            boss.location = new Vector2f(appSize.Width / 2,
-                appSize.Height / 4);
+			boss.location = new Vector2f(Renderer.FIELD_WIDTH / 2,
+				Renderer.FIELD_HEIGHT / 4);
 			boss.UpdateDisplayPos();
             boss.currentPattern = -1;
             boss.NextPattern();
@@ -335,8 +330,8 @@ namespace TestSFMLDotNet
 						else if (appScale == 2.0)
 							appScale = 1.0;
 						RenderWindow app = (RenderWindow)sender;
-						app.Size = new Vector2u((uint)(APP_BASE_WIDTH * appScale),
-							(uint)(APP_BASE_HEIGHT * appScale));
+						app.Size = new Vector2u( (uint) (Renderer.APP_BASE_WIDTH * appScale),
+							(uint) (Renderer.APP_BASE_HEIGHT * appScale) );
 						menuRenderer.SetOptScale(appScale);
 						break;
                     case MainMenu.Exit:
@@ -389,8 +384,8 @@ namespace TestSFMLDotNet
 				{
 					player.location.X += keys.slow > 0 || bombBlast != null ?
 						Player.LO_SPEED : Player.HI_SPEED;
-					if (player.location.X + player.Size.X > appSize.Width)
-						player.location.X = appSize.Width - player.Size.X;
+					if (player.location.X + player.Size.X > Renderer.FIELD_WIDTH)
+						player.location.X = Renderer.FIELD_WIDTH - player.Size.X;
 				}
 				player.UpdateDisplayPos();
 			}
@@ -408,8 +403,8 @@ namespace TestSFMLDotNet
 				{
 					player.location.Y += keys.slow > 0 || bombBlast != null ?
 						Player.LO_SPEED : Player.HI_SPEED;
-					if (player.location.Y + player.Size.Y > appSize.Height)
-						player.location.Y = appSize.Height - player.Size.Y;
+					if (player.location.Y + player.Size.Y > Renderer.FIELD_HEIGHT)
+						player.location.Y = Renderer.FIELD_HEIGHT - player.Size.Y;
 				}
 				player.UpdateDisplayPos();
 			}
@@ -712,7 +707,7 @@ namespace TestSFMLDotNet
             {
                 Bullet bullet = (Bullet)enemyBullets[i];
                 bullet.Update();
-                if (bullet.isOutside(appSize, 30))
+                if (bullet.isOutside(Renderer.FieldSize, 30))
                     // Build a list of "dead" bullets.
                     toRemove.Add(i);
                 else if (player.invincibleCountdown <= 0 && lives >= 0 &&
@@ -768,7 +763,7 @@ namespace TestSFMLDotNet
             {
                 Bullet bullet = (Bullet)playerBullets[i];
                 bullet.Update();
-                if (bullet.isOutside(appSize, 0))
+                if (bullet.isOutside(Renderer.FieldSize, 0))
                     toRemove.Add(i);
                 else
                 {

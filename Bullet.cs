@@ -176,18 +176,17 @@ namespace TestSFMLDotNet
 		}
 		
 		/// <summary>
-		/// See if the Bullet is outside of the Rectangle.
+		/// Check if the Bullet is outside of the game field.
 		/// </summary>
-		/// <param name="rect">The Rectangle that should contain this Bullet.</param>
-		/// <param name="lenience">The number of extra pixels the Bullet may be
-		/// outside of the Rectangle. When positive, it extends the Bullet's
-		/// range of life. When negative, it shortens the Bullet's lifespan.</param>
-		/// <returns></returns>
-		public bool isOutside(SFML.Graphics.IntRect rect, int lenience) {
-			return location.X - radius + lenience <= rect.Left ||
-				location.X + radius - lenience >= rect.Width ||
-				location.Y - radius + lenience <= rect.Top ||
-				location.Y + radius - lenience >= rect.Height;
+		/// <param name="extremity">The size of the game field.</param>
+		/// <param name="lenience">How far beyond the game field the bullet can exist.</param>
+		/// <returns>True if this bullet has left the game field.</returns>
+		public bool isOutside(Vector2f extremity, int lenience)
+		{
+			return location.X - radius + lenience <= 0 ||
+				location.X + radius - lenience >= extremity.X ||
+				location.Y - radius + lenience <= 0 ||
+				location.Y + radius - lenience >= extremity.Y;
 		}
 		
 		/// <summary>
@@ -251,7 +250,7 @@ namespace TestSFMLDotNet
 		{
 			if (sprite != null)
 			{
-				sprite.setPosition(location);
+				sprite.setPosition(location + Renderer.FieldUpperLeft);
 			}
 		}
 		

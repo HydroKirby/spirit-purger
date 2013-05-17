@@ -177,20 +177,20 @@ namespace TestSFMLDotNet {
 		public Player() : base(new Vector2f(), new Vector2i(20, 20)) {}
 
 		public void SetImage(CenterSprite s) {
-			s.setPosition(location);
+            s.setPosition(location + Renderer.FieldUpperLeft);
 			sprite = s;
 		}
 
 		public void SetHitboxSprite(CenterSprite s)
 		{
-			s.setPosition(location);
+			s.setPosition(location + Renderer.FieldUpperLeft);
 			hitBoxSprite = s;
 		}
 
 		public void UpdateDisplayPos()
 		{
-			sprite.setPosition(location);
-			hitBoxSprite.setPosition(location);
+			sprite.setPosition(location + Renderer.FieldUpperLeft);
+			hitBoxSprite.setPosition(location + Renderer.FieldUpperLeft);
 		}
 
 		/// <summary>
@@ -823,7 +823,7 @@ namespace TestSFMLDotNet {
 
 		public void UpdateDisplayPos()
 		{
-			sprite.setPosition(location);
+			sprite.setPosition(location + Renderer.FieldUpperLeft);
 		}
 
         public void Draw()

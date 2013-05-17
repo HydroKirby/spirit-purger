@@ -19,7 +19,7 @@ namespace TestSFMLDotNet
             // Create the game and run it.
             TestSFMLDotNet.Engine engine = new TestSFMLDotNet.Engine();
             // Create the main window.
-            RenderWindow app = new RenderWindow(new VideoMode(290, 290), "SFML window");
+            RenderWindow app = new RenderWindow(new VideoMode(640, 480), "SFML window");
             app.Closed += new EventHandler(OnClose);
             engine.Run(app);
         }

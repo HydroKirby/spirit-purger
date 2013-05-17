@@ -30,16 +30,46 @@ namespace TestSFMLDotNet
     {
 		// Fonts and images generated solely to display text.
         protected Font menuFont;
+        // The size of the whole application window when not scaled.
+        public const uint APP_BASE_WIDTH = 640;
+        public const uint APP_BASE_HEIGHT = 480;
+		// The size of the gameplay field.
+		public const uint FIELD_TOP = 50;
+		public const uint FIELD_LEFT = 50;
+		public const uint FIELD_WIDTH = 300;
+		public const uint FIELD_HEIGHT = 380;
+		// Easy access members for other areas of the program.
+		private static Vector2u appBaseSize;
+		private static Vector2f fieldUpperLeft;
+		private static Vector2f fieldSize;
 
         public Renderer()
         {
             menuFont = new Font("arial.ttf");
+			appBaseSize = new Vector2u(APP_BASE_WIDTH, APP_BASE_HEIGHT);
+			fieldUpperLeft = new Vector2f(FIELD_LEFT, FIELD_TOP);
+			fieldSize = new Vector2f(FIELD_WIDTH, FIELD_HEIGHT);
         }
 
         public Font MenuFont
         {
             get { return menuFont; }
         }
+
+		public static Vector2u AppBaseSize
+		{
+			get { return appBaseSize; }
+		}
+
+		public static Vector2f FieldUpperLeft
+		{
+			get { return fieldUpperLeft; }
+		}
+
+		public static Vector2f FieldSize
+		{
+			get { return fieldSize; }
+		}
 
         /// <summary>
         /// Loads an image and gives a replacement on failure.
