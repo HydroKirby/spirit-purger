@@ -241,12 +241,15 @@ namespace TestSFMLDotNet
 		// hitCircleImage is displayed when the player slows down; it's an identifier.
 		public Texture playerImage, hitCircleImage;
 		public Texture bg;
+		// The area drawn outside of the game field.
+		public Texture border;
 		public Texture bossImage;
 		public Texture playerBulletImage;
         
 		// Game Sprites. Let the objects have (not own) the sprites so that
 		// the objects can request drawing, swapping, and alterations of sprites.
 		public Sprite bgSprite;
+		public Sprite borderSprite;
 		public CenterSprite playerSprite, hitCircleSprite;
         public CenterSprite bossSprite;
 
@@ -258,6 +261,10 @@ namespace TestSFMLDotNet
 			MakeBulletImages();
 			bg = LoadImage("bg.png");
 			bgSprite = GetSprite(bg);
+			bgSprite.Origin = new Vector2f(bg.Size.X / 2, bg.Size.Y / 2);
+			bgSprite.Position = bgSprite.Origin - FieldUpperLeft;
+			border = LoadImage("border.png");
+			borderSprite = GetSprite(border);
 			playerImage = LoadImage("p_fly.png");
 			playerSprite = GetCenterSprite(playerImage);
 			// TODO: Deprecate need for player.SetImage(playerImage);
@@ -430,40 +437,41 @@ namespace TestSFMLDotNet
             timeLeftToShowPatternResult--;
             if (timeLeftToShowPatternResult < 0)
                 timeLeftToShowPatternResult = 0;
+			bgSprite.Rotation += 1;
+			if (bgSprite.Rotation >= 360)
+				bgSprite.Rotation -= 360;
         }
 
 		public void Paint(object sender)
 		{
 			RenderWindow app = (RenderWindow)sender;
-            // TODO: Fade-out elements when close-by?
-            // Alternatively, make element outside of the play field.
+            if (isGameOver)
+                app.Draw(labelGameOver);
+			app.Draw(borderSprite);
 			app.Draw(labelScore);
 			app.Draw(labelBombs);
 			app.Draw(labelLives);
 
-            if (isBombComboShown)
-                app.Draw(labelBombCombo);
+			if (isBombComboShown)
+				app.Draw(labelBombCombo);
 
-            if (isInBossPattern)
-            {
-                app.Draw(labelPatternTime);
-                app.Draw(labelBossHealth);
-            }
+			if (isInBossPattern)
+			{
+				app.Draw(labelPatternTime);
+				app.Draw(labelBossHealth);
+			}
 
-            if (timeLeftToShowPatternResult > 0)
-                app.Draw(labelPatternResult);
+			if (timeLeftToShowPatternResult > 0)
+				app.Draw(labelPatternResult);
 
 			app.Draw(labelBullets);
 
-            if (isPaused)
-            {
-                app.Draw(labelPaused);
-                app.Draw(labelPausedToPlay);
-                app.Draw(labelPausedToEnd);
-            }
-
-            if (isGameOver)
-                app.Draw(labelGameOver);
+			if (isPaused)
+			{
+				app.Draw(labelPaused);
+				app.Draw(labelPausedToPlay);
+				app.Draw(labelPausedToEnd);
+			}
 		}
 	}
 }
