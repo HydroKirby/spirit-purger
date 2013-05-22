@@ -16,6 +16,8 @@ using SFML.Graphics;
 namespace TestSFMLDotNet
 {
 	public class Bullet {
+		public const uint LIFETIME_DEFAULT = 4000;
+		public const uint LIFETIME_PARTICLE = 5;
 		public static int[] RADII = {2, 4, 8};
 		public enum BulletColors {Red, Orange, Green, Blue, Violet, EndColors};
 		// The index offset in the array of pre-generated images with which
@@ -33,7 +35,7 @@ namespace TestSFMLDotNet
 		// Refers to if the bullet touched the player's hitbox,
 		// but not the player's hitcircle.
 		public bool grazed = false;
-		public int lifetime = 0;
+		protected uint lifetime = LIFETIME_DEFAULT;
         protected CenterSprite sprite;
 
         public CenterSprite Sprite
@@ -89,6 +91,15 @@ namespace TestSFMLDotNet
 			set {
 				speed = value;
 				this.RefreshVelocity();
+			}
+		}
+
+		public uint Lifetime
+		{
+			get { return lifetime; }
+			set
+			{
+				lifetime = value;
 			}
 		}
 		
@@ -188,6 +199,17 @@ namespace TestSFMLDotNet
 				location.Y - radius + lenience <= 0 ||
 				location.Y + radius - lenience >= extremity.Y;
 		}
+
+		/// <summary>
+		/// Checks if the bullet has no more life time.
+		/// </summary>
+		/// <returns>True if lifetime is zero.</returns>
+		public bool isGone() { return lifetime <= 0; }
+
+		/// <summary>
+		/// Simply sets the bullet's lifetime to zero.
+		/// </summary>
+		public void Kill() { lifetime = 0; }
 		
 		/// <summary>
 		/// Hit test for a bullet-against-bullet.
@@ -257,27 +279,52 @@ namespace TestSFMLDotNet
 		public virtual void Update() {
 			location.X += dx;
 			location.Y += dy;
-			lifetime++;
+			lifetime = lifetime > 0 ? lifetime - 1 : 0;
 			UpdateDisplayPos();
 		}
 	}
 	
 	public class Bomb : Bullet {
-		// The time when the bomb comes from the player and inflates.
-		public const int GROW_FRAMES = 35;
 		// The time the bomb lasts at full power.
-		public const int ACTIVE_FRAMES = GROW_FRAMES + 170;
+		public const int LIFETIME_ACTIVE = 220;
+		// The time spent inflating the bomb radius.
+		public const int LIFETIME_GROWING = 30;
 		// At full size, this is the bomb's radius.
-		public const int FULL_RADIUS = 50;
+		public const int FULL_RADIUS = 100;
+		private static Vector2f SCALE_ONE = new Vector2f(1, 1);
 		
-		public Bomb(Vector2f pt) : base(0, 0, pt) {}
+		public Bomb(Vector2f pt) : base(0, 0, pt) {
+			lifetime = LIFETIME_ACTIVE;
+			dx = 0.0F;
+			dy = -2.0F;
+		}
 		
 		public override void Update() {
-			lifetime++;
-			if (lifetime <= GROW_FRAMES) {
-				location.Y -= 2;
-				Radius = (int) ((double) lifetime / GROW_FRAMES * FULL_RADIUS);
+			base.Update();
+			if (lifetime > LIFETIME_ACTIVE - LIFETIME_GROWING)
+			{
+				float scale = (float) (LIFETIME_ACTIVE - lifetime) / LIFETIME_GROWING;
+				sprite.Scale = SCALE_ONE * scale;
+				Radius = (int)(scale * FULL_RADIUS);
 			}
+			else if (lifetime == LIFETIME_ACTIVE - LIFETIME_GROWING)
+			{
+				dy = 0.0F;
+				sprite.Scale = SCALE_ONE;
+				Radius = FULL_RADIUS;
+			}
+			UpdateDisplayPos();
+		}
+
+		/// <summary>
+		/// Restores the bomb into activity.
+		/// </summary>
+		/// <param name="pos">Where to spawn the bomb.</param>
+		public void Renew(Vector2f pos)
+		{
+			location = new Vector2f(pos.X, pos.Y);
+			lifetime = LIFETIME_ACTIVE;
+			dy = -2.0F;
 		}
 		
         /*

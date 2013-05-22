@@ -131,6 +131,8 @@ namespace TestSFMLDotNet
 			player.UpdateDisplayPos();
 			boss.SetImage(gameRenderer.bossSprite);
 			boss.UpdateDisplayPos();
+			bombBlast = new Bomb(new Vector2f(0, 0));
+			bombBlast.Sprite = gameRenderer.GetCenterSprite(gameRenderer.bombImage);
 
             // Prepare the game to be run.
             Reset();
@@ -172,7 +174,7 @@ namespace TestSFMLDotNet
             paused = false;
             transitionFrames = 0;
             bossIntroTime = 0;
-            bombBlast = null;
+            bombBlast.Kill();
             bombCombo = 0;
             bombComboTimeCountdown = 0;
             bombComboScore = 0;
@@ -375,14 +377,14 @@ namespace TestSFMLDotNet
 			{
 				if (keys.left > 0)
 				{
-					player.location.X -= keys.slow > 0 || bombBlast != null ?
+					player.location.X -= keys.slow > 0 || !bombBlast.isGone() ?
 						Player.LO_SPEED : Player.HI_SPEED;
 					if (player.location.X - player.HalfSize.X < 0)
 						player.location.X = player.HalfSize.X;
 				}
 				else
 				{
-					player.location.X += keys.slow > 0 || bombBlast != null ?
+					player.location.X += keys.slow > 0 || !bombBlast.isGone() ?
 						Player.LO_SPEED : Player.HI_SPEED;
 					if (player.location.X + player.Size.X > Renderer.FIELD_WIDTH)
 						player.location.X = Renderer.FIELD_WIDTH - player.Size.X;
@@ -394,14 +396,14 @@ namespace TestSFMLDotNet
 			{
 				if (keys.up > 0)
 				{
-					player.location.Y -= keys.slow > 0 || bombBlast != null ?
+					player.location.Y -= keys.slow > 0 || !bombBlast.isGone() ?
 						Player.LO_SPEED : Player.HI_SPEED;
 					if (player.location.Y - player.HalfSize.Y < 0)
 						player.location.Y = player.HalfSize.Y;
 				}
 				else
 				{
-					player.location.Y += keys.slow > 0 || bombBlast != null ?
+					player.location.Y += keys.slow > 0 || !bombBlast.isGone() ?
 						Player.LO_SPEED : Player.HI_SPEED;
 					if (player.location.Y + player.Size.Y > Renderer.FIELD_HEIGHT)
 						player.location.Y = Renderer.FIELD_HEIGHT - player.Size.Y;
@@ -459,8 +461,8 @@ namespace TestSFMLDotNet
 
             MovePlayer();
 
-            if (godMode && keys.slow == 2 && bombBlast != null)
-                bombBlast = null;
+			if (godMode && keys.slow == 2 && !bombBlast.isGone())
+                bombBlast.Kill();
             if (gameOver)
             {
                 if (keys.shoot == 2)
@@ -495,13 +497,13 @@ namespace TestSFMLDotNet
                         playerBullets.Add(bullet);
                     }
                 }
-                if (keys.bomb == 2 && bombBlast == null && (godMode ||
+				if (keys.bomb == 2 && bombBlast.isGone() && (godMode ||
                     bombs > 0 && player.reentryCountdown <= 0 &&
                     player.deathCountdown <= 0))
                 {
 					// Fire a bomb.
-                    player.invincibleCountdown = Bomb.ACTIVE_FRAMES;
-                    bombBlast = new Bomb(player.location);
+                    player.invincibleCountdown = Bomb.LIFETIME_ACTIVE;
+					bombBlast.Renew(player.location);
                     bombCombo = 0;
                     bombComboTimeCountdown = BOMB_COMBO_DISPLAY_FRAMES;
                     bombs--;
@@ -601,7 +603,7 @@ namespace TestSFMLDotNet
             {
                 Bullet spark = (Bullet)hitSparks[i];
                 spark.Update();
-                if (spark.lifetime >= 5)
+                if (spark.isGone())
                     toRemove.Add(i);
             }
             // Sort the list from biggest to smallest index.
@@ -618,11 +620,11 @@ namespace TestSFMLDotNet
             // of bullets that will need removal.
             toRemove.Clear();
 
-            if (bombBlast != null)
+            if (!bombBlast.isGone())
             {
                 bool bombMadeCombo = true;
                 bombBlast.Update();
-                bool finalFrame = bombBlast.lifetime >= Bomb.ACTIVE_FRAMES;
+                bool finalFrame = bombBlast.isGone();
                 for (int i = 0; i < enemyBullets.Count; i++)
                 {
                     if (bombBlast.HitTest((Bullet)enemyBullets[i]))
@@ -690,7 +692,7 @@ namespace TestSFMLDotNet
                 if (finalFrame)
                 {
                     // Disable the bomb.
-                    bombBlast = null;
+                    bombBlast.Kill();
                     // Give the player a little leeway after the blast.
                     player.invincibleCountdown = 20;
                 }
@@ -736,6 +738,7 @@ namespace TestSFMLDotNet
                                     5.0);
                                 h.Sprite = gameRenderer.GetCenterSprite(
                                     gameRenderer.grazeSparkImage);
+								h.Lifetime = Bullet.LIFETIME_PARTICLE;
                                 hitSparks.Add(h);
                                 score += 50;
                             }
@@ -774,15 +777,21 @@ namespace TestSFMLDotNet
                             enemy.health -= 2;
                             toRemove.Add(i);
                             // Make 2 hitsparks to show that the enemy was hit.
-                            for (int k = 0; k < 2; k++)
-                                // Makes a hitspark shoot downwards at an angle
-                                // between 210 and 330 degrees.
-                                hitSparks.Add(new Bullet(BULLSEYE_SPARK_INDEX,
-                                    0, new Vector2f(bullet.location.X,
-                                        boss.DrawLocation.Y + boss.Size.Y),
-                                    Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(
-                                        60.0 + rand.NextDouble() * 60.0)),
-                                    2.5));
+							for (int k = 0; k < 2; k++)
+							{
+								// Makes a hitspark shoot downwards at an angle
+								// between 210 and 330 degrees.
+								Bullet h = new Bullet(BULLSEYE_SPARK_INDEX,
+									0, new Vector2f(bullet.location.X,
+										boss.DrawLocation.Y + boss.Size.Y),
+									Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(
+										60.0 + rand.NextDouble() * 60.0)),
+									2.5);
+								h.Sprite = gameRenderer.GetCenterSprite(
+									gameRenderer.bullseyeSparkImage);
+								h.Lifetime = Bullet.LIFETIME_PARTICLE;
+								hitSparks.Add(h);
+							}
                             score += 20;
                             scoreUp = true;
                         }
@@ -811,6 +820,7 @@ namespace TestSFMLDotNet
                                     60.0 + rand.NextDouble() * 60.0)), 2.5);
                             h.Sprite = gameRenderer.GetCenterSprite(
                                 gameRenderer.bullseyeSparkImage);
+							h.Lifetime = Bullet.LIFETIME_PARTICLE;
                             hitSparks.Add(h);
                         }
                         score += 20;
@@ -855,6 +865,10 @@ namespace TestSFMLDotNet
 			RenderWindow app = (RenderWindow)sender;
             
 			app.Draw(gameRenderer.bgSprite);
+			if (!bombBlast.isGone())
+			{
+				app.Draw(bombBlast.Sprite);
+			}
 			// Draw the player, boss, and enemies.
 			if (lives >= 0)
 				app.Draw(gameRenderer.playerSprite);
@@ -877,17 +891,12 @@ namespace TestSFMLDotNet
             }
 
 			// Draw the bullets and hitsparks.
-            foreach (Bullet spark in hitSparks)
+			foreach (Bullet spark in hitSparks)
                 app.Draw(spark.Sprite);
             foreach (Bullet bullet in playerBullets)
                 app.Draw(bullet.Sprite);
             foreach (Bullet bullet in enemyBullets)
                 app.Draw(bullet.Sprite);
-
-			if (bombBlast != null)
-			{
-				//bombBlast.Draw(e.Graphics);
-			}
 
 			if (keys.slow > 0)
 				app.Draw(gameRenderer.hitCircleSprite);

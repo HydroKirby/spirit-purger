@@ -13,12 +13,15 @@ namespace TestSFMLDotNet
 		public CenterSprite(Texture img)
 		{
 			Texture = img;
+			Origin = new Vector2f(Texture.Size.X * 0.5F,
+				Texture.Size.Y * 0.5F);
 		}
 
 		public void setPosition(Vector2f v)
 		{
-			Position = new Vector2f(v.X - Texture.Size.X * 0.5F,
-				v.Y - Texture.Size.Y * 0.5F);
+			/*Position = new Vector2f(v.X - Texture.Size.X * 0.5F,
+				v.Y - Texture.Size.Y * 0.5F);*/
+			Position = new Vector2f(v.X, v.Y);
 		}
 	}
 
@@ -238,6 +241,7 @@ namespace TestSFMLDotNet
 		public Texture grazeSparkImage;
 		// This goes to the spark the flies out when an enemy is shot.
 		public Texture bullseyeSparkImage;
+		public Texture bombImage;
 		// hitCircleImage is displayed when the player slows down; it's an identifier.
 		public Texture playerImage, hitCircleImage;
 		public Texture bg;
@@ -275,6 +279,7 @@ namespace TestSFMLDotNet
             hitCircleSprite = GetCenterSprite(hitCircleImage);
 			grazeSparkImage = LoadImage("spark_graze.png");
 			bullseyeSparkImage = LoadImage("spark_nailed_foe.png");
+			bombImage = LoadImage("bomb.png");
 
             // Set the positions for constantly regenerating labels.
             labelScorePos = new Vector2f(113, 9);
