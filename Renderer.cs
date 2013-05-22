@@ -19,8 +19,6 @@ namespace TestSFMLDotNet
 
 		public void setPosition(Vector2f v)
 		{
-			/*Position = new Vector2f(v.X - Texture.Size.X * 0.5F,
-				v.Y - Texture.Size.Y * 0.5F);*/
 			Position = new Vector2f(v.X, v.Y);
 		}
 	}
@@ -282,14 +280,15 @@ namespace TestSFMLDotNet
 			bombImage = LoadImage("bomb.png");
 
             // Set the positions for constantly regenerating labels.
-            labelScorePos = new Vector2f(113, 9);
-            labelLivesPos = new Vector2f(210, 217);
-            labelBulletsPos = new Vector2f(0, 276);
-            labelBombsPos = new Vector2f(210, 236);
-            labelBombComboPos = new Vector2f(15.0F, 45.0F);
-            labelBossHealthPos = new Vector2f(30, 28);
-            labelPatternTimePos = new Vector2f(235.0F, 1.0F);
-            labelPatternResultPos = new Vector2f(25.0F, 55.0F);
+			float rightmost = FIELD_LEFT + FIELD_WIDTH;
+            labelScorePos = new Vector2f(rightmost + 50, FIELD_TOP + 10);
+            labelLivesPos = new Vector2f(rightmost + 50, FIELD_TOP + 20);
+			labelBombsPos = new Vector2f(rightmost + 50, FIELD_TOP + 30);
+            labelBulletsPos = new Vector2f(rightmost + 50, FIELD_TOP + 40);
+            labelBombComboPos = new Vector2f(FIELD_LEFT + 15F, FIELD_TOP + 35F);
+            labelBossHealthPos = new Vector2f(FIELD_LEFT + 30F, FIELD_TOP + 5F);
+            labelPatternTimePos = new Vector2f(FIELD_LEFT + 200, FIELD_TOP + 5F);
+			labelPatternResultPos = new Vector2f(FIELD_LEFT + FIELD_WIDTH / 6, FIELD_TOP + FIELD_HEIGHT / 3);
 
 			// Create the labels that are constantly regenerated.
 			SetScore(0);
