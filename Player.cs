@@ -162,8 +162,8 @@ namespace TestSFMLDotNet {
 		// bottom of the screen after dying. The player can't move during
 		// the reentry sequence.
 		public int reentryCountdown = 0;
-		protected CenterSprite sprite;
-		protected CenterSprite hitBoxSprite;
+		public CenterSprite sprite;
+		public CenterSprite hitBoxSprite;
 
 		public int Radius {
 			get { return radius; }
@@ -311,7 +311,7 @@ namespace TestSFMLDotNet {
         protected double dy = 1.0;
         // Refers to moving towards aimFor.
         protected MoveStyle moveStyle = MoveStyle.NoMove;
-        protected CenterSprite sprite;
+        public CenterSprite sprite;
 
         public Enemy()
             : base(new Vector2f(), new Vector2i(25, 25))

@@ -8,6 +8,10 @@ using SFML.Graphics;
 
 namespace TestSFMLDotNet
 {
+	/// <summary>
+	/// A sprite whose origin is at the image's center.
+	/// Used to keep track of which sprites are centered or not.
+	/// </summary>
 	public class CenterSprite : Sprite
 	{
 		public CenterSprite(Texture img)
@@ -231,29 +235,27 @@ namespace TestSFMLDotNet
         protected int timeLeftToShowPatternResult;
 
 		// Game Textures.
+		protected Dictionary<string, Texture> textures;
+		private readonly string[] PNG_FILENAMES =
+		{
+			"bg",
+			"border",
+			"p_fly",
+			"boss_fly",
+			"b_player",
+			"hitbox",
+			"spark_graze",
+			"spark_nailed_foe",
+			"bomb",
+		};
 		// This variable holds the images shared between all bullets. It's
 		//   organized by [color_code][size_index].
 		public Texture[][] bulletImages;
-		// This goes to the spark that flies out of the player when a
-		// bullet passes by the player's hitbox.
-		public Texture grazeSparkImage;
-		// This goes to the spark the flies out when an enemy is shot.
-		public Texture bullseyeSparkImage;
-		public Texture bombImage;
-		// hitCircleImage is displayed when the player slows down; it's an identifier.
-		public Texture playerImage, hitCircleImage;
-		public Texture bg;
-		// The area drawn outside of the game field.
-		public Texture border;
-		public Texture bossImage;
-		public Texture playerBulletImage;
-        
+
 		// Game Sprites. Let the objects have (not own) the sprites so that
 		// the objects can request drawing, swapping, and alterations of sprites.
 		public Sprite bgSprite;
 		public Sprite borderSprite;
-		public CenterSprite playerSprite, hitCircleSprite;
-        public CenterSprite bossSprite;
 
 		public GameRenderer()
 		{
@@ -261,23 +263,16 @@ namespace TestSFMLDotNet
 
 			// Create images.
 			MakeBulletImages();
-			bg = LoadImage("bg.png");
-			bgSprite = GetSprite(bg);
-			bgSprite.Origin = new Vector2f(bg.Size.X / 2, bg.Size.Y / 2);
+
+			textures = new Dictionary<string, Texture>(StringComparer.Ordinal);
+			foreach (string filename in PNG_FILENAMES)
+				textures.Add(filename, LoadImage(filename + ".png"));
+
+			bgSprite = GetSprite(textures["bg"]);
+			bgSprite.Origin = new Vector2f(bgSprite.TextureRect.Width / 2,
+				bgSprite.TextureRect.Height / 2);
 			bgSprite.Position = bgSprite.Origin - FieldUpperLeft;
-			border = LoadImage("border.png");
-			borderSprite = GetSprite(border);
-			playerImage = LoadImage("p_fly.png");
-			playerSprite = GetCenterSprite(playerImage);
-			// TODO: Deprecate need for player.SetImage(playerImage);
-			bossImage = LoadImage("boss_fly.png");
-            bossSprite = GetCenterSprite(bossImage);
-			playerBulletImage = LoadImage("b_player.png");
-			hitCircleImage = LoadImage("hitbox.png");
-            hitCircleSprite = GetCenterSprite(hitCircleImage);
-			grazeSparkImage = LoadImage("spark_graze.png");
-			bullseyeSparkImage = LoadImage("spark_nailed_foe.png");
-			bombImage = LoadImage("bomb.png");
+			borderSprite = GetSprite(textures["border"]);
 
             // Set the positions for constantly regenerating labels.
 			float rightmost = FIELD_LEFT + FIELD_WIDTH;
@@ -314,6 +309,16 @@ namespace TestSFMLDotNet
 
 			labelPaused.Color = labelGameOver.Color =
 				labelPausedToEnd.Color = labelPausedToPlay.Color = commonTextColor;
+		}
+
+		public Sprite GetSprite(string key)
+		{
+			return new Sprite(textures[key]);
+		}
+
+		public CenterSprite GetCenterSprite(string key)
+		{
+			return new CenterSprite(textures[key]);
 		}
 
         public int BombComboTimeCountdown

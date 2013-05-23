@@ -126,13 +126,13 @@ namespace TestSFMLDotNet
 			gameRenderer = new GameRenderer();
 
 			// Assign sprites.
-			player.SetImage(gameRenderer.playerSprite);
-			player.SetHitboxSprite(gameRenderer.hitCircleSprite);
+			player.SetImage(gameRenderer.GetCenterSprite("p_fly"));
+			player.SetHitboxSprite(gameRenderer.GetCenterSprite("hitbox"));
 			player.UpdateDisplayPos();
-			boss.SetImage(gameRenderer.bossSprite);
+			boss.SetImage(gameRenderer.GetCenterSprite("boss_fly"));
 			boss.UpdateDisplayPos();
 			bombBlast = new Bomb(new Vector2f(0, 0));
-			bombBlast.Sprite = gameRenderer.GetCenterSprite(gameRenderer.bombImage);
+			bombBlast.Sprite = gameRenderer.GetCenterSprite("bomb");
 
             // Prepare the game to be run.
             Reset();
@@ -487,13 +487,13 @@ namespace TestSFMLDotNet
                             Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(270)),
                             9.0);
                         bullet.Sprite = gameRenderer.GetCenterSprite(
-                            gameRenderer.playerBulletImage);
+                            "b_player");
                         playerBullets.Add(bullet);
                         bullet = new Bullet(bullet);
                         bullet.location.X = player.location.X +
                             Bullet.RADII[1];
                         bullet.Sprite = gameRenderer.GetCenterSprite(
-                            gameRenderer.playerBulletImage);
+                            "b_player");
                         playerBullets.Add(bullet);
                     }
                 }
@@ -737,7 +737,7 @@ namespace TestSFMLDotNet
                                         bullet.location, player.location),
                                     5.0);
                                 h.Sprite = gameRenderer.GetCenterSprite(
-                                    gameRenderer.grazeSparkImage);
+                                    "spark_graze");
 								h.Lifetime = Bullet.LIFETIME_PARTICLE;
                                 hitSparks.Add(h);
                                 score += 50;
@@ -788,7 +788,7 @@ namespace TestSFMLDotNet
 										60.0 + rand.NextDouble() * 60.0)),
 									2.5);
 								h.Sprite = gameRenderer.GetCenterSprite(
-									gameRenderer.bullseyeSparkImage);
+									"spark_nailed_foe");
 								h.Lifetime = Bullet.LIFETIME_PARTICLE;
 								hitSparks.Add(h);
 							}
@@ -819,7 +819,7 @@ namespace TestSFMLDotNet
                                 Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(
                                     60.0 + rand.NextDouble() * 60.0)), 2.5);
                             h.Sprite = gameRenderer.GetCenterSprite(
-                                gameRenderer.bullseyeSparkImage);
+								"spark_nailed_foe");
 							h.Lifetime = Bullet.LIFETIME_PARTICLE;
                             hitSparks.Add(h);
                         }
@@ -871,9 +871,9 @@ namespace TestSFMLDotNet
 			}
 			// Draw the player, boss, and enemies.
 			if (lives >= 0)
-				app.Draw(gameRenderer.playerSprite);
+				app.Draw(player.sprite);
             if (bossState == BossState.Active)
-                app.Draw(gameRenderer.bossSprite);
+                app.Draw(boss.sprite);
             else if (bossState == BossState.Intro &&
                      bossIntroTime > BOSS_PRE_INTRO_FRAMES)
             {
@@ -887,7 +887,7 @@ namespace TestSFMLDotNet
                     (float)BOSS_INTRO_FRAMES * 255.0F));
                  */
                 // TODO: Temporary code is below. Swap for the above.
-                app.Draw(gameRenderer.bossSprite);
+				app.Draw(boss.sprite);
             }
 
 			// Draw the bullets and hitsparks.
@@ -899,7 +899,7 @@ namespace TestSFMLDotNet
                 app.Draw(bullet.Sprite);
 
 			if (keys.slow > 0)
-				app.Draw(gameRenderer.hitCircleSprite);
+				app.Draw(player.hitBoxSprite);
 
 			// Draw the HUD.
 			gameRenderer.Paint(sender);
