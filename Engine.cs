@@ -157,13 +157,13 @@ namespace TestSFMLDotNet
         /// </summary>
         protected void Reset()
         {
-            player.location = new Vector2f(Renderer.FIELD_WIDTH / 2,
+            player.Location = new Vector2f(Renderer.FIELD_WIDTH / 2,
 				Renderer.FIELD_WIDTH / 4 * 3);
 			player.UpdateDisplayPos();
             player.deathCountdown = 0;
 			player.reentryCountdown = 0;
             player.invincibleCountdown = 0;
-			boss.location = new Vector2f(Renderer.FIELD_WIDTH / 2,
+			boss.Location = new Vector2f(Renderer.FIELD_WIDTH / 2,
 				Renderer.FIELD_HEIGHT / 4);
 			boss.UpdateDisplayPos();
             boss.currentPattern = -1;
@@ -365,7 +365,7 @@ namespace TestSFMLDotNet
                         gameOver = gameRenderer.IsGameOver = true;
 					gameRenderer.SetLives(lives);
 					player.reentryCountdown = REENTRY_FRAMES;
-					player.location = new Vector2f(145.0F, 320.0F);
+					player.Location = new Vector2f(145.0F, 320.0F);
 					player.UpdateDisplayPos();
 				}
 				else
@@ -374,7 +374,7 @@ namespace TestSFMLDotNet
 				return;
 			if (player.reentryCountdown > 0)
 			{
-				player.location.Y -= Player.LO_SPEED;
+				player.Move(0, -Player.LO_SPEED);
 				player.UpdateDisplayPos();
 				return;
 			}
@@ -383,17 +383,18 @@ namespace TestSFMLDotNet
 			{
 				if (keys.left > 0)
 				{
-					player.location.X -= keys.slow > 0 || !bombBlast.IsGone() ?
-						Player.LO_SPEED : Player.HI_SPEED;
-					if (player.location.X - player.HalfSize.X < 0)
-						player.location.X = player.HalfSize.X;
+					player.Move(keys.slow > 0 || !bombBlast.IsGone() ?
+						-Player.LO_SPEED : -Player.HI_SPEED, 0);
+					if (player.Location.X - player.HalfSize.X < 0)
+						player.Location = new Vector2f(player.HalfSize.X, player.Location.Y);
 				}
 				else
 				{
-					player.location.X += keys.slow > 0 || !bombBlast.IsGone() ?
-						Player.LO_SPEED : Player.HI_SPEED;
-					if (player.location.X + player.Size.X > Renderer.FIELD_WIDTH)
-						player.location.X = Renderer.FIELD_WIDTH - player.Size.X;
+					player.Move(keys.slow > 0 || !bombBlast.IsGone() ?
+						Player.LO_SPEED : Player.HI_SPEED, 0);
+					if (player.Location.X + player.HalfSize.X > Renderer.FIELD_WIDTH)
+						player.Location = new Vector2f(Renderer.FIELD_WIDTH - player.HalfSize.X,
+							player.Location.Y);
 				}
 				player.UpdateDisplayPos();
 			}
@@ -402,17 +403,18 @@ namespace TestSFMLDotNet
 			{
 				if (keys.up > 0)
 				{
-					player.location.Y -= keys.slow > 0 || !bombBlast.IsGone() ?
-						Player.LO_SPEED : Player.HI_SPEED;
-					if (player.location.Y - player.HalfSize.Y < 0)
-						player.location.Y = player.HalfSize.Y;
+					player.Move(0, keys.slow > 0 || !bombBlast.IsGone() ?
+						-Player.LO_SPEED : -Player.HI_SPEED);
+					if (player.Location.Y - player.HalfSize.Y < 0)
+						player.Location = new Vector2f(player.Location.X, player.HalfSize.Y);
 				}
 				else
 				{
-					player.location.Y += keys.slow > 0 || !bombBlast.IsGone() ?
-						Player.LO_SPEED : Player.HI_SPEED;
-					if (player.location.Y + player.Size.Y > Renderer.FIELD_HEIGHT)
-						player.location.Y = Renderer.FIELD_HEIGHT - player.Size.Y;
+					player.Move(0, keys.slow > 0 || !bombBlast.IsGone() ?
+						Player.LO_SPEED : Player.HI_SPEED);
+					if (player.Location.Y + player.HalfSize.Y > Renderer.FIELD_HEIGHT)
+						player.Location = new Vector2f(player.Location.X,
+							Renderer.FIELD_HEIGHT - player.HalfSize.Y);
 				}
 				player.UpdateDisplayPos();
 			}
@@ -488,15 +490,15 @@ namespace TestSFMLDotNet
                     {
                         // The color (index) doesn't matter.
                         Bullet bullet = new Bullet(0, 1, new Vector2f(
-                            player.location.X - Bullet.RADII[1],
-                            player.location.Y),
+                            player.Location.X - Bullet.RADII[1],
+                            player.Location.Y),
                             Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(270)),
                             9.0);
                         bullet.Sprite = gameRenderer.GetCenterSprite(
                             "b_player");
                         playerBullets.Add(bullet);
                         bullet = new Bullet(bullet);
-                        bullet.location.X = player.location.X +
+                        bullet.location.X = player.Location.X +
                             Bullet.RADII[1];
                         bullet.Sprite = gameRenderer.GetCenterSprite(
                             "b_player");
@@ -509,7 +511,7 @@ namespace TestSFMLDotNet
                 {
 					// Fire a bomb.
                     player.invincibleCountdown = Bomb.LIFETIME_ACTIVE;
-					bombBlast.Renew(player.location);
+					bombBlast.Renew(player.Location);
                     bombCombo = 0;
                     bombComboTimeCountdown = BOMB_COMBO_DISPLAY_FRAMES;
                     bombs--;
@@ -537,7 +539,7 @@ namespace TestSFMLDotNet
                 if (enemy.health <= 0)
                     // TODO: Make enemies go pop.
                     break;
-                enemy.Update(ref enemyBullets, gameRenderer, player.location, rand);
+                enemy.Update(ref enemyBullets, gameRenderer, player.Location, rand);
                 if (player.invincibleCountdown <= 0 && !godMode &&
 					lives >= 0 && Physics.Touches(player, enemy))
                 {
@@ -560,7 +562,7 @@ namespace TestSFMLDotNet
                 if (boss.health > 0)
                 {
                     // Increment the time the boss is in its pattern.
-                    boss.Update(ref enemyBullets, gameRenderer, player.location, rand);
+                    boss.Update(ref enemyBullets, gameRenderer, player.Location, rand);
                 }
                 else
                 {
@@ -633,7 +635,7 @@ namespace TestSFMLDotNet
                 bool finalFrame = bombBlast.IsGone();
                 for (int i = 0; i < enemyBullets.Count; i++)
                 {
-                    if (bombBlast.HitTest((Bullet)enemyBullets[i]))
+                    if (Physics.Touches(bombBlast, (Bullet)enemyBullets[i]))
                     {
                         bombMadeCombo = true;
                         if (!funBomb && finalFrame)
@@ -719,7 +721,7 @@ namespace TestSFMLDotNet
                     // Build a list of "dead" bullets.
                     toRemove.Add(i);
                 else if (player.invincibleCountdown <= 0 && lives >= 0 &&
-                         Math.Abs(player.location.Y - bullet.location.Y) <=
+                         Math.Abs(player.Location.Y - bullet.location.Y) <=
                          player.Size.X + bullet.Radius)
                     // It is kind of close to the player. Check for collison.
                     if (Physics.Touches(player, bullet))
@@ -732,7 +734,7 @@ namespace TestSFMLDotNet
                                 // the player.
                                 bullet.Direction =
                                     Vector2D.GetDirectionVector(
-                                    bullet.location, player.location);
+                                    bullet.location, player.Location);
                             else
                             {
                                 // Show feedback of a graze with a hitspark.
@@ -740,7 +742,7 @@ namespace TestSFMLDotNet
                                 Bullet h = new Bullet(GRAZE_SPARK_INDEX,
                                     0, new Vector2f(bullet.location.X, bullet.location.Y),
                                     Vector2D.GetDirectionVector(
-                                        bullet.location, player.location),
+                                        bullet.location, player.Location),
                                     5.0);
                                 h.Sprite = gameRenderer.GetCenterSprite(
                                     "spark_graze");
@@ -751,7 +753,7 @@ namespace TestSFMLDotNet
                             bullet.grazed = true;
                         }
                         if (!godMode && !repulsive &&
-                            bullet.HitTest(player.location, player.Radius))
+                            Physics.Touches(bullet, player.hitbox))
                         {
                             player.invincibleCountdown =
                                 POST_DEATH_INVINC_FRAMES;
@@ -789,7 +791,7 @@ namespace TestSFMLDotNet
 								// between 210 and 330 degrees.
 								Bullet h = new Bullet(BULLSEYE_SPARK_INDEX,
 									0, new Vector2f(bullet.location.X,
-										boss.location.Y + boss.Size.Y),
+										boss.Location.Y + boss.Size.Y),
 									Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(
 										60.0 + rand.NextDouble() * 60.0)),
 									2.5);
@@ -821,7 +823,7 @@ namespace TestSFMLDotNet
                         {
                             Bullet h = new Bullet(BULLSEYE_SPARK_INDEX, 0,
                                 new Vector2f(bullet.location.X,
-                                    boss.location.Y + boss.Size.Y),
+                                    boss.Location.Y + boss.Size.Y),
                                 Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(
                                     60.0 + rand.NextDouble() * 60.0)), 2.5);
                             h.Sprite = gameRenderer.GetCenterSprite(

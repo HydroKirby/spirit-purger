@@ -20,19 +20,45 @@ namespace TestSFMLDotNet
 	/// </summary>
 	public static class Physics
 	{
+		/// <summary>
+		/// Does a rectangle-rectangle collision test.
+		/// </summary>
+		/// <param name="e1">An Entity.</param>
+		/// <param name="e2">Another Entity.</param>
+		/// <returns>True if they least touch each other.</returns>
 		public static bool Touches(Entity e1, Entity e2)
 		{
-			return e1.location.X <= e2.location.X + e2.Size.X &&
-				e1.location.X + e1.Size.X >= e2.location.X &&
-				e1.location.Y <= e2.location.Y + e2.Size.Y &&
-				e1.location.Y + e1.Size.Y >= e2.location.Y;
+			return e1.Location.X <= e2.Location.X + e2.Size.X &&
+				e1.Location.X + e1.Size.X >= e2.Location.X &&
+				e1.Location.Y <= e2.Location.Y + e2.Size.Y &&
+				e1.Location.Y + e1.Size.Y >= e2.Location.Y;
 		}
 
+		/// <summary>
+		/// Does a circle-circle collision test.
+		/// </summary>
+		/// <param name="b1">A Bullet.</param>
+		/// <param name="b2">Another Bullet.</param>
+		/// <returns>True if they least touch each other.</returns>
+		public static bool Touches(Bullet b1, Bullet b2)
+		{
+			uint a = (b1.Radius + b2.Radius) * (b1.Radius + b2.Radius);
+			double dx = b1.location.X - b2.location.X;
+			double dy = b1.location.Y - b2.location.Y;
+			return a > (dx * dx) + (dy * dy);
+		}
+
+		/// <summary>
+		/// Does a rectangle-circle collision test.
+		/// </summary>
+		/// <param name="entity">An Entity.</param>
+		/// <param name="bullet">A Bullet.</param>
+		/// <returns>True if they least touch each other.</returns>
 		public static bool Touches(Entity entity, Bullet bullet)
 		{
 			// Get the center of the circle relative to the center of this.
 			// Actually, the sprite is centered, so let's just copy the location.
-			Vector2f rectCenter = new Vector2f(entity.location.X, entity.location.Y);
+			Vector2f rectCenter = new Vector2f(entity.Location.X, entity.Location.Y);
 			Vector2f circleCenterRelRect = bullet.location - rectCenter;
 
 			// Get the point on the surface of the square that's closest to

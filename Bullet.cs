@@ -204,28 +204,6 @@ namespace TestSFMLDotNet
 		public void Kill() { lifetime = 0; }
 		
 		/// <summary>
-		/// Hit test for a bullet-against-bullet.
-		/// </summary>
-		/// <param name="bullet">The other bullet to compare to.</param>
-		/// <returns>Whether or not the bullets have collided.</returns>
-		public bool HitTest(Bullet bullet) {
-			return HitTest(bullet.location, bullet.Radius);
-		}
-		
-		/// <summary>
-		/// HitTest for a non-classed circle.
-		/// </summary>
-		/// <param name="pt">The center of the passed circle.</param>
-		/// <param name="radius">The radius of the passed circle.</param>
-		/// <returns>Whether or not the circles have collided.</returns>
-		public bool HitTest(Vector2f pt, uint radius) {
-			uint a = (this.radius + radius) * (this.radius + radius);
-			double dx = location.X - pt.X;
-			double dy = location.Y - pt.Y;
-			return a > (dx * dx) + (dy * dy);
-		}
-		
-		/// <summary>
 		/// Returns a color based on the index in the pre-generated bullet
 		/// images array.
 		/// </summary>
@@ -275,7 +253,15 @@ namespace TestSFMLDotNet
 			UpdateDisplayPos();
 		}
 	}
-	
+
+	public class Hitbox : Bullet
+	{
+		public Hitbox()
+		{
+			radius = 2;
+		}
+	}
+
 	public class Bomb : Bullet {
 		// The time the bomb lasts at full power.
 		public const int LIFETIME_ACTIVE = 220;
