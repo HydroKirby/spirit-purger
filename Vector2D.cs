@@ -15,49 +15,58 @@ using SFML.Graphics;
 
 namespace TestSFMLDotNet
 {
-    /// <summary>
-    /// Holds integer coordinates.
-    /// This is merely a shell of a replacement for what is offered in System.Drawing.
-    /// I do not want to include GDI+ elements, so System.Drawing is banned.
-    /// </summary>
-    public class Point
-    {
-        protected int x = 0;
-        protected int y = 0;
+	/// <summary>
+	/// Common calculations and functions.
+	/// </summary>
+	public static class Physics
+	{
+		public static bool Touches(Entity e1, Entity e2)
+		{
+			return e1.location.X <= e2.location.X + e2.Size.X &&
+				e1.location.X + e1.Size.X >= e2.location.X &&
+				e1.location.Y <= e2.location.Y + e2.Size.Y &&
+				e1.location.Y + e1.Size.Y >= e2.location.Y;
+		}
 
-        public int X
-        {
-            get { return x; }
-            set { x = value; }
-        }
+		public static bool Touches(Entity entity, Bullet bullet)
+		{
+			// Get the center of the circle relative to the center of this.
+			// Actually, the sprite is centered, so let's just copy the location.
+			Vector2f rectCenter = new Vector2f(entity.location.X, entity.location.Y);
+			Vector2f circleCenterRelRect = bullet.location - rectCenter;
 
-        public int Y
-        {
-            get { return y; }
-            set { y = value; }
-        }
+			// Get the point on the surface of the square that's closest to
+			// the bullet.
+			Vector2f rectPoint = new Vector2f();
+			// Check circle against rect on the x-axis alone. If the circle
+			// is to the left of the rect, then the left edge is closest.
+			// Vice versa is true as well. When the circle is between the
+			// rect's edges, the circle's distance from the rect is 0.
+			if (circleCenterRelRect.X < -entity.HalfSize.X)
+				rectPoint.X = -entity.HalfSize.X;
+			else if (circleCenterRelRect.X > entity.HalfSize.X)
+				rectPoint.X = entity.HalfSize.X;
+			else
+				rectPoint.X = circleCenterRelRect.X;
 
-        public Point(int x, int y)
-        {
-            X = x;
-            Y = y;
-        }
-    }
+			// Do the same check for the y-axis.
+			if (circleCenterRelRect.Y < -entity.HalfSize.Y)
+				rectPoint.Y = -entity.HalfSize.Y;
+			else if (circleCenterRelRect.Y > entity.HalfSize.Y)
+				rectPoint.Y = entity.HalfSize.Y;
+			else
+				rectPoint.Y = circleCenterRelRect.Y;
 
-    /// <summary>
-    /// Holds rectangular extremities.
-    /// This is another hastily composed stand-in for a System.Drawing class.
-    /// </summary>
-    public class Rectangle
-    {
-        public int Top;
-        public int Bottom;
-        public int Left;
-        public int Right;
-    }
+			// See if the distance from the closest point on the rect to the
+			// circle is less than the radius.
+			Vector2f dist = circleCenterRelRect - rectPoint;
+			return dist.X * dist.X + dist.Y * dist.Y <
+				bullet.Radius * bullet.Radius;
+		}
+	}
 
 	/// <summary>
-	/// Vector made for 2-dimensions. It is set up for radians.
+	/// Provides logic for dealing with vectors.
 	/// </summary>
 	public class Vector2D {
 		protected double x = 0.0;
@@ -84,19 +93,6 @@ namespace TestSFMLDotNet
 			Y = y;
 		}
 		
-		public Vector2D(Point pt) {
-			X = pt.X;
-			Y = pt.Y;
-		}
-		
-        // TODO: Can I remove this?
-        /*
-		public Vector2D(PointF pt) {
-			X = pt.X;
-			Y = pt.Y;
-		}
-         */
-		
 		public Vector2D(Vector2D vector) {
 			X = vector.X;
 			Y = vector.Y;
@@ -106,11 +102,11 @@ namespace TestSFMLDotNet
 			return new Vector2D(v1.X + v2.X, v1.Y + v2.Y);
 		}
 		
-		public static Vector2D operator+(Point p, Vector2D v) {
+		public static Vector2D operator+(Vector2u p, Vector2D v) {
 			return new Vector2D(p.X + v.X, p.Y + v.Y);
 		}
 		
-		public static Vector2D operator+(Vector2D v, Point p) {
+		public static Vector2D operator+(Vector2D v, Vector2u p) {
 			return new Vector2D(v.X + p.X, v.Y + p.Y);
 		}
 		
@@ -118,11 +114,11 @@ namespace TestSFMLDotNet
 			return new Vector2D(v1.X - v2.X, v1.Y - v2.Y);
 		}
 		
-		public static Vector2D operator-(Point p, Vector2D v) {
+		public static Vector2D operator-(Vector2u p, Vector2D v) {
 			return new Vector2D(p.X - v.X, p.Y - v.Y);
 		}
 		
-		public static Vector2D operator-(Vector2D v, Point p) {
+		public static Vector2D operator-(Vector2D v, Vector2u p) {
 			return new Vector2D(v.X - p.X, v.Y - p.Y);
 		}
 		
@@ -159,7 +155,7 @@ namespace TestSFMLDotNet
             return new Vector2f((float)Math.Cos(radians), (float)Math.Sin(radians));
         }
 		
-		public static double GetDistance(Point pt1, Point pt2) {
+		public static double GetDistance(Vector2u pt1, Vector2u pt2) {
 			return Math.Sqrt((pt1.X - pt2.X) * (pt1.X - pt2.X) +
 			                 (pt1.Y - pt2.Y) * (pt1.Y - pt2.Y));
 		}
@@ -182,15 +178,6 @@ namespace TestSFMLDotNet
 		public static double GetAngle(Vector2f v) {
 			return Math.Atan2(v.Y, v.X);
 		}
-		
-		public void Normalize() {
-			double magnitude = Math.Sqrt(X * X + Y * Y);
-			if (magnitude >= -0.00001 || magnitude <= 0.00001)
-				// It is dangerously close to 0. Do not try division by 0.
-				return;
-			X /= magnitude;
-			Y /= magnitude;
-		}
 
         public static void Normalize(Vector2f v)
         {
@@ -206,8 +193,8 @@ namespace TestSFMLDotNet
 		/// Returns this vector as a Point with integer coordinates.
 		/// </summary>
 		/// <returns>A Point representing this vector.</returns>
-		public Point AsPoint() {
-			return new Point((int) X, (int) Y);
+		public Vector2u AsPoint() {
+			return new Vector2u((uint) X, (uint) Y);
 		}
 	}
 }

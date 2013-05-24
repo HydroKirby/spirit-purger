@@ -142,8 +142,14 @@ namespace TestSFMLDotNet
             gameState = GameState.MainMenu;
             paintHandler = new PaintHandler(PaintMenu);
 
-            MainLoop(app);
+			if (ReadOptions())
+				MainLoop(app);
         }
+
+		protected bool ReadOptions()
+		{
+			return true;
+		}
 
         /// <summary>
         /// Sets the game into a before-main-gameplay state.
@@ -377,14 +383,14 @@ namespace TestSFMLDotNet
 			{
 				if (keys.left > 0)
 				{
-					player.location.X -= keys.slow > 0 || !bombBlast.isGone() ?
+					player.location.X -= keys.slow > 0 || !bombBlast.IsGone() ?
 						Player.LO_SPEED : Player.HI_SPEED;
 					if (player.location.X - player.HalfSize.X < 0)
 						player.location.X = player.HalfSize.X;
 				}
 				else
 				{
-					player.location.X += keys.slow > 0 || !bombBlast.isGone() ?
+					player.location.X += keys.slow > 0 || !bombBlast.IsGone() ?
 						Player.LO_SPEED : Player.HI_SPEED;
 					if (player.location.X + player.Size.X > Renderer.FIELD_WIDTH)
 						player.location.X = Renderer.FIELD_WIDTH - player.Size.X;
@@ -396,14 +402,14 @@ namespace TestSFMLDotNet
 			{
 				if (keys.up > 0)
 				{
-					player.location.Y -= keys.slow > 0 || !bombBlast.isGone() ?
+					player.location.Y -= keys.slow > 0 || !bombBlast.IsGone() ?
 						Player.LO_SPEED : Player.HI_SPEED;
 					if (player.location.Y - player.HalfSize.Y < 0)
 						player.location.Y = player.HalfSize.Y;
 				}
 				else
 				{
-					player.location.Y += keys.slow > 0 || !bombBlast.isGone() ?
+					player.location.Y += keys.slow > 0 || !bombBlast.IsGone() ?
 						Player.LO_SPEED : Player.HI_SPEED;
 					if (player.location.Y + player.Size.Y > Renderer.FIELD_HEIGHT)
 						player.location.Y = Renderer.FIELD_HEIGHT - player.Size.Y;
@@ -461,7 +467,7 @@ namespace TestSFMLDotNet
 
             MovePlayer();
 
-			if (godMode && keys.slow == 2 && !bombBlast.isGone())
+			if (godMode && keys.slow == 2 && !bombBlast.IsGone())
                 bombBlast.Kill();
             if (gameOver)
             {
@@ -483,7 +489,7 @@ namespace TestSFMLDotNet
                         // The color (index) doesn't matter.
                         Bullet bullet = new Bullet(0, 1, new Vector2f(
                             player.location.X - Bullet.RADII[1],
-                            player.DrawLocation.Y),
+                            player.location.Y),
                             Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(270)),
                             9.0);
                         bullet.Sprite = gameRenderer.GetCenterSprite(
@@ -497,7 +503,7 @@ namespace TestSFMLDotNet
                         playerBullets.Add(bullet);
                     }
                 }
-				if (keys.bomb == 2 && bombBlast.isGone() && (godMode ||
+				if (keys.bomb == 2 && bombBlast.IsGone() && (godMode ||
                     bombs > 0 && player.reentryCountdown <= 0 &&
                     player.deathCountdown <= 0))
                 {
@@ -533,7 +539,7 @@ namespace TestSFMLDotNet
                     break;
                 enemy.Update(ref enemyBullets, gameRenderer, player.location, rand);
                 if (player.invincibleCountdown <= 0 && !godMode &&
-                    lives >= 0 && enemy.HitTest(player.Size, player.location))
+					lives >= 0 && Physics.Touches(player, enemy))
                 {
                     player.invincibleCountdown = POST_DEATH_INVINC_FRAMES;
                     player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
@@ -544,7 +550,7 @@ namespace TestSFMLDotNet
             if (bossState == BossState.Active)
             {
                 if (player.invincibleCountdown <= 0 && !godMode &&
-                    lives >= 0 && boss.HitTest(player.Size, player.location))
+                    lives >= 0 && Physics.Touches(player, boss))
                 {
                     player.invincibleCountdown = POST_DEATH_INVINC_FRAMES;
                     player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
@@ -603,7 +609,7 @@ namespace TestSFMLDotNet
             {
                 Bullet spark = (Bullet)hitSparks[i];
                 spark.Update();
-                if (spark.isGone())
+                if (spark.IsGone())
                     toRemove.Add(i);
             }
             // Sort the list from biggest to smallest index.
@@ -620,11 +626,11 @@ namespace TestSFMLDotNet
             // of bullets that will need removal.
             toRemove.Clear();
 
-            if (!bombBlast.isGone())
+            if (!bombBlast.IsGone())
             {
                 bool bombMadeCombo = true;
                 bombBlast.Update();
-                bool finalFrame = bombBlast.isGone();
+                bool finalFrame = bombBlast.IsGone();
                 for (int i = 0; i < enemyBullets.Count; i++)
                 {
                     if (bombBlast.HitTest((Bullet)enemyBullets[i]))
@@ -709,14 +715,14 @@ namespace TestSFMLDotNet
             {
                 Bullet bullet = (Bullet)enemyBullets[i];
                 bullet.Update();
-                if (bullet.isOutside(Renderer.FieldSize, 30))
+                if (bullet.IsOutside(Renderer.FieldSize, 30))
                     // Build a list of "dead" bullets.
                     toRemove.Add(i);
                 else if (player.invincibleCountdown <= 0 && lives >= 0 &&
                          Math.Abs(player.location.Y - bullet.location.Y) <=
                          player.Size.X + bullet.Radius)
                     // It is kind of close to the player. Check for collison.
-                    if (player.HitTest(bullet))
+                    if (Physics.Touches(player, bullet))
                     {
                         if (!bullet.grazed)
                         {
@@ -766,13 +772,13 @@ namespace TestSFMLDotNet
             {
                 Bullet bullet = (Bullet)playerBullets[i];
                 bullet.Update();
-                if (bullet.isOutside(Renderer.FieldSize, 0))
+                if (bullet.IsOutside(Renderer.FieldSize, 0))
                     toRemove.Add(i);
                 else
                 {
                     bool scoreUp = false;
                     foreach (Enemy enemy in enemies)
-                        if (enemy.HitTest(bullet))
+                        if (Physics.Touches(enemy, bullet))
                         {
                             enemy.health -= 2;
                             toRemove.Add(i);
@@ -783,7 +789,7 @@ namespace TestSFMLDotNet
 								// between 210 and 330 degrees.
 								Bullet h = new Bullet(BULLSEYE_SPARK_INDEX,
 									0, new Vector2f(bullet.location.X,
-										boss.DrawLocation.Y + boss.Size.Y),
+										boss.location.Y + boss.Size.Y),
 									Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(
 										60.0 + rand.NextDouble() * 60.0)),
 									2.5);
@@ -795,7 +801,7 @@ namespace TestSFMLDotNet
                             score += 20;
                             scoreUp = true;
                         }
-                    if (bossState == BossState.Active && boss.HitTest(bullet))
+                    if (bossState == BossState.Active && Physics.Touches(boss, bullet))
                     {
                         hitBoss = true;
                         if (boss.DealDamage(2))
@@ -815,7 +821,7 @@ namespace TestSFMLDotNet
                         {
                             Bullet h = new Bullet(BULLSEYE_SPARK_INDEX, 0,
                                 new Vector2f(bullet.location.X,
-                                    boss.DrawLocation.Y + boss.Size.Y),
+                                    boss.location.Y + boss.Size.Y),
                                 Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(
                                     60.0 + rand.NextDouble() * 60.0)), 2.5);
                             h.Sprite = gameRenderer.GetCenterSprite(
@@ -863,9 +869,11 @@ namespace TestSFMLDotNet
         protected void PaintGame(object sender, double ticks)
         {
 			RenderWindow app = (RenderWindow)sender;
+
+			// Tell the renderer about any new positions.
             
 			app.Draw(gameRenderer.bgSprite);
-			if (!bombBlast.isGone())
+			if (!bombBlast.IsGone())
 			{
 				app.Draw(bombBlast.Sprite);
 			}

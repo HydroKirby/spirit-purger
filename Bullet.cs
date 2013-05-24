@@ -18,13 +18,13 @@ namespace TestSFMLDotNet
 	public class Bullet {
 		public const uint LIFETIME_DEFAULT = 4000;
 		public const uint LIFETIME_PARTICLE = 5;
-		public static int[] RADII = {2, 4, 8};
+		public static uint[] RADII = {2, 4, 8};
 		public enum BulletColors {Red, Orange, Green, Blue, Violet, EndColors};
 		// The index offset in the array of pre-generated images with which
 		// this bullet's graphics will correspond to.
 		public int colorIndex = 0;
 		protected int sizeIndex = 0;
-		protected int radius = 2;
+		protected uint radius = 2;
 		public Vector2f location;
 		protected Vector2f direction;
 		protected double speed = 1.0;
@@ -60,15 +60,12 @@ namespace TestSFMLDotNet
 			}
 		}
 		
-		public int Radius {
+		public uint Radius {
 			get { return radius; }
-			set {
-				if (value >= 0)
-					radius = value;
-			}
+			set { radius = value; }
 		}
 		
-		public int Diameter {
+		public uint Diameter {
 			get { return radius + radius; }
 		}
 		
@@ -79,11 +76,6 @@ namespace TestSFMLDotNet
                 Vector2D.Normalize(direction);
 				this.RefreshVelocity();
 			}
-		}
-		
-		public Point DrawLocation {
-			get { return new Point((int) location.X - Radius,
-			                       (int) location.Y - Radius); }
 		}
 		
 		public double Speed {
@@ -192,7 +184,7 @@ namespace TestSFMLDotNet
 		/// <param name="extremity">The size of the game field.</param>
 		/// <param name="lenience">How far beyond the game field the bullet can exist.</param>
 		/// <returns>True if this bullet has left the game field.</returns>
-		public bool isOutside(Vector2f extremity, int lenience)
+		public bool IsOutside(Vector2f extremity, int lenience)
 		{
 			return location.X - radius + lenience <= 0 ||
 				location.X + radius - lenience >= extremity.X ||
@@ -204,7 +196,7 @@ namespace TestSFMLDotNet
 		/// Checks if the bullet has no more life time.
 		/// </summary>
 		/// <returns>True if lifetime is zero.</returns>
-		public bool isGone() { return lifetime <= 0; }
+		public bool IsGone() { return lifetime <= 0; }
 
 		/// <summary>
 		/// Simply sets the bullet's lifetime to zero.
@@ -226,8 +218,8 @@ namespace TestSFMLDotNet
 		/// <param name="pt">The center of the passed circle.</param>
 		/// <param name="radius">The radius of the passed circle.</param>
 		/// <returns>Whether or not the circles have collided.</returns>
-		public bool HitTest(Vector2f pt, int radius) {
-			int a = (this.radius + radius) * (this.radius + radius);
+		public bool HitTest(Vector2f pt, uint radius) {
+			uint a = (this.radius + radius) * (this.radius + radius);
 			double dx = location.X - pt.X;
 			double dy = location.Y - pt.Y;
 			return a > (dx * dx) + (dy * dy);
@@ -305,7 +297,7 @@ namespace TestSFMLDotNet
 			{
 				float scale = (float) (LIFETIME_ACTIVE - lifetime) / LIFETIME_GROWING;
 				sprite.Scale = SCALE_ONE * scale;
-				Radius = (int)(scale * FULL_RADIUS);
+				Radius = (uint)(scale * FULL_RADIUS);
 			}
 			else if (lifetime == LIFETIME_ACTIVE - LIFETIME_GROWING)
 			{
@@ -352,9 +344,5 @@ namespace TestSFMLDotNet
 			solidBrush.Dispose();
 		}
          */
-
-        public void Draw()
-        {
-        }
 	}
 }

@@ -19,14 +19,14 @@ using SFML.Window;
 using SFML.Graphics;
 
 namespace TestSFMLDotNet {
-	public class Square {
+	public class Entity {
 		public Color color = Color.Red;
 		public Vector2f location;
-		private Vector2i size;
+		private Vector2u size;
 		// Stored to bypass calculating it all the time.
-		private Vector2i halfSize;
+		private Vector2u halfSize;
 
-		public Vector2i Size {
+		public Vector2u Size {
 			get { return size; }
 			set {
 				size = value;
@@ -34,7 +34,7 @@ namespace TestSFMLDotNet {
 				halfSize.Y = size.Y / 2;
 			}
 		}
-		public Vector2i HalfSize {
+		public Vector2u HalfSize {
 			get { return halfSize; }
 			set {
 				halfSize = value;
@@ -42,105 +42,31 @@ namespace TestSFMLDotNet {
 				size.Y = halfSize.Y + halfSize.Y;
 			}
 		}
-		public Point DrawLocation {
-			get { return new Point((int) location.X - halfSize.X,
-			                       (int) location.Y - halfSize.Y); }
-		}
 
-		public Square() {
+		public Entity() {
 			location = new Vector2f();
-			Size = new Vector2i(1, 1);
+			Size = new Vector2u(1, 1);
 		}
 
-		public Square(Vector2f location) {
+		public Entity(Vector2f location) {
 			this.location = new Vector2f(location.X, location.Y);
-			Size = new Vector2i(1, 1);
+			Size = new Vector2u(1, 1);
 		}
 
-		public Square(Vector2f location, Vector2i size) {
+		public Entity(Vector2f location, Vector2u size) {
 			this.location = new Vector2f(location.X, location.Y);
 			this.Size = size;
 		}
 
-		public Square(Square square) {
+		public Entity(Entity square) {
 			location = new Vector2f(square.location.X, square.location.Y);
 			Size = square.size;
 			color = square.color;
 		}
-
-        /*
-		public bool HitTest(Point pt) {
-			return new Rectangle(location.AsPoint(), size).Contains(pt);
-		}
-         */
-
-		public bool HitTest(Vector2i rSize, Vector2f loc) {
-			return location.X <= loc.X + rSize.X &&
-				location.X + size.X >= loc.X &&
-				location.Y <= loc.Y + rSize.Y &&
-				location.Y + size.Y >= loc.Y;
-		}
-
-		public bool HitTest(Square square) {
-			return location.X <= square.location.X + square.Size.X &&
-				location.X + size.X >= square.location.X &&
-				location.Y <= square.location.Y + square.Size.Y &&
-				location.Y + size.Y >= square.location.Y;
-		}
-
-		public bool HitTest(Bullet circle) {
-			// Get the center of the circle relative to the center of this.
-			Vector2f rectCenter =
-				new Vector2f(DrawLocation.X + size.X / 2,
-				             DrawLocation.Y + size.Y / 2);
-			Vector2f circleCenterRelRect = circle.location - rectCenter;
-
-			// Get the point on the surface of the square that's closest to
-			// the bullet.
-			Vector2f rectPoint = new Vector2f();
-			// Check circle against rect on the x-axis alone. If the circle
-			// is to the left of the rect, then the left edge is closest.
-			// Vice versa is true as well. When the circle is between the
-			// rect's edges, the circle's distance from the rect is 0.
-			if (circleCenterRelRect.X < -size.X / 2.0)
-				rectPoint.X = -size.X / 2;
-			else if (circleCenterRelRect.X > size.X / 2.0)
-				rectPoint.X = size.X / 2;
-			else
-				rectPoint.X = circleCenterRelRect.X;
-
-			// Do the same check for the y-axis.
-			if (circleCenterRelRect.Y < -size.Y / 2.0)
-				rectPoint.Y = -size.Y / 2;
-			else if (circleCenterRelRect.Y > size.Y / 2.0)
-				rectPoint.Y = size.Y / 2;
-			else
-				rectPoint.Y = circleCenterRelRect.Y;
-
-			// See if the distance from the closest point on the rect to the
-			// circle is less than the radius.
-			Vector2f dist = circleCenterRelRect - rectPoint;
-			return dist.X * dist.X + dist.Y * dist.Y <
-				circle.Radius * circle.Radius;
-		}
-
-        /*
-		public virtual void Draw(Graphics g) {
-			SolidBrush solidBrush = new SolidBrush(color);
-			g.FillRectangle(solidBrush, new Rectangle(DrawLocation, size));
-			solidBrush.Dispose();
-		}
-
-		public void Draw(Graphics g, int alpha) {
-			SolidBrush solidBrush = new SolidBrush(
-				Color.FromArgb(alpha, color.R, color.G, color.B));
-			g.FillRectangle(solidBrush, new Rectangle(DrawLocation, size));
-			solidBrush.Dispose();
-		}
-         */
 	}
 
-	public class Player : Square {
+	public class Player : Entity {
+		public enum STATE {MOVE_FORWARD, MOVE_LEFT, MOVE_RIGHT, DEAD, REVIVING};
 		public const float HI_SPEED = 4.0F;
 		public const float LO_SPEED = 2.0F;
 		// This is how long the player waits after being hit until being sent
@@ -151,7 +77,7 @@ namespace TestSFMLDotNet {
 		protected int timeSinceLastFire = fireRate + 1;
 		// This relates to the smaller, circular hitbox at the center.
 		// It is not related to the player's width or height.
-		protected int radius = 2;
+		protected uint radius = 2;
 		// How many frames to be waited after being hit. It stays 0 when not in
 		// use and counts down from DEATH_SEQUENCE_FRAMES when initiated.
 		// The player can't move during the death sequence. The death sequence
@@ -164,17 +90,21 @@ namespace TestSFMLDotNet {
 		public int reentryCountdown = 0;
 		public CenterSprite sprite;
 		public CenterSprite hitBoxSprite;
+		protected STATE _state;
 
-		public int Radius {
+		public uint Radius {
 			get { return radius; }
 		}
 
-		public Point DrawHitCircleLocation {
-			get { return new Point((int) location.X - radius,
-			                       (int) location.Y - radius); }
+		public STATE State
+		{
+			get { return _state; }
 		}
 
-		public Player() : base(new Vector2f(), new Vector2i(20, 20)) {}
+		public Player() : base(new Vector2f(), new Vector2u(20, 20))
+		{
+			_state = STATE.REVIVING;
+		}
 
 		public void SetImage(CenterSprite s) {
             s.setPosition(location + Renderer.FieldUpperLeft);
@@ -262,7 +192,7 @@ namespace TestSFMLDotNet {
          */
 	}
 
-    public class Enemy : Square
+    public class Enemy : Entity
     {
         public enum MoveStyle { NoMove, Accel, Decel, Constant }
         protected int updateCount = 0;
@@ -314,7 +244,7 @@ namespace TestSFMLDotNet {
         public CenterSprite sprite;
 
         public Enemy()
-            : base(new Vector2f(), new Vector2i(25, 25))
+            : base(new Vector2f(), new Vector2u(25, 25))
         {
             health = fullHealth[0];
         }

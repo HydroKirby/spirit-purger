@@ -433,7 +433,7 @@ namespace TestSFMLDotNet
 					new Texture[(int)Bullet.BulletColors.EndColors];
 				for (int color = 0; color < bulletImages[atSize].Length; color++)
 				{
-					int radius = Bullet.RADII[atSize];
+					uint radius = Bullet.RADII[atSize];
 					bulletImages[atSize][color] = LoadImage("b_" +
 						(radius + radius).ToString() + "x" + (radius + radius).ToString() +
 						Bullet.GetColorByName(color) + ".png");
@@ -450,6 +450,10 @@ namespace TestSFMLDotNet
 			if (bgSprite.Rotation >= 360)
 				bgSprite.Rotation -= 360;
         }
+
+		public void UpdatePlayer(ref Player p)
+		{
+		}
 
 		public void Paint(object sender)
 		{
