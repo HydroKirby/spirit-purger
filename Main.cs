@@ -3,7 +3,7 @@ using SFML.Audio;
 using SFML.Window;
 using SFML.Graphics;
 
-namespace TestSFMLDotNet
+namespace SpiritPurger
 {
     class Program
     {
@@ -17,9 +17,9 @@ namespace TestSFMLDotNet
         static void Main(string[] args)
         {
             // Create the game and run it.
-            TestSFMLDotNet.Engine engine = new TestSFMLDotNet.Engine();
+            SpiritPurger.Engine engine = new SpiritPurger.Engine();
             // Create the main window.
-            RenderWindow app = new RenderWindow(new VideoMode(640, 480), "SFML window");
+            RenderWindow app = new RenderWindow(new VideoMode(640, 480), "Spirit Purger");
             app.Closed += new EventHandler(OnClose);
             engine.Run(app);
         }

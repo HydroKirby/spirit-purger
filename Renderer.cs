@@ -6,7 +6,7 @@ using SFML.Audio;
 using SFML.Window;
 using SFML.Graphics;
 
-namespace TestSFMLDotNet
+namespace SpiritPurger
 {
 	/// <summary>
 	/// A sprite whose origin is at the image's center.

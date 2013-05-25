@@ -13,7 +13,7 @@ using System;
 using SFML.Window;
 using SFML.Graphics;
 
-namespace TestSFMLDotNet
+namespace SpiritPurger
 {
 	/// <summary>
 	/// Common calculations and functions.

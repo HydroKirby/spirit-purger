@@ -11,7 +11,7 @@ using System;
 using System.Threading;
 using System.Runtime.InteropServices;
 
-namespace TestSFMLDotNet {
+namespace SpiritPurger {
 	/// <summary>
 	/// Time-handler for a game loop. It uses a precise calculation from
 	/// kernel32.dll but will fall-back on less precise means if importing the

@@ -18,7 +18,7 @@ using SFML;
 using SFML.Window;
 using SFML.Graphics;
 
-namespace TestSFMLDotNet {
+namespace SpiritPurger {
 	public class Entity {
 		public Color color = Color.Red;
 		protected Vector2f location;

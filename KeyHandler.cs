@@ -12,7 +12,7 @@
 using System;
 using SFML.Window;
 
-namespace TestSFMLDotNet {
+namespace SpiritPurger {
 	/// <summary>
 	/// Maintains how long specific keys have been held down.
 	/// </summary>

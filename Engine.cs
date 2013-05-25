@@ -7,7 +7,7 @@ using SFML.Audio;
 using SFML.Window;
 using SFML.Graphics;
 
-namespace TestSFMLDotNet
+namespace SpiritPurger
 {
 	public enum MainMenu
 	{

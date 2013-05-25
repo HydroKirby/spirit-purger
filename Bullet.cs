@@ -13,7 +13,7 @@ using System;
 using SFML.Window;
 using SFML.Graphics;
 
-namespace TestSFMLDotNet
+namespace SpiritPurger
 {
 	public class Bullet {
 		public const uint LIFETIME_DEFAULT = 4000;
