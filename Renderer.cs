@@ -205,19 +205,6 @@ namespace SpiritPurger
 
 	public class GameRenderer : Renderer
 	{
-		// Connects sprite sheets of bullets to sprites.
-		class SubTexture
-		{
-			public int imageIndex;
-			public IntRect subRect;
-
-			public SubTexture(int idx, IntRect rect)
-			{
-				imageIndex = idx;
-				subRect = rect;
-			}
-		}
-
         // Refers to when a boss pattern has completed. It's the time to wait
         // until initiating the next pattern.
         public const int PATTERN_TRANSITION_PAUSE = 80;
@@ -268,10 +255,7 @@ namespace SpiritPurger
 			"spark_nailed_foe",
 			"bomb",
 		};
-		// Sprite sheets of images shared between all bullets.
-		public ArrayList bulletImages;
-		// Lets bulletImages be seen as separate images instead of a sprite sheet.
-		public ArrayList subTextures;
+		protected BulletCreator bulletCreator;
 
 		// Game Sprites. Let the objects have (not own) the sprites so that
 		// the objects can request drawing, swapping, and alterations of sprites.
@@ -283,9 +267,7 @@ namespace SpiritPurger
 			commonTextColor = Color.Black;
 
 			// Create images.
-			bulletImages = new ArrayList();
-			subTextures = new ArrayList();
-			LoadBulletImages();
+			bulletCreator = new BulletCreator(this);
 
 			textures = new Dictionary<string, Texture>(StringComparer.Ordinal);
 			foreach (string filename in PNG_FILENAMES)
@@ -443,51 +425,9 @@ namespace SpiritPurger
             labelPatternResult.Position = labelPatternResultPos;
         }
 
-		/// <summary>
-		/// Makes all bullet images for the first time.
-		/// All images are put into the bulletImages array.
-		/// </summary>
-		public void LoadBulletImages()
-		{
-			string[] filenames = { "b_4.png", "b_8.png", "b_16.png" };
-			for (int i = 0; i < filenames.Length; ++i)
-			{
-				Texture spriteSheetImage = LoadImage(filenames[i]);
-				bulletImages.Add(spriteSheetImage);
-				// The images are vertically aligned.
-				// There should be 5 images per sheet.
-				int numSubImages = (int)(spriteSheetImage.Size.Y / spriteSheetImage.Size.X);
-				for (int j = 0; j < numSubImages; ++j)
-				{
-					// Width is the same as height for a square sub-image,
-					// so use the width as a height multiplier.
-					subTextures.Add(new SubTexture(bulletImages.Count - 1,
-						new IntRect(0, (int)spriteSheetImage.Size.X * j,
-							(int)spriteSheetImage.Size.X, (int)spriteSheetImage.Size.X)));
-				}
-			}
-
-			/*
-			bulletImages = new Texture[Bullet.RADII.Length][];
-			for (int atSize = 0; atSize < Bullet.RADII.Length; atSize++)
-			{
-				bulletImages[atSize] =
-					new Texture[(int)Bullet.BulletColors.EndColors];
-				for (int color = 0; color < bulletImages[atSize].Length; color++)
-				{
-					uint radius = Bullet.RADII[atSize];
-					bulletImages[atSize][color] = LoadImage("b_" +
-						(radius + radius).ToString() + "x" + (radius + radius).ToString() +
-						Bullet.GetColorByName(color) + ".png");
-				}
-			}
-			 */
-		}
-
 		public CenterSprite MakeBulletSprite(int index)
 		{
-			SubTexture tex = (SubTexture)subTextures[index];
-			return new CenterSprite((Texture)bulletImages[tex.imageIndex], tex.subRect);
+			return bulletCreator.MakeBulletSprite(index);
 		}
 
 		public CenterSprite MakeBulletSprite(int sizeIndex, int colorIndex)
@@ -497,6 +437,29 @@ namespace SpiritPurger
 			int index = sizeIndex * 5 + colorIndex;
 			return MakeBulletSprite(index);
 		}
+
+		public Bullet MakeBullet(int index)
+		{
+			return bulletCreator.MakeBullet(index);
+		}
+
+		public Bullet MakeBullet(int index, Vector2f loc)
+		{
+			return bulletCreator.MakeBullet(index, loc);
+		}
+
+		public Bullet MakeBullet(int index, Vector2f loc, Vector2f dir)
+		{
+			return bulletCreator.MakeBullet(index, loc, dir);
+		}
+
+		public Bullet MakeBullet(int index, Vector2f loc, Vector2f dir, double speed)
+		{
+			return bulletCreator.MakeBullet(index, loc, dir, speed);
+		}
+
+		public Bullet MakeBullet(Bullet b) { return bulletCreator.MakeBullet(b); }
+		public Bullet MakeBullet(Bullet b, Vector2f dir) { return bulletCreator.MakeBullet(b, dir); }
 
         public void Update(double dt)
         {

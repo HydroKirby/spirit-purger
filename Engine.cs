@@ -146,6 +146,10 @@ namespace SpiritPurger
 
 			if (ReadOptions())
 				MainLoop(app);
+			else
+			{
+				// Produce default options and write that to the config.
+			}
         }
 
 		protected bool ReadOptions()
@@ -491,8 +495,8 @@ namespace SpiritPurger
                     if (player.TryShoot())
                     {
                         // The color (index) doesn't matter.
-                        Bullet bullet = new Bullet(0, 1, new Vector2f(
-                            player.Location.X - Bullet.RADII[1],
+                        Bullet bullet = new Bullet(4, new Vector2f(
+                            player.Location.X - 4,
                             player.Location.Y),
                             VectorLogic.AngleToVector(VectorLogic.Radians(270)),
                             9.0);
@@ -501,7 +505,7 @@ namespace SpiritPurger
                         playerBullets.Add(bullet);
                         bullet = new Bullet(bullet);
                         bullet.location.X = player.Location.X +
-                            Bullet.RADII[1];
+                            4;
                         bullet.Sprite = gameRenderer.GetCenterSprite(
                             "b_player");
                         playerBullets.Add(bullet);
@@ -742,7 +746,7 @@ namespace SpiritPurger
                                 // Show feedback of a graze with a hitspark.
                                 // The size index does not matter.
                                 Bullet h = new Bullet(GRAZE_SPARK_INDEX,
-                                    0, new Vector2f(bullet.location.X, bullet.location.Y),
+                                    new Vector2f(bullet.location.X, bullet.location.Y),
                                     VectorLogic.GetDirectionVector(
                                         bullet.location, player.Location),
                                     5.0);
@@ -792,7 +796,7 @@ namespace SpiritPurger
 								// Makes a hitspark shoot downwards at an angle
 								// between 210 and 330 degrees.
 								Bullet h = new Bullet(BULLSEYE_SPARK_INDEX,
-									0, new Vector2f(bullet.location.X,
+									new Vector2f(bullet.location.X,
 										boss.Location.Y + boss.Size.Y),
 									VectorLogic.AngleToVector(VectorLogic.Radians(
 										60.0 + rand.NextDouble() * 60.0)),
@@ -823,7 +827,7 @@ namespace SpiritPurger
                         // Make 2 hitsparks to show that the enemy was hit.
                         for (int k = 0; k < 2; k++)
                         {
-                            Bullet h = new Bullet(BULLSEYE_SPARK_INDEX, 0,
+                            Bullet h = new Bullet(BULLSEYE_SPARK_INDEX,
                                 new Vector2f(bullet.location.X,
                                     boss.Location.Y + boss.Size.Y),
                                 VectorLogic.AngleToVector(VectorLogic.Radians(

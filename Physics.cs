@@ -37,7 +37,7 @@ namespace SpiritPurger
 		/// <returns>True if they least touch each other.</returns>
 		public static bool Touches(Bullet b1, Bullet b2)
 		{
-			uint a = (b1.Radius + b2.Radius) * (b1.Radius + b2.Radius);
+			int a = (b1.Radius + b2.Radius) * (b1.Radius + b2.Radius);
 			double dx = b1.location.X - b2.location.X;
 			double dy = b1.location.Y - b2.location.Y;
 			return a > (dx * dx) + (dy * dy);

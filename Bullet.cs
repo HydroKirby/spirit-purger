@@ -5,21 +5,165 @@
  */
 
 using System;
+using System.Collections;
 using SFML.Window;
 using SFML.Graphics;
 
 namespace SpiritPurger
 {
+	public class BulletCreator
+	{
+		// Sprite sheets of images shared between all bullets.
+		protected ArrayList bulletImages;
+		// Stores distinct bullets based on radius, sprite, etc.
+		protected ArrayList bulletTypes;
+
+		public BulletCreator(Renderer renderer)
+		{
+			bulletImages = new ArrayList();
+			bulletTypes = new ArrayList();
+			LoadBulletImages(renderer);
+		}
+
+		/// <summary>
+		/// Makes all bullet images for the first time.
+		/// All images are put into the bulletImages array.
+		/// </summary>
+		private void LoadBulletImages(Renderer renderer)
+		{
+			string[] filenames = { "b_4.png", "b_8.png", "b_16.png" };
+			for (int i = 0; i < filenames.Length; ++i)
+			{
+				Texture spriteSheetImage = renderer.LoadImage(filenames[i]);
+				bulletImages.Add(spriteSheetImage);
+				// The images are vertically aligned.
+				// There should be 5 images per sheet.
+				int numSubImages = (int)(spriteSheetImage.Size.Y / spriteSheetImage.Size.X);
+				for (int j = 0; j < numSubImages; ++j)
+				{
+					// Width is the same as height for a square sub-image,
+					// so use the width as a height multiplier.
+					bulletTypes.Add(new BulletType(
+						// radius is half the width
+						(int)spriteSheetImage.Size.X / 2,
+						// image index is the last element in the array.
+						bulletImages.Count - 1,
+						// The subrect is x=0, y=offset_from_top, width, height(=width)
+						new IntRect(0, (int)spriteSheetImage.Size.X * j,
+							(int)spriteSheetImage.Size.X, (int)spriteSheetImage.Size.X)));
+				}
+			}
+		}
+
+		public CenterSprite MakeBulletSprite(int index)
+		{
+			BulletType type = (BulletType)bulletTypes[index];
+			return new CenterSprite((Texture)bulletImages[type.ImageIndex], type.SubRect);
+		}
+
+		public CenterSprite MakeBulletSprite(int sizeIndex, int colorIndex)
+		{
+			// This is a temporary function. Remove when colorIndex and sizeIndex
+			// are removed from the codebase entirely.
+			int index = sizeIndex * 5 + colorIndex;
+			return MakeBulletSprite(index);
+		}
+
+		protected Bullet MakeBullet(BulletType type)
+		{
+			int radius = type.Radius;
+			Bullet bullet = new Bullet(radius);
+			bullet.Sprite = new CenterSprite(
+				(Texture)bulletImages[type.ImageIndex], type.SubRect);
+			return bullet;
+		}
+
+		public Bullet MakeBullet(int index)
+		{
+			BulletType type = (BulletType)bulletTypes[index];
+			Bullet bullet = MakeBullet(type);
+			return bullet;
+		}
+
+		public Bullet MakeBullet(int index, Vector2f loc)
+		{
+			BulletType type = (BulletType)bulletTypes[index];
+			Bullet bullet = MakeBullet(type);
+			bullet.location = loc;
+			return bullet;
+		}
+
+		public Bullet MakeBullet(int index, Vector2f loc, Vector2f dir)
+		{
+			BulletType type = (BulletType)bulletTypes[index];
+			Bullet bullet = MakeBullet(type);
+			bullet.location = loc;
+			bullet.Direction = dir;
+			return bullet;
+		}
+
+		public Bullet MakeBullet(int index, Vector2f loc, Vector2f dir, double speed)
+		{
+			BulletType type = (BulletType)bulletTypes[index];
+			Bullet bullet = MakeBullet(type);
+			bullet.location = loc;
+			bullet.Direction = dir;
+			bullet.Speed = speed;
+			return bullet;
+		}
+
+		public Bullet MakeBullet(Bullet b)
+		{
+			Bullet bullet = new Bullet(b);
+			BulletType type = (BulletType)bulletTypes[b.typeID];
+			bullet.Sprite = new CenterSprite(
+				(Texture)bulletImages[type.ImageIndex], type.SubRect);
+			return bullet;
+		}
+
+		public Bullet MakeBullet(Bullet b, Vector2f dir)
+		{
+			Bullet bullet = MakeBullet(b);
+			bullet.Direction = dir;
+			return bullet;
+		}
+	}
+
+	public class BulletType
+	{
+		protected int radius;
+		// Index of the texture in the array of bullet sprite sheets.
+		protected int imageIndex;
+		// The sprite to take from the sprite sheet.
+		protected IntRect subRect;
+		protected bool rotates;
+
+		public BulletType(int radius, int imgIndex, IntRect rect)
+		{
+			imageIndex = imgIndex;
+			subRect = rect;
+			this.radius = radius;
+			rotates = false;
+		}
+
+		public int Radius { get { return radius; } }
+		public int ImageIndex { get { return imageIndex; } }
+		public IntRect SubRect { get { return subRect; } }
+		public bool Rotates
+		{
+			get { return rotates; }
+			set { rotates = value; }
+		}
+	}
+
 	public class Bullet {
 		public const uint LIFETIME_DEFAULT = 4000;
 		public const uint LIFETIME_PARTICLE = 5;
-		public static uint[] RADII = {2, 4, 8};
 		public enum BulletColors {Red, Orange, Green, Blue, Violet, EndColors};
 		// The program will load the different types of bullets and
 		// assign them typeIDs to differentiate the base types.
 		public int typeID = 0;
-		protected int sizeIndex = 0;
-		protected uint radius = 2;
+		protected int radius = 2;
 		public Vector2f location;
 		protected Vector2f direction;
 		protected double speed = 1.0;
@@ -43,24 +187,12 @@ namespace SpiritPurger
 			}
         }
 		
-		public int SizeIndex {
-			get { return sizeIndex; }
-			set {
-				if (value >= 0 && value <= RADII.Length) {
-					sizeIndex = value;
-					Radius = RADII[value];
-				} else if (radius == 0)
-					// It was not set before.
-					Radius = RADII[0];
-			}
-		}
-		
-		public uint Radius {
+		public int Radius {
 			get { return radius; }
 			set { radius = value; }
 		}
 		
-		public uint Diameter {
+		public int Diameter {
 			get { return radius + radius; }
 		}
 		
@@ -92,12 +224,41 @@ namespace SpiritPurger
 		
 		public Bullet() {
 			location = new Vector2f();
-			direction = new Vector2f(dx, dy);
+			Direction = new Vector2f(dx, dy);
+		}
+
+		public Bullet(int radius)
+		{
+			Radius = radius;
+			location = new Vector2f();
+			Direction = new Vector2f(dx, dy);
+		}
+
+		public Bullet(int radius, Vector2f loc)
+		{
+			Radius = radius;
+			location = new Vector2f(loc.X, loc.Y);
+			Direction = new Vector2f(dx, dy);
+		}
+
+		public Bullet(int radius, Vector2f loc, Vector2f dir)
+		{
+			Radius = radius;
+			location = new Vector2f(loc.X, loc.Y);
+			Direction = new Vector2f(dir.X, dir.Y);
+		}
+
+		public Bullet(int radius, Vector2f loc, Vector2f dir, double speed)
+		{
+			Radius = radius;
+			location = new Vector2f(loc.X, loc.Y);
+			Direction = new Vector2f(dir.X, dir.Y);
+			Speed = speed;
 		}
 		
+		/*
 		public Bullet(int colorIndex, int sizeIndex) {
 			this.typeID = colorIndex;
-			this.sizeIndex = sizeIndex;
 			location = new Vector2f();
 			Direction = new Vector2f(dx, dy);
 			Radius = RADII[sizeIndex];
@@ -129,10 +290,10 @@ namespace SpiritPurger
 			Radius = RADII[sizeIndex];
 			Speed = speed;
 		}
+		 * */
 		
 		public Bullet(Bullet bullet) {
 			typeID = bullet.typeID;
-			sizeIndex = bullet.sizeIndex;
 			location = new Vector2f(bullet.location.X, bullet.location.Y);
 			// Don't use the accessor Size - refresh dx/dy once with the
 			// assignment to Direction.
@@ -155,7 +316,6 @@ namespace SpiritPurger
 		/// <param name="direction">The new direction vector.</param>
 		public Bullet(Bullet bullet, Vector2f direction) {
 			typeID = bullet.typeID;
-			sizeIndex = bullet.sizeIndex;
 			location = new Vector2f(bullet.location.X, bullet.location.Y);
 			// Don't use the accessor Size - refresh dx/dy once with the
 			// assignment to Direction.
@@ -266,7 +426,7 @@ namespace SpiritPurger
 		public const int FULL_RADIUS = 100;
 		private static Vector2f SCALE_ONE = new Vector2f(1, 1);
 		
-		public Bomb(Vector2f pt) : base(0, 0, pt) {
+		public Bomb(Vector2f pt) : base(0, pt) {
 			lifetime = LIFETIME_ACTIVE;
 			dx = 0.0F;
 			dy = -2.0F;
@@ -278,7 +438,7 @@ namespace SpiritPurger
 			{
 				float scale = (float) (LIFETIME_ACTIVE - lifetime) / LIFETIME_GROWING;
 				sprite.Scale = SCALE_ONE * scale;
-				Radius = (uint)(scale * FULL_RADIUS);
+				Radius = (int)(scale * FULL_RADIUS);
 			}
 			else if (lifetime == LIFETIME_ACTIVE - LIFETIME_GROWING)
 			{
