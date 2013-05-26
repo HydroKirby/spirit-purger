@@ -1,5 +1,4 @@
 ﻿using System;
-using SFML.Audio;
 using SFML.Window;
 using SFML.Graphics;
 

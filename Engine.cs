@@ -81,6 +81,8 @@ namespace SpiritPurger
         protected bool beatThisPattern = true;
         protected bool paused = false;
         protected Player player = new Player();
+		// Stores all base types of bullets. Keep in memory.
+		protected ArrayList bulletTypes = new ArrayList();
         protected ArrayList enemies = new ArrayList();
         protected ArrayList enemyBullets = new ArrayList();
         protected ArrayList playerBullets = new ArrayList();
@@ -151,11 +153,11 @@ namespace SpiritPurger
 			return true;
 		}
 
-        /// <summary>
-        /// Sets the game into a before-main-gameplay state.
-        /// Use during the game start and after a Game Over.
-        /// </summary>
-        protected void Reset()
+		/// <summary>
+		/// Sets the game into a before-main-gameplay state.
+		/// Use during the game start and after a Game Over.
+		/// </summary>
+		protected void Reset()
         {
             player.Location = new Vector2f(Renderer.FIELD_WIDTH / 2,
 				Renderer.FIELD_WIDTH / 4 * 3);
@@ -492,7 +494,7 @@ namespace SpiritPurger
                         Bullet bullet = new Bullet(0, 1, new Vector2f(
                             player.Location.X - Bullet.RADII[1],
                             player.Location.Y),
-                            Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(270)),
+                            VectorLogic.AngleToVector(VectorLogic.Radians(270)),
                             9.0);
                         bullet.Sprite = gameRenderer.GetCenterSprite(
                             "b_player");
@@ -649,7 +651,7 @@ namespace SpiritPurger
                         }
 
                         Bullet enemyBullet = (Bullet)enemyBullets[i];
-                        if (!funBomb && Math.Abs(Vector2D.GetDistance(
+                        if (!funBomb && Math.Abs(VectorLogic.GetDistance(
                             enemyBullet.location, bombBlast.location)) <=
                             enemyBullet.Speed + 0.1)
                         {
@@ -662,9 +664,9 @@ namespace SpiritPurger
                         }
 
                         // Get the angles to compare.
-                        double towardBombAngle = Vector2D.GetDirection(
+                        double towardBombAngle = VectorLogic.GetDirection(
                             bombBlast.location, enemyBullet.location);
-                        double currentAngle = Vector2D.GetAngle(enemyBullet.Direction);
+                        double currentAngle = VectorLogic.GetAngle(enemyBullet.Direction);
 
                         // If the angle is far (more than 90 degrees), then
                         //   decrease the speed.
@@ -688,7 +690,7 @@ namespace SpiritPurger
 
                         // Alter the bullet's current trrajectory by a
                         //   maximum of 0.1 radians.
-                        enemyBullet.Direction = Vector2D.VectorFromAngle(
+                        enemyBullet.Direction = VectorLogic.AngleToVector(
                             currentAngle + Math.Max(-0.1, Math.Min(0.1,
                             towardBombAngle - currentAngle)));
                     }
@@ -733,7 +735,7 @@ namespace SpiritPurger
                                 // Make the bullet point directly away from
                                 // the player.
                                 bullet.Direction =
-                                    Vector2D.GetDirectionVector(
+                                    VectorLogic.GetDirectionVector(
                                     bullet.location, player.Location);
                             else
                             {
@@ -741,7 +743,7 @@ namespace SpiritPurger
                                 // The size index does not matter.
                                 Bullet h = new Bullet(GRAZE_SPARK_INDEX,
                                     0, new Vector2f(bullet.location.X, bullet.location.Y),
-                                    Vector2D.GetDirectionVector(
+                                    VectorLogic.GetDirectionVector(
                                         bullet.location, player.Location),
                                     5.0);
                                 h.Sprite = gameRenderer.GetCenterSprite(
@@ -792,7 +794,7 @@ namespace SpiritPurger
 								Bullet h = new Bullet(BULLSEYE_SPARK_INDEX,
 									0, new Vector2f(bullet.location.X,
 										boss.Location.Y + boss.Size.Y),
-									Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(
+									VectorLogic.AngleToVector(VectorLogic.Radians(
 										60.0 + rand.NextDouble() * 60.0)),
 									2.5);
 								h.Sprite = gameRenderer.GetCenterSprite(
@@ -824,7 +826,7 @@ namespace SpiritPurger
                             Bullet h = new Bullet(BULLSEYE_SPARK_INDEX, 0,
                                 new Vector2f(bullet.location.X,
                                     boss.Location.Y + boss.Size.Y),
-                                Vector2D.VectorFromAngle(Vector2D.DegreesToRadians(
+                                VectorLogic.AngleToVector(VectorLogic.Radians(
                                     60.0 + rand.NextDouble() * 60.0)), 2.5);
                             h.Sprite = gameRenderer.GetCenterSprite(
 								"spark_nailed_foe");

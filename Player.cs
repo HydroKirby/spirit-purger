@@ -300,7 +300,7 @@ namespace SpiritPurger {
             set
             {
                 direction = value;
-                Vector2D.Normalize(direction);
+                VectorLogic.Normalize(direction);
                 this.RefreshVelocity();
             }
         }
@@ -319,7 +319,7 @@ namespace SpiritPurger {
 
         protected void PointAt(Vector2f pt)
         {
-            direction = Vector2D.GetDirectionVector(pt, Location);
+            direction = VectorLogic.GetDirectionVector(pt, Location);
             RefreshVelocity();
         }
 
@@ -342,7 +342,7 @@ namespace SpiritPurger {
             health = fullHealth[currentPattern];
             moveStyle = MoveStyle.NoMove;
             if (startPoints[currentPattern].X != 0 && startPoints[currentPattern].Y != 0)
-                if (Math.Abs(Vector2D.GetDistance(
+                if (Math.Abs(VectorLogic.GetDistance(
                     startPoints[currentPattern], Location)) > 0.5)
                 {
                     // We're far from the desired point. Move there.
@@ -386,7 +386,7 @@ namespace SpiritPurger {
 				Location += new Vector2f((float)dx, (float)dy);
             }
 
-            if (Math.Abs(Vector2D.GetDistance(Location, aimFor)) <= 4.0)
+            if (Math.Abs(VectorLogic.GetDistance(Location, aimFor)) <= 4.0)
             {
                 moveStyle = MoveStyle.NoMove;
                 return true;
@@ -426,33 +426,29 @@ namespace SpiritPurger {
                 //   gradually move to the other side before restarting their
                 //   trajectory. This statement is hit 45 times.
                 //   45 updates * 2 is 90 degrees.
-                double baseDegree = Vector2D.DegreesToRadians(updateCount * 2);
+                double baseDegree = VectorLogic.Radians(updateCount * 2);
                 // Moves clockwise from 0 to 180 degrees.
                 Bullet b = new Bullet(3, 0, Location,
-                    Vector2D.VectorFromAngle(baseDegree), 1.5);
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                    VectorLogic.AngleToVector(baseDegree), 1.5);
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
 
                 // Moves clockwise from 180 to 0 degrees.
-                b = new Bullet(b, Vector2D.VectorFromAngle(baseDegree +
+                b = new Bullet(b, VectorLogic.AngleToVector(baseDegree +
                     Math.PI));
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
 
                 // Moves counter-clockwise from 180 to 0 degrees.
-                b = new Bullet(b, Vector2D.VectorFromAngle(baseDegree +
+                b = new Bullet(b, VectorLogic.AngleToVector(baseDegree +
                     Math.PI - 2 * baseDegree));
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
 
                 // Moves CCW from 0 to 180 degrees.
-                b = new Bullet(b, Vector2D.VectorFromAngle(baseDegree +
+                b = new Bullet(b, VectorLogic.AngleToVector(baseDegree +
                     Math.PI * 2 - 2 * baseDegree));
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
             }
             if ((updateCount >= 0 && updateCount <= 6) ||
@@ -461,12 +457,11 @@ namespace SpiritPurger {
             {
                 if (updateCount % 20 == 0)
                     // Store the angle towards the player in vard1.
-                    vard1 = Vector2D.GetDirection(playerPos, Location);
+                    vard1 = VectorLogic.GetDirection(playerPos, Location);
                 // Make a line of bullets aimed at the player.
                 Bullet b = new Bullet((int)Bullet.BulletColors.Orange, 1,
-                    Location, Vector2D.VectorFromAngle(vard1), 1.7);
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                    Location, VectorLogic.AngleToVector(vard1), 1.7);
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
                 if (updateCount % 10 == 3)
                 {
@@ -474,16 +469,16 @@ namespace SpiritPurger {
                     {
                         // Make 2 bullets aimed at the player's sides.
                         b = new Bullet(
-                            (int)Bullet.BulletColors.Red, 1, Location,
-                            Vector2D.VectorFromAngle(vard1 + Math.PI * angle), 2.0);
-                        b.Sprite = renderer.GetCenterSprite(
-                            renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                            //(int)Bullet.BulletColors.Red
+							4, 1, Location,
+                            VectorLogic.AngleToVector(vard1 + Math.PI * angle), 2.0);
+						b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                         bullets.Add(b);
                         b = new Bullet(
-                            (int)Bullet.BulletColors.Red, 1, Location,
-                            Vector2D.VectorFromAngle(vard1 - Math.PI * angle), 2.0);
-                        b.Sprite = renderer.GetCenterSprite(
-                            renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                            //(int)Bullet.BulletColors.Red
+							4, 1, Location,
+                            VectorLogic.AngleToVector(vard1 - Math.PI * angle), 2.0);
+						b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                         bullets.Add(b);
                     }
                 }
@@ -509,12 +504,11 @@ namespace SpiritPurger {
                 // Makes as many bullets in a row until the updateCount is
                 // refreshed to 1.
                 if (updateCount == 30)
-                    varv1 = Vector2D.GetDirectionVector(playerPos, Location);
+                    varv1 = VectorLogic.GetDirectionVector(playerPos, Location);
                 Bullet b = new Bullet(
                     (int)Bullet.BulletColors.EndColors - 1, 2, Location,
                     varv1, 3.0);
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
             }
             if (updateCount % 5.0 == 0.0)
@@ -523,14 +517,13 @@ namespace SpiritPurger {
                 for (int i = 0; i < 6; i++)
                 {
                     Bullet b = new Bullet(
-                        rand.Next((int)Bullet.BulletColors.EndColors - 2),
+                        (int)rand.Next((int)Bullet.BulletColors.EndColors - 2),
                         1, Location);
                     b.Speed = 1.0 + rand.NextDouble() * 1.5;
-                    b.Direction = Vector2D.VectorFromAngle(
-                        Vector2D.DegreesToRadians(rand.Next(360)));
+                    b.Direction = VectorLogic.AngleToVector(
+                        VectorLogic.Radians(rand.Next(360)));
                     b.RefreshVelocity();
-                    b.Sprite = renderer.GetCenterSprite(
-                        renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+					b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                     bullets.Add(b);
                 }
             }
@@ -575,71 +568,65 @@ namespace SpiritPurger {
                 // progressively moves from clockwise.
                 // Note: 90 is 1/4th of a full 360 degrees. 9 is 90/10.
                 //   This area will be executed about 10 times.
-                double baseRadian = Vector2D.DegreesToRadians(
+                double baseRadian = VectorLogic.Radians(
                     updateCount / 4.0 * 9.0);
                 Bullet b = new Bullet((int)Bullet.BulletColors.Orange, 1,
-                    Location, Vector2D.VectorFromAngle(baseRadian), 2.0);
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                    Location, VectorLogic.AngleToVector(baseRadian), 2.0);
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
                 // Add 90 degrees.
-                b = new Bullet(b, Vector2D.VectorFromAngle(baseRadian -
+                b = new Bullet(b, VectorLogic.AngleToVector(baseRadian -
                     Math.PI / 2.0));
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
                 // Add 180 degrees.
-                b = new Bullet(b, Vector2D.VectorFromAngle(baseRadian - Math.PI));
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                b = new Bullet(b, VectorLogic.AngleToVector(baseRadian - Math.PI));
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
                 // Add 270 degrees.
-                b = new Bullet(b, Vector2D.VectorFromAngle(baseRadian +
+                b = new Bullet(b, VectorLogic.AngleToVector(baseRadian +
                     Math.PI / 2.0));
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
             }
             else if (updateCount == 40)
             {
-                double towardsPlayer = Vector2D.GetDirection(playerPos,
+                double towardsPlayer = VectorLogic.GetDirection(playerPos,
                                                              Location);
                 // Make a ring of 10 bullets. One bullet is aimed at the player.
                 for (int i = 0; i < 11; i++)
                 {
-					Vector2f v = Vector2D.VectorFromAngle(towardsPlayer + Vector2D.DegreesToRadians(i / 10.0 * 360));
+					Vector2f v = VectorLogic.AngleToVector(towardsPlayer +
+						VectorLogic.Radians(i / 10.0 * 360));
                     Bullet b = new Bullet(
                         (int)Bullet.BulletColors.Green, 2, Location,
                         v,
                         3.0F);
-                    b.Sprite = renderer.GetCenterSprite(
-                        renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+					b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                     bullets.Add(b);
                 }
             }
             else if (updateCount >= 45 && updateCount % 4 == 0)
             {
-                double towardsPlayer = Vector2D.GetDirection(
+                double towardsPlayer = VectorLogic.GetDirection(
 					playerPos, Location);
 				// Make 2 bullets aimed adjacent to the player. They both
                 // miss by 30 degrees on each side.
 				double offsetedAngle = towardsPlayer +
-					Vector2D.DegreesToRadians(15);
-				Vector2f offsetedVector = Vector2D.VectorFromAngle(offsetedAngle);
+					VectorLogic.Radians(15);
+				Vector2f offsetedVector = VectorLogic.AngleToVector(offsetedAngle);
                 Bullet b = new Bullet(
                     (int)Bullet.BulletColors.Violet, 1, Location,
                     offsetedVector, 3.0);
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
 
 				offsetedAngle = towardsPlayer -
-					Vector2D.DegreesToRadians(15);
-				offsetedVector = Vector2D.VectorFromAngle(offsetedAngle);
+					VectorLogic.Radians(15);
+				offsetedVector = VectorLogic.AngleToVector(offsetedAngle);
                 b = new Bullet(b, offsetedVector);
 				b.Speed = 3.0;
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
             }
             else if (updateCount >= 60)
@@ -681,23 +668,21 @@ namespace SpiritPurger {
                         angle = Math.PI * 0.75; break;
                     case 2:
                     default: // Aimed at the player.
-                        angle = Vector2D.GetDirection(playerPos, Location);
+                        angle = VectorLogic.GetDirection(playerPos, Location);
                         break;
                 }
                 for (int i = 1; i <= 3; i++)
                 {
                     // vari1 types 0 and 1 have colorIndex 0.
                     // vari1 type 2 has a colorIndex of 1.
-                    Bullet b = new Bullet(Math.Max(vari1 - 1, 0), 1,
-                        Location, Vector2D.VectorFromAngle(angle), i + 0.5);
-                    b.Sprite = renderer.GetCenterSprite(
-                        renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                    Bullet b = new Bullet((int)Math.Max(vari1 - 1, 0), 1,
+                        Location, VectorLogic.AngleToVector(angle), i + 0.5);
+					b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                     bullets.Add(b);
                     // Make a small trailing bullet.
-                    b = new Bullet(Math.Max(vari1 - 1, 0), 0,
-                        Location, Vector2D.VectorFromAngle(angle), i + 1);
-                    b.Sprite = renderer.GetCenterSprite(
-                        renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+					b = new Bullet((int)Math.Max(vari1 - 1, 0), 0,
+                        Location, VectorLogic.AngleToVector(angle), i + 1);
+					b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                     bullets.Add(b);
                 }
                 if (vari1 < 2)
@@ -706,14 +691,12 @@ namespace SpiritPurger {
                     for (int i = 2; i < 5; i++)
                     {
                         Bullet b = new Bullet(0, 1, Location,
-                            Vector2D.VectorFromAngle(angle + Math.PI), i);
-                        b.Sprite = renderer.GetCenterSprite(
-                            renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                            VectorLogic.AngleToVector(angle + Math.PI), i);
+						b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                         bullets.Add(b);
                         b = new Bullet(0, 0, Location,
-                            Vector2D.VectorFromAngle(angle + Math.PI), i - 0.5);
-                        b.Sprite = renderer.GetCenterSprite(
-                            renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                            VectorLogic.AngleToVector(angle + Math.PI), i - 0.5);
+						b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                         bullets.Add(b);
                     }
                 vari1++;
@@ -727,24 +710,20 @@ namespace SpiritPurger {
                 // Shoot a cross of bullets - something to tease the player
                 //   into grazing.
                 Bullet b = new Bullet((int)Bullet.BulletColors.Violet, 0,
-                    Location, Vector2D.VectorFromAngle(0), 1.5);
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                    Location, VectorLogic.AngleToVector(0), 1.5);
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
                 // Aimed down.
-                b = new Bullet(b, Vector2D.VectorFromAngle(Math.PI / 2.0));
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                b = new Bullet(b, VectorLogic.AngleToVector(Math.PI / 2.0));
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
                 // Aimed right.
-                b = new Bullet(b, Vector2D.VectorFromAngle(Math.PI));
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                b = new Bullet(b, VectorLogic.AngleToVector(Math.PI));
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
                 // Aimed up.
-                b = new Bullet(b, Vector2D.VectorFromAngle(Math.PI * 1.5));
-                b.Sprite = renderer.GetCenterSprite(
-                    renderer.bulletImages[b.SizeIndex][b.colorIndex]);
+                b = new Bullet(b, VectorLogic.AngleToVector(Math.PI * 1.5));
+				b.Sprite = renderer.MakeBulletSprite(b.SizeIndex, b.typeID);
                 bullets.Add(b);
             }
 

@@ -1,7 +1,6 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using SFML.Audio;
 using SFML.Window;
 using SFML.Graphics;
@@ -19,6 +18,14 @@ namespace SpiritPurger
 			Texture = img;
 			Origin = new Vector2f(Texture.Size.X * 0.5F,
 				Texture.Size.Y * 0.5F);
+		}
+
+		public CenterSprite(Texture img, IntRect subRect)
+		{
+			Texture = img;
+			TextureRect = subRect;
+			Origin = new Vector2f(subRect.Width * 0.5F,
+				subRect.Height * 0.5F);
 		}
 
 		public void setPosition(Vector2f v)
@@ -198,6 +205,19 @@ namespace SpiritPurger
 
 	public class GameRenderer : Renderer
 	{
+		// Connects sprite sheets of bullets to sprites.
+		class SubTexture
+		{
+			public int imageIndex;
+			public IntRect subRect;
+
+			public SubTexture(int idx, IntRect rect)
+			{
+				imageIndex = idx;
+				subRect = rect;
+			}
+		}
+
         // Refers to when a boss pattern has completed. It's the time to wait
         // until initiating the next pattern.
         public const int PATTERN_TRANSITION_PAUSE = 80;
@@ -248,9 +268,10 @@ namespace SpiritPurger
 			"spark_nailed_foe",
 			"bomb",
 		};
-		// This variable holds the images shared between all bullets. It's
-		//   organized by [color_code][size_index].
-		public Texture[][] bulletImages;
+		// Sprite sheets of images shared between all bullets.
+		public ArrayList bulletImages;
+		// Lets bulletImages be seen as separate images instead of a sprite sheet.
+		public ArrayList subTextures;
 
 		// Game Sprites. Let the objects have (not own) the sprites so that
 		// the objects can request drawing, swapping, and alterations of sprites.
@@ -262,7 +283,9 @@ namespace SpiritPurger
 			commonTextColor = Color.Black;
 
 			// Create images.
-			MakeBulletImages();
+			bulletImages = new ArrayList();
+			subTextures = new ArrayList();
+			LoadBulletImages();
 
 			textures = new Dictionary<string, Texture>(StringComparer.Ordinal);
 			foreach (string filename in PNG_FILENAMES)
@@ -424,8 +447,27 @@ namespace SpiritPurger
 		/// Makes all bullet images for the first time.
 		/// All images are put into the bulletImages array.
 		/// </summary>
-		public void MakeBulletImages()
+		public void LoadBulletImages()
 		{
+			string[] filenames = { "b_4.png", "b_8.png", "b_16.png" };
+			for (int i = 0; i < filenames.Length; ++i)
+			{
+				Texture spriteSheetImage = LoadImage(filenames[i]);
+				bulletImages.Add(spriteSheetImage);
+				// The images are vertically aligned.
+				// There should be 5 images per sheet.
+				int numSubImages = (int)(spriteSheetImage.Size.Y / spriteSheetImage.Size.X);
+				for (int j = 0; j < numSubImages; ++j)
+				{
+					// Width is the same as height for a square sub-image,
+					// so use the width as a height multiplier.
+					subTextures.Add(new SubTexture(bulletImages.Count - 1,
+						new IntRect(0, (int)spriteSheetImage.Size.X * j,
+							(int)spriteSheetImage.Size.X, (int)spriteSheetImage.Size.X)));
+				}
+			}
+
+			/*
 			bulletImages = new Texture[Bullet.RADII.Length][];
 			for (int atSize = 0; atSize < Bullet.RADII.Length; atSize++)
 			{
@@ -439,6 +481,21 @@ namespace SpiritPurger
 						Bullet.GetColorByName(color) + ".png");
 				}
 			}
+			 */
+		}
+
+		public CenterSprite MakeBulletSprite(int index)
+		{
+			SubTexture tex = (SubTexture)subTextures[index];
+			return new CenterSprite((Texture)bulletImages[tex.imageIndex], tex.subRect);
+		}
+
+		public CenterSprite MakeBulletSprite(int sizeIndex, int colorIndex)
+		{
+			// This is a temporary function. Remove when colorIndex and sizeIndex
+			// are removed from the codebase entirely.
+			int index = sizeIndex * 5 + colorIndex;
+			return MakeBulletSprite(index);
 		}
 
         public void Update(double dt)

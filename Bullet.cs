@@ -1,12 +1,7 @@
 /*
- * Larry Resnik          Pgm 9-1           Game (Shmup)
+ * Larry Resnik
  * 
- * Created by SharpDevelop.
- * SharpDevelop Version : 3.0.0.3800
- * .NET Version         : 2.0.50727.4200
- * 
- * Date: 12/10/2009
- * Time: 6:46 PM
+ * Since: 12/10/2009
  */
 
 using System;
@@ -20,9 +15,9 @@ namespace SpiritPurger
 		public const uint LIFETIME_PARTICLE = 5;
 		public static uint[] RADII = {2, 4, 8};
 		public enum BulletColors {Red, Orange, Green, Blue, Violet, EndColors};
-		// The index offset in the array of pre-generated images with which
-		// this bullet's graphics will correspond to.
-		public int colorIndex = 0;
+		// The program will load the different types of bullets and
+		// assign them typeIDs to differentiate the base types.
+		public int typeID = 0;
 		protected int sizeIndex = 0;
 		protected uint radius = 2;
 		public Vector2f location;
@@ -73,7 +68,7 @@ namespace SpiritPurger
 			get { return direction; }
 			set {
 				direction = value;
-                Vector2D.Normalize(direction);
+                VectorLogic.Normalize(direction);
 				this.RefreshVelocity();
 			}
 		}
@@ -101,7 +96,7 @@ namespace SpiritPurger
 		}
 		
 		public Bullet(int colorIndex, int sizeIndex) {
-			this.colorIndex = colorIndex;
+			this.typeID = colorIndex;
 			this.sizeIndex = sizeIndex;
 			location = new Vector2f();
 			Direction = new Vector2f(dx, dy);
@@ -109,7 +104,7 @@ namespace SpiritPurger
 		}
 		
 		public Bullet(int colorIndex, int sizeIndex, Vector2f location) {
-			this.colorIndex = colorIndex;
+			this.typeID = colorIndex;
 			this.sizeIndex = sizeIndex;
 			this.location = new Vector2f(location.X, location.Y);
 			Direction = new Vector2f(dx, dy);
@@ -118,7 +113,7 @@ namespace SpiritPurger
 		
 		public Bullet(int colorIndex, int sizeIndex, Vector2f location,
 		              Vector2f direction) {
-			this.colorIndex = colorIndex;
+			this.typeID = colorIndex;
 			this.sizeIndex = sizeIndex;
 			this.location = new Vector2f(location.X, location.Y);
 			Direction = new Vector2f(direction.X, direction.Y);
@@ -127,7 +122,7 @@ namespace SpiritPurger
 		
 		public Bullet(int colorIndex, int sizeIndex, Vector2f location,
 		              Vector2f direction, double speed) {
-			this.colorIndex = colorIndex;
+			this.typeID = colorIndex;
 			this.sizeIndex = sizeIndex;
             this.location = new Vector2f(location.X, location.Y);
             Direction = new Vector2f(direction.X, direction.Y);
@@ -136,7 +131,7 @@ namespace SpiritPurger
 		}
 		
 		public Bullet(Bullet bullet) {
-			colorIndex = bullet.colorIndex;
+			typeID = bullet.typeID;
 			sizeIndex = bullet.sizeIndex;
 			location = new Vector2f(bullet.location.X, bullet.location.Y);
 			// Don't use the accessor Size - refresh dx/dy once with the
@@ -159,7 +154,7 @@ namespace SpiritPurger
 		/// <param name="bullet">The Bullet to mirror.</param>
 		/// <param name="direction">The new direction vector.</param>
 		public Bullet(Bullet bullet, Vector2f direction) {
-			colorIndex = bullet.colorIndex;
+			typeID = bullet.typeID;
 			sizeIndex = bullet.sizeIndex;
 			location = new Vector2f(bullet.location.X, bullet.location.Y);
 			// Don't use the accessor Size - refresh dx/dy once with the
