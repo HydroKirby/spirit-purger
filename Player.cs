@@ -125,12 +125,13 @@ namespace SpiritPurger {
 			}
 		}
 
-		public Player()
+		public Player(Hitbox hitbox)
 		{
 			_state = STATE.REVIVING;
 			// Do not use the base class' constructor because hitbox
 			// must be initialized to set Player's Location.
-			hitbox = new Hitbox();
+			this.hitbox = hitbox;
+			hitBoxSprite = hitbox.Sprite;
 			Location = new Vector2f(0, 0);
 			Size = new Vector2u(20, 20);
 		}
@@ -235,12 +236,10 @@ namespace SpiritPurger {
         // Ideally, I imagine the next 4 parameters would be in a single
         // script or structure because they each relate to a pattern.
         // This is how much health the boss has during a pattern.
-        //public static int[] fullHealth = { 400, 500, 350, 350 };
 		public static int[] fullHealth = { 400, 500, 350, 350 };
         // This is where the boss begins firing from. If the boss is not in
         // this point when the pattern begins, the boss rushes to there.
         // If the point is null, then the boss keeps its position.
-        // Note: The app window is 290x290.
         public static Vector2f[] startPoints = {
 			new Vector2f(145.0F, 72.5F),
 			new Vector2f(145.0F, 120.0F),

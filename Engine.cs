@@ -40,9 +40,6 @@ namespace SpiritPurger
         // Refers to when a boss pattern has completed. It's the time to wait
         // until initiating the next pattern.
         public const int PATTERN_TRANSITION_PAUSE = 80;
-        // Replaces the color index for hitsparks.
-        public const int GRAZE_SPARK_INDEX = 0;
-        public const int BULLSEYE_SPARK_INDEX = 1;
         // The time to wait before the boss begins the intro sequence.
         public const int BOSS_PRE_INTRO_FRAMES = 20;
         // The time to wait during the boss' fade-in sequence.
@@ -80,7 +77,7 @@ namespace SpiritPurger
         // Gives points when true. Becomes false if the players dies or bombs.
         protected bool beatThisPattern = true;
         protected bool paused = false;
-        protected Player player = new Player();
+        protected Player player;
 		// Stores all base types of bullets. Keep in memory.
 		protected ArrayList bulletTypes = new ArrayList();
         protected ArrayList enemies = new ArrayList();
@@ -95,6 +92,7 @@ namespace SpiritPurger
         protected double appScale = 1.0;
 
         // Current-game variables.
+		protected BulletCreator bulletCreator;
         // This is the number of seconds left to complete a pattern.
         protected int patternTime = 0;
         // During a timed boss pattern, this is the milliseconds accumulated
@@ -126,15 +124,17 @@ namespace SpiritPurger
 			renderer = new Renderer();
             menuRenderer = new MenuRenderer();
 			gameRenderer = new GameRenderer();
+			bulletCreator = new BulletCreator(gameRenderer);
 
 			// Assign sprites.
+			player = new Player(new Hitbox(bulletCreator.GetSprite(15), 2, new Vector2f(),
+				new Vector2f(), 0.0));
 			player.SetImage(gameRenderer.GetCenterSprite("p_fly"));
-			player.SetHitboxSprite(gameRenderer.GetCenterSprite("hitbox"));
 			player.UpdateDisplayPos();
 			boss.SetImage(gameRenderer.GetCenterSprite("boss_fly"));
 			boss.UpdateDisplayPos();
-			bombBlast = new Bomb(new Vector2f(0, 0));
-			bombBlast.Sprite = gameRenderer.GetCenterSprite("bomb");
+			bombBlast = new Bomb(bulletCreator.GetSprite(16), 0, new Vector2f(),
+				new Vector2f(), 0.0);
 
             // Prepare the game to be run.
             Reset();
@@ -494,20 +494,18 @@ namespace SpiritPurger
                 {
                     if (player.TryShoot())
                     {
+						BulletProp prop = new BulletProp(19, new Vector2f(
+							player.Location.X - 4,
+							player.Location.Y),
+							VectorLogic.AngleToVector(VectorLogic.Radians(270)),
+							9.0);
                         // The color (index) doesn't matter.
-                        Bullet bullet = new Bullet(4, new Vector2f(
-                            player.Location.X - 4,
-                            player.Location.Y),
-                            VectorLogic.AngleToVector(VectorLogic.Radians(270)),
-                            9.0);
-                        bullet.Sprite = gameRenderer.GetCenterSprite(
-                            "b_player");
+                        Bullet bullet = bulletCreator.MakeBullet(prop);
                         playerBullets.Add(bullet);
-                        bullet = new Bullet(bullet);
-                        bullet.location.X = player.Location.X +
-                            4;
-                        bullet.Sprite = gameRenderer.GetCenterSprite(
-                            "b_player");
+						prop.Renew();
+                        prop.Location = new Vector2f(player.Location.X +
+                            4, prop.Location.Y);
+						bullet = bulletCreator.MakeBullet(prop);
                         playerBullets.Add(bullet);
                     }
                 }
@@ -548,7 +546,7 @@ namespace SpiritPurger
                     break;
                 enemy.Update(out newBullets, player.Location, rand);
 				foreach (BulletProp b in newBullets)
-					enemyBullets.Add(gameRenderer.MakeBullet(b));
+					enemyBullets.Add(bulletCreator.MakeBullet(b));
 				newBullets.Clear();
                 if (player.invincibleCountdown <= 0 && !godMode &&
 					lives >= 0 && Physics.Touches(player, enemy))
@@ -574,7 +572,7 @@ namespace SpiritPurger
                     // Increment the time the boss is in its pattern.
 					boss.Update(out newBullets, player.Location, rand);
 					foreach (BulletProp b in newBullets)
-						enemyBullets.Add(gameRenderer.MakeBullet(b));
+						enemyBullets.Add(bulletCreator.MakeBullet(b));
 					newBullets.Clear();
                 }
                 else
@@ -752,13 +750,11 @@ namespace SpiritPurger
                             {
                                 // Show feedback of a graze with a hitspark.
                                 // The size index does not matter.
-                                Bullet h = new Bullet(GRAZE_SPARK_INDEX,
+                                Bullet h = bulletCreator.MakeBullet(new BulletProp(17,
                                     new Vector2f(bullet.location.X, bullet.location.Y),
                                     VectorLogic.GetDirectionVector(
                                         bullet.location, player.Location),
-                                    5.0);
-                                h.Sprite = gameRenderer.GetCenterSprite(
-                                    "spark_graze");
+                                    5.0));
 								h.Lifetime = Bullet.LIFETIME_PARTICLE;
                                 hitSparks.Add(h);
                                 score += 50;
@@ -802,14 +798,12 @@ namespace SpiritPurger
 							{
 								// Makes a hitspark shoot downwards at an angle
 								// between 210 and 330 degrees.
-								Bullet h = new Bullet(BULLSEYE_SPARK_INDEX,
+								Bullet h = bulletCreator.MakeBullet(new BulletProp(18,
 									new Vector2f(bullet.location.X,
 										boss.Location.Y + boss.Size.Y),
 									VectorLogic.AngleToVector(VectorLogic.Radians(
 										60.0 + rand.NextDouble() * 60.0)),
-									2.5);
-								h.Sprite = gameRenderer.GetCenterSprite(
-									"spark_nailed_foe");
+									2.5));
 								h.Lifetime = Bullet.LIFETIME_PARTICLE;
 								hitSparks.Add(h);
 							}
@@ -834,13 +828,11 @@ namespace SpiritPurger
                         // Make 2 hitsparks to show that the enemy was hit.
                         for (int k = 0; k < 2; k++)
                         {
-                            Bullet h = new Bullet(BULLSEYE_SPARK_INDEX,
+                            Bullet h = bulletCreator.MakeBullet(new BulletProp(18,
                                 new Vector2f(bullet.location.X,
                                     boss.Location.Y + boss.Size.Y),
                                 VectorLogic.AngleToVector(VectorLogic.Radians(
-                                    60.0 + rand.NextDouble() * 60.0)), 2.5);
-                            h.Sprite = gameRenderer.GetCenterSprite(
-								"spark_nailed_foe");
+                                    60.0 + rand.NextDouble() * 60.0)), 2.5));
 							h.Lifetime = Bullet.LIFETIME_PARTICLE;
                             hitSparks.Add(h);
                         }

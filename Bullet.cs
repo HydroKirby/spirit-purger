@@ -31,10 +31,20 @@ namespace SpiritPurger
 		/// </summary>
 		private void LoadBulletImages(Renderer renderer)
 		{
-			string[] filenames = { "b_4.png", "b_8.png", "b_16.png" };
+			string[] filenames =
+			{
+				"b_4", // Indexes 0-4
+				"b_8", // 5-9
+				"b_16", // 10-14
+				"hitbox", // 15
+				"bomb", // 16
+				"spark_graze", // 17
+				"spark_nailed_foe", // 18
+				"b_player" // 19
+			};
 			for (int i = 0; i < filenames.Length; ++i)
 			{
-				Texture spriteSheetImage = renderer.LoadImage(filenames[i]);
+				Texture spriteSheetImage = renderer.LoadImage(filenames[i] + ".png");
 				bulletImages.Add(spriteSheetImage);
 				// The images are vertically aligned.
 				// There should be 5 images per sheet.
@@ -58,10 +68,20 @@ namespace SpiritPurger
 		public Bullet MakeBullet(BulletProp b)
 		{
 			BulletType type = (BulletType)bulletTypes[b.typeID];
-			return new Bullet( new CenterSprite(
-				(Texture)bulletImages[type.ImageIndex], type.SubRect),
+			return new Bullet(GetSprite(type),
 				type.Radius, b.Location,
 				b.Direction, b.Speed);
+		}
+
+		public CenterSprite GetSprite(int typeID)
+		{
+			return GetSprite((BulletType)bulletTypes[typeID]);
+		}
+
+		public CenterSprite GetSprite(BulletType type)
+		{
+			return new CenterSprite(
+				(Texture)bulletImages[type.ImageIndex], type.SubRect);
 		}
 	}
 
@@ -249,6 +269,7 @@ namespace SpiritPurger
 			set { lifetime = value; }
 		}
 		
+		/*
 		public Bullet() {
 			location = new Vector2f();
 			Direction = new Vector2f(dx, dy);
@@ -294,6 +315,26 @@ namespace SpiritPurger
 		}
 
 		// Note: This is the master constructor which is the only one to use.
+		
+
+		/// <summary>
+		/// Makes a copy of the passed Bullet, but uses the passed direction
+		/// vector instead of the passed Bullet's direction vector.
+		/// </summary>
+		/// <param name="bullet">The Bullet to mirror.</param>
+		/// <param name="direction">The new direction vector.</param>
+		public Bullet(Bullet bullet, Vector2f direction)
+		{
+			typeID = bullet.typeID;
+			location = new Vector2f(bullet.location.X, bullet.location.Y);
+			// Don't use the accessor Size - refresh dx/dy once with the
+			// assignment to Direction.
+			speed = bullet.speed;
+			Direction = new Vector2f(direction.X, direction.Y);
+			Radius = bullet.radius;
+		}
+		*/
+
 		public Bullet(CenterSprite sprite, int radius, Vector2f loc,
 			Vector2f dir, double speed)
 		{
@@ -304,26 +345,10 @@ namespace SpiritPurger
 			Speed = speed;
 		}
 
-        ~Bullet()
-        {
-            if (sprite != null)
-                sprite.Dispose();
-        }
-		
-		/// <summary>
-		/// Makes a copy of the passed Bullet, but uses the passed direction
-		/// vector instead of the passed Bullet's direction vector.
-		/// </summary>
-		/// <param name="bullet">The Bullet to mirror.</param>
-		/// <param name="direction">The new direction vector.</param>
-		public Bullet(Bullet bullet, Vector2f direction) {
-			typeID = bullet.typeID;
-			location = new Vector2f(bullet.location.X, bullet.location.Y);
-			// Don't use the accessor Size - refresh dx/dy once with the
-			// assignment to Direction.
-			speed = bullet.speed;
-			Direction = new Vector2f(direction.X, direction.Y);
-			Radius = bullet.radius;
+		~Bullet()
+		{
+			if (sprite != null)
+				sprite.Dispose();
 		}
 		
 		/// <summary>
@@ -378,10 +403,10 @@ namespace SpiritPurger
 
 	public class Hitbox : Bullet
 	{
-		public Hitbox()
-		{
-			radius = 2;
-		}
+		public Hitbox(CenterSprite sprite, int radius, Vector2f loc,
+			Vector2f dir, double speed)
+			: base(sprite, radius, loc, dir, speed)
+		{ }
 	}
 
 	public class Bomb : Bullet {
@@ -392,8 +417,11 @@ namespace SpiritPurger
 		// At full size, this is the bomb's radius.
 		public const int FULL_RADIUS = 100;
 		private static Vector2f SCALE_ONE = new Vector2f(1, 1);
-		
-		public Bomb(Vector2f pt) : base(0, pt) {
+
+		public Bomb(CenterSprite sprite, int radius, Vector2f loc,
+			Vector2f dir, double speed)
+			: base(sprite, radius, loc, dir, speed)
+		{
 			lifetime = LIFETIME_ACTIVE;
 			dx = 0.0F;
 			dy = -2.0F;
@@ -426,31 +454,5 @@ namespace SpiritPurger
 			lifetime = LIFETIME_ACTIVE;
 			dy = -2.0F;
 		}
-		
-        /*
-		public void Draw(Graphics g) {
-			// Fade from yellow to green a tiny bit during full expansion.
-			// This formula circulates every 10 frames. It changes yellow color
-			// to green in increments of 2 between the values 230 and 210.
-			
-			int val = 230;
-			if (lifetime > GROW_FRAMES) {
-				// This is the ones-digit of lifetime.
-				int framePortion = (int) (lifetime % 10);
-				if (framePortion <= 5)
-					// Fade-out gradually.
-					val -= framePortion * 2;
-				else
-					// Fade-in gradually. num + max - 2 * num is a formula that
-					// makes smaller output as num gets bigger.
-					val -= (framePortion + 2 - 2 * framePortion) * 2;
-			}
-			SolidBrush solidBrush;
-			solidBrush = new SolidBrush(Color.FromArgb(150, val, 230, 0));
-			g.FillEllipse(solidBrush, (int) location.X - radius,
-				(int) location.Y - radius, radius + radius, radius + radius);
-			solidBrush.Dispose();
-		}
-         */
 	}
 }

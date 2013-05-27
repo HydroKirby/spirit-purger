@@ -249,14 +249,8 @@ namespace SpiritPurger
 			"border",
 			"p_fly",
 			"boss_fly",
-			"b_player",
-			"hitbox",
-			"spark_graze",
-			"spark_nailed_foe",
-			"bomb",
 		};
-		protected BulletCreator bulletCreator;
-
+		
 		// Game Sprites. Let the objects have (not own) the sprites so that
 		// the objects can request drawing, swapping, and alterations of sprites.
 		public Sprite bgSprite;
@@ -267,8 +261,6 @@ namespace SpiritPurger
 			commonTextColor = Color.Black;
 
 			// Create images.
-			bulletCreator = new BulletCreator(this);
-
 			textures = new Dictionary<string, Texture>(StringComparer.Ordinal);
 			foreach (string filename in PNG_FILENAMES)
 				textures.Add(filename, LoadImage(filename + ".png"));
@@ -425,12 +417,7 @@ namespace SpiritPurger
             labelPatternResult.Position = labelPatternResultPos;
         }
 
-		public Bullet MakeBullet(BulletProp b)
-		{
-			return bulletCreator.MakeBullet(b);
-		}
-
-        public void Update(double dt)
+		public void Update(double dt)
         {
             timeLeftToShowPatternResult--;
             if (timeLeftToShowPatternResult < 0)
