@@ -55,71 +55,6 @@ namespace SpiritPurger
 			}
 		}
 
-		public CenterSprite MakeBulletSprite(int index)
-		{
-			BulletType type = (BulletType)bulletTypes[index];
-			return new CenterSprite((Texture)bulletImages[type.ImageIndex], type.SubRect);
-		}
-
-		protected Bullet MakeBullet(BulletType type)
-		{
-			int radius = type.Radius;
-			Bullet bullet = new Bullet(radius);
-			bullet.Sprite = new CenterSprite(
-				(Texture)bulletImages[type.ImageIndex], type.SubRect);
-			return bullet;
-		}
-
-		public Bullet MakeBullet(int index)
-		{
-			BulletType type = (BulletType)bulletTypes[index];
-			Bullet bullet = MakeBullet(type);
-			return bullet;
-		}
-
-		public Bullet MakeBullet(int index, Vector2f loc)
-		{
-			BulletType type = (BulletType)bulletTypes[index];
-			Bullet bullet = MakeBullet(type);
-			bullet.location = loc;
-			return bullet;
-		}
-
-		public Bullet MakeBullet(int index, Vector2f loc, Vector2f dir)
-		{
-			BulletType type = (BulletType)bulletTypes[index];
-			Bullet bullet = MakeBullet(type);
-			bullet.location = loc;
-			bullet.Direction = dir;
-			return bullet;
-		}
-
-		public Bullet MakeBullet(int index, Vector2f loc, Vector2f dir, double speed)
-		{
-			BulletType type = (BulletType)bulletTypes[index];
-			Bullet bullet = MakeBullet(type);
-			bullet.location = loc;
-			bullet.Direction = dir;
-			bullet.Speed = speed;
-			return bullet;
-		}
-
-		public Bullet MakeBullet(Bullet b)
-		{
-			Bullet bullet = new Bullet(b);
-			BulletType type = (BulletType)bulletTypes[b.typeID];
-			bullet.Sprite = new CenterSprite(
-				(Texture)bulletImages[type.ImageIndex], type.SubRect);
-			return bullet;
-		}
-
-		public Bullet MakeBullet(Bullet b, Vector2f dir)
-		{
-			Bullet bullet = MakeBullet(b);
-			bullet.Direction = dir;
-			return bullet;
-		}
-
 		public Bullet MakeBullet(BulletProp b)
 		{
 			BulletType type = (BulletType)bulletTypes[b.typeID];
@@ -233,6 +168,23 @@ namespace SpiritPurger
 		public BulletProp(Bullet b, Vector2f direction)
 			: this(b.typeID, b.location, direction, b.Speed)
 		{ }
+
+		public BulletProp(BulletProp b)
+			: this(b.typeID, b.Location, b.Direction, b.Speed)
+		{ }
+
+		public BulletProp(BulletProp b, Vector2f direction)
+			: this(b.typeID, b.Location, direction, b.Speed)
+		{ }
+
+		/// <summary>
+		/// Duplicates the instance's own instances to avoid shared memory.
+		/// </summary>
+		public void Renew()
+		{
+			Location = Location;
+			Direction = Direction;
+		}
 	}
 
 	public class Bullet {

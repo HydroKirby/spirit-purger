@@ -425,34 +425,6 @@ namespace SpiritPurger
             labelPatternResult.Position = labelPatternResultPos;
         }
 
-		public CenterSprite MakeBulletSprite(int index)
-		{
-			return bulletCreator.MakeBulletSprite(index);
-		}
-
-		public Bullet MakeBullet(int index)
-		{
-			return bulletCreator.MakeBullet(index);
-		}
-
-		public Bullet MakeBullet(int index, Vector2f loc)
-		{
-			return bulletCreator.MakeBullet(index, loc);
-		}
-
-		public Bullet MakeBullet(int index, Vector2f loc, Vector2f dir)
-		{
-			return bulletCreator.MakeBullet(index, loc, dir);
-		}
-
-		public Bullet MakeBullet(int index, Vector2f loc, Vector2f dir, double speed)
-		{
-			return bulletCreator.MakeBullet(index, loc, dir, speed);
-		}
-
-		public Bullet MakeBullet(Bullet b) { return bulletCreator.MakeBullet(b); }
-		public Bullet MakeBullet(Bullet b, Vector2f dir) { return bulletCreator.MakeBullet(b, dir); }
-		
 		public Bullet MakeBullet(BulletProp b)
 		{
 			return bulletCreator.MakeBullet(b);
