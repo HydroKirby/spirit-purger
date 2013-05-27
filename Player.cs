@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using SFML;
 using SFML.Window;
 using SFML.Graphics;
@@ -414,9 +415,11 @@ namespace SpiritPurger {
         /// the player. The line has a half-dozen pairs of adjacent bullets
         /// to punish reckless running around.
         /// </summary>
-        protected bool UpdatePtrn0(ref ArrayList bullets, GameRenderer renderer,
+		protected bool UpdatePtrn0(out List<BulletProp> newBullets,
             Vector2f playerPos, Random rand)
         {
+			newBullets = new List<BulletProp>();
+			BulletProp prop;
             bool movedToDest = false;
             if (moveStyle != MoveStyle.NoMove)
                 movedToDest = MoveTowardsDestination();
@@ -428,24 +431,23 @@ namespace SpiritPurger {
                 //   45 updates * 2 is 90 degrees.
                 double baseDegree = VectorLogic.Radians(updateCount * 2);
                 // Moves clockwise from 0 to 180 degrees.
-				Bullet b = renderer.MakeBullet(new BulletProp(3, Location,
-					VectorLogic.AngleToVector(baseDegree), 1.5));
-                bullets.Add(b);
+				prop = new BulletProp(3, Location,
+					VectorLogic.AngleToVector(baseDegree), 1.5);
+				newBullets.Add(prop);
 
                 // Moves clockwise from 180 to 0 degrees.
-				b = renderer.MakeBullet(new BulletProp(b,  VectorLogic.AngleToVector(baseDegree +
-                    Math.PI)));
-                bullets.Add(b);
+				prop = new BulletProp(prop,  VectorLogic.AngleToVector(baseDegree + Math.PI));
+				newBullets.Add(prop);
 
                 // Moves counter-clockwise from 180 to 0 degrees.
-				b = renderer.MakeBullet(new BulletProp(b, VectorLogic.AngleToVector(baseDegree +
-                    Math.PI - 2 * baseDegree)));
-                bullets.Add(b);
+				prop = new BulletProp(prop, VectorLogic.AngleToVector(baseDegree +
+					Math.PI - 2 * baseDegree));
+				newBullets.Add(prop);
 
                 // Moves CCW from 0 to 180 degrees.
-				b = renderer.MakeBullet(new BulletProp(b, VectorLogic.AngleToVector(baseDegree +
-                    Math.PI * 2 - 2 * baseDegree)));
-                bullets.Add(b);
+				prop = new BulletProp(prop, VectorLogic.AngleToVector(baseDegree +
+					Math.PI * 2 - 2 * baseDegree));
+				newBullets.Add(prop);
             }
             if ((updateCount >= 0 && updateCount <= 6) ||
                 (updateCount >= 30 && updateCount <= 36) ||
@@ -455,20 +457,20 @@ namespace SpiritPurger {
                     // Store the angle towards the player in vard1.
                     vard1 = VectorLogic.GetDirection(playerPos, Location);
                 // Make a line of bullets aimed at the player.
-				Bullet b = renderer.MakeBullet(new BulletProp(6, Location,
-					VectorLogic.AngleToVector(vard1), 1.7));
-                bullets.Add(b);
+				prop = new BulletProp(6, Location,
+					VectorLogic.AngleToVector(vard1), 1.7);
+				newBullets.Add(prop);
                 if (updateCount % 10 == 3)
                 {
                     for (double angle = 0.07; angle < 0.13; angle += 0.01)
                     {
                         // Make 2 bullets aimed at the player's sides.
-						b = renderer.MakeBullet(new BulletProp(5, Location,
-							VectorLogic.AngleToVector(vard1 + Math.PI * angle), 2.0));
-                        bullets.Add(b);
-						b = renderer.MakeBullet(new BulletProp(5, Location,
-							VectorLogic.AngleToVector(vard1 - Math.PI * angle), 2.0));
-                        bullets.Add(b);
+						prop = new BulletProp(5, Location,
+							VectorLogic.AngleToVector(vard1 + Math.PI * angle), 2.0);
+						newBullets.Add(prop);
+						prop = new BulletProp(5, Location,
+							VectorLogic.AngleToVector(vard1 - Math.PI * angle), 2.0);
+						newBullets.Add(prop);
                     }
                 }
             }
@@ -481,9 +483,11 @@ namespace SpiritPurger {
         /// Stays in place and fires everywhere randomly. Occasionally shoots
         /// a line of large bullets aimed at the player.
         /// </summary>
-        protected bool UpdatePtrn1(ref ArrayList bullets, GameRenderer renderer,
+		protected bool UpdatePtrn1(out List<BulletProp> newBullets,
             Vector2f playerPos, Random rand)
         {
+			newBullets = new List<BulletProp>();
+			BulletProp prop;
             bool movedToDest = false;
             if (moveStyle != MoveStyle.NoMove)
                 movedToDest = MoveTowardsDestination();
@@ -494,18 +498,18 @@ namespace SpiritPurger {
                 // refreshed to 1.
                 if (updateCount == 30)
                     varv1 = VectorLogic.GetDirectionVector(playerPos, Location);
-				Bullet b = renderer.MakeBullet(new BulletProp(14, Location, varv1, 3.0));
-                bullets.Add(b);
+				prop = new BulletProp(14, Location, varv1, 3.0);
+				newBullets.Add(prop);
             }
             if (updateCount % 5.0 == 0.0)
             {
                 // Fires 5 bullets off in random directions.
                 for (int i = 0; i < 6; i++)
                 {
-					bullets.Add(renderer.MakeBullet(new BulletProp(
+					newBullets.Add(new BulletProp(
 						(int)rand.Next(5, 10), Location,
 						VectorLogic.AngleToVector(VectorLogic.Radians(rand.Next(360))),
-						1.0 + rand.NextDouble() * 1.5)));
+						1.0 + rand.NextDouble() * 1.5));
                 }
             }
             if (updateCount >= 40)
@@ -519,9 +523,11 @@ namespace SpiritPurger {
         /// player's safety zone. A twisting cross of bullets is made
         /// continuously.
         /// </summary>
-        protected bool UpdatePtrn2(ref ArrayList bullets, GameRenderer renderer,
+		protected bool UpdatePtrn2(out List<BulletProp> newBullets,
             Vector2f playerPos, Random rand)
         {
+			newBullets = new List<BulletProp>();
+			BulletProp prop;
             bool movedToDest = false;
             if (moveStyle != MoveStyle.NoMove)
                 movedToDest = MoveTowardsDestination();
@@ -543,53 +549,52 @@ namespace SpiritPurger {
                 vari1 = 0;
             }
 
-            if (updateCount < 40 && updateCount % 4 == 0)
-            {
-                // Shoots 4 bullets in a cross. The shot direction
-                // progressively moves from clockwise.
-                // Note: 90 is 1/4th of a full 360 degrees. 9 is 90/10.
-                //   This area will be executed about 10 times.
-                double baseRadian = VectorLogic.Radians(
-                    updateCount / 4.0 * 9.0);
-				Bullet b = renderer.MakeBullet(new BulletProp(6, Location,
-					VectorLogic.AngleToVector(baseRadian), 2.0));
-                bullets.Add(b);
-                // Add 90 degrees.
-				b = renderer.MakeBullet(new BulletProp(b, VectorLogic.AngleToVector(baseRadian -
-					Math.PI / 2.0)));
-                bullets.Add(b);
-                // Add 180 degrees.
-				b = renderer.MakeBullet(new BulletProp(b, VectorLogic.AngleToVector(baseRadian - Math.PI)));
-                bullets.Add(b);
-                // Add 270 degrees.
-				b = renderer.MakeBullet(new BulletProp(b, VectorLogic.AngleToVector(baseRadian +
-					Math.PI / 2.0)));
-                bullets.Add(b);
-            }
-            else if (updateCount == 40)
-            {
-                double towardsPlayer = VectorLogic.GetDirection(playerPos,
-                                                             Location);
-                // Make a ring of 10 bullets. One bullet is aimed at the player.
-                for (int i = 0; i < 11; i++)
-                {
+			if (updateCount < 40 && updateCount % 4 == 0)
+			{
+				// Shoots 4 bullets in a cross. The shot direction
+				// progressively moves from clockwise.
+				// Note: 90 is 1/4th of a full 360 degrees. 9 is 90/10.
+				//   This area will be executed about 10 times.
+				double baseRadian = VectorLogic.Radians(
+					updateCount / 4.0 * 9.0);
+				prop = new BulletProp(6, Location,
+					VectorLogic.AngleToVector(baseRadian), 2.0);
+				newBullets.Add(prop);
+				// Add 90 degrees.
+				prop = new BulletProp(prop, VectorLogic.AngleToVector(baseRadian -
+					Math.PI / 2.0));
+				newBullets.Add(prop);
+				// Add 180 degrees.
+				prop = new BulletProp(prop, VectorLogic.AngleToVector(baseRadian - Math.PI));
+				newBullets.Add(prop);
+				// Add 270 degrees.
+				prop = new BulletProp(prop, VectorLogic.AngleToVector(baseRadian +
+					Math.PI / 2.0));
+				newBullets.Add(prop);
+			}
+			else if (updateCount == 40)
+			{
+				double towardsPlayer = VectorLogic.GetDirection(playerPos,
+															 Location);
+				// Make a ring of 10 bullets. One bullet is aimed at the player.
+				for (int i = 0; i < 11; i++)
+				{
 					Vector2f v = VectorLogic.AngleToVector(towardsPlayer +
 						VectorLogic.Radians(i / 10.0 * 360));
-                    bullets.Add(renderer.MakeBullet(new BulletProp(13, Location, v, 3.0)));
-                }
-            }
-            else if (updateCount >= 45 && updateCount % 4 == 0)
-            {
-                double towardsPlayer = VectorLogic.GetDirection(
+					newBullets.Add(new BulletProp(13, Location, v, 3.0));
+				}
+			}
+			else if (updateCount >= 45 && updateCount % 4 == 0)
+			{
+				double towardsPlayer = VectorLogic.GetDirection(
 					playerPos, Location);
 				// Make 2 bullets aimed adjacent to the player. They both
-                // miss by 30 degrees on each side.
+				// miss by 30 degrees on each side.
 				double offsetedAngle = towardsPlayer +
 					VectorLogic.Radians(15);
 				Vector2f offsetedVector = VectorLogic.AngleToVector(offsetedAngle);
-				BulletProp prop = new BulletProp(14, Location, offsetedVector, 3.0);
-				Bullet b = renderer.MakeBullet(prop);
-                bullets.Add(b);
+				prop = new BulletProp(14, Location, offsetedVector, 3.0);
+				newBullets.Add(prop);
 
 				offsetedAngle = towardsPlayer -
 					VectorLogic.Radians(15);
@@ -597,11 +602,10 @@ namespace SpiritPurger {
 				prop.Renew();
 				prop.Direction = offsetedVector;
 				prop.Speed = 3.0;
-				b = renderer.MakeBullet(prop);
-                bullets.Add(b);
-            }
-            else if (updateCount >= 60)
-                updateCount = 1;
+				newBullets.Add(prop);
+			}
+			else if (updateCount >= 60)
+				updateCount = 1;
             return movedToDest;
         }
 
@@ -611,9 +615,11 @@ namespace SpiritPurger {
         /// angles. Upon stopping, a string of bullets is aimed at the player.
         /// While idle, a cross of slow, tiny bullets are fired continuously.
         /// </summary>
-        protected bool UpdatePtrn3(ref ArrayList bullets, GameRenderer renderer,
+		protected bool UpdatePtrn3(out List<BulletProp> newBullets,
             Vector2f playerPos, Random rand)
         {
+			newBullets = new List<BulletProp>();
+			BulletProp prop;
             bool movedToDest = false;
             if (moveStyle != MoveStyle.NoMove)
                 movedToDest = MoveTowardsDestination();
@@ -642,30 +648,30 @@ namespace SpiritPurger {
                         angle = VectorLogic.GetDirection(playerPos, Location);
                         break;
                 }
-                for (int i = 1; i <= 3; i++)
-                {
-                    // vari1 types 0 and 1 have colorIndex 0.
-                    // vari1 type 2 has a colorIndex of 1.
-					Bullet b = renderer.MakeBullet(new BulletProp((int)Math.Max(vari1 - 1, 0) + 5,
-						Location, VectorLogic.AngleToVector(angle), i + 0.5));
-                    bullets.Add(b);
-                    // Make a small trailing bullet.
-					b = renderer.MakeBullet(new BulletProp((int)Math.Max(vari1 - 1, 0),
-						Location, VectorLogic.AngleToVector(angle), i + 1));
-                    bullets.Add(b);
-                }
+				for (int i = 1; i <= 3; i++)
+				{
+					// vari1 types 0 and 1 have colorIndex 0.
+					// vari1 type 2 has a colorIndex of 1.
+					prop = new BulletProp((int)Math.Max(vari1 - 1, 0) + 5,
+						Location, VectorLogic.AngleToVector(angle), i + 0.5);
+					newBullets.Add(prop);
+					// Make a small trailing bullet.
+					prop = new BulletProp((int)Math.Max(vari1 - 1, 0),
+						Location, VectorLogic.AngleToVector(angle), i + 1);
+					newBullets.Add(prop);
+				}
                 if (vari1 < 2)
                     // It's aimed diagonally.
                     // Shoot along the opposite diagonal.
                     for (int i = 2; i < 5; i++)
                     {
-						Bullet b = renderer.MakeBullet(new BulletProp(5, Location,
-							VectorLogic.AngleToVector(angle + Math.PI), i));
-                        bullets.Add(b);
-						b = renderer.MakeBullet(new BulletProp(0, Location,
-							VectorLogic.AngleToVector(angle + Math.PI), i - 0.5));
-                        bullets.Add(b);
-                    }
+						prop = new BulletProp(5, Location,
+							VectorLogic.AngleToVector(angle + Math.PI), i);
+						newBullets.Add(prop);
+						prop = new BulletProp(0, Location,
+							VectorLogic.AngleToVector(angle + Math.PI), i - 0.5);
+						newBullets.Add(prop);
+					}
                 vari1++;
                 if (vari1 >= 3)
                     vari1 = 0;
@@ -676,18 +682,18 @@ namespace SpiritPurger {
             {
                 // Shoot a cross of bullets - something to tease the player
                 //   into grazing.
-				Bullet b = renderer.MakeBullet(new BulletProp(4, Location,
-					VectorLogic.AngleToVector(0), 1.5));
-                bullets.Add(b);
-                // Aimed down.
-				b = renderer.MakeBullet(new BulletProp(b, VectorLogic.AngleToVector(Math.PI / 2.0)));
-                bullets.Add(b);
-                // Aimed right.
-				b = renderer.MakeBullet(new BulletProp(b, VectorLogic.AngleToVector(Math.PI)));
-                bullets.Add(b);
-                // Aimed up.
-				b = renderer.MakeBullet(new BulletProp(b, VectorLogic.AngleToVector(Math.PI * 1.5)));
-                bullets.Add(b);
+				prop = new BulletProp(4, Location,
+					VectorLogic.AngleToVector(0), 1.5);
+				newBullets.Add(prop);
+				// Aimed down.
+				prop = new BulletProp(prop, VectorLogic.AngleToVector(Math.PI / 2.0));
+				newBullets.Add(prop);
+				// Aimed right.
+				prop = new BulletProp(prop, VectorLogic.AngleToVector(Math.PI));
+				newBullets.Add(prop);
+				// Aimed up.
+				prop = new BulletProp(prop, VectorLogic.AngleToVector(Math.PI * 1.5));
+				newBullets.Add(prop);
             }
 
             if (updateCount >= 51)
@@ -695,23 +701,25 @@ namespace SpiritPurger {
             return movedToDest;
         }
 
-        public bool Update(ref ArrayList bullets, GameRenderer renderer,
+		public bool Update(out List<BulletProp> newBullets,
             Vector2f playerPos, Random rand)
         {
+			newBullets = null;
             bool finishedMoving = false;
             if (startedPattern)
             {
                 if (currentPattern == 0)
-                    finishedMoving = UpdatePtrn0(ref bullets, renderer, playerPos, rand);
+					finishedMoving = UpdatePtrn0(out newBullets, playerPos, rand);
                 else if (currentPattern == 1)
-                    finishedMoving = UpdatePtrn1(ref bullets, renderer, playerPos, rand);
+					finishedMoving = UpdatePtrn1(out newBullets, playerPos, rand);
                 else if (currentPattern == 2)
-                    finishedMoving = UpdatePtrn2(ref bullets, renderer, playerPos, rand);
+					finishedMoving = UpdatePtrn2(out newBullets, playerPos, rand);
                 else if (currentPattern == 3)
-                    finishedMoving = UpdatePtrn3(ref bullets, renderer, playerPos, rand);
+					finishedMoving = UpdatePtrn3(out newBullets, playerPos, rand);
             }
             else
             {
+				newBullets = new List<BulletProp>();
 				if (moveStyle != MoveStyle.NoMove)
 				{
 					finishedMoving = MoveTowardsDestination();
@@ -731,9 +739,5 @@ namespace SpiritPurger {
 		{
 			sprite.setPosition(Location + Renderer.FieldUpperLeft);
 		}
-
-        public void Draw()
-        {
-        }
-    }
+	}
 }

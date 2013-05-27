@@ -540,12 +540,16 @@ namespace SpiritPurger
 
         public void UpdateEnemies()
         {
+			List<BulletProp> newBullets;
             foreach (Enemy enemy in enemies)
             {
                 if (enemy.health <= 0)
                     // TODO: Make enemies go pop.
                     break;
-                enemy.Update(ref enemyBullets, gameRenderer, player.Location, rand);
+                enemy.Update(out newBullets, player.Location, rand);
+				foreach (BulletProp b in newBullets)
+					enemyBullets.Add(gameRenderer.MakeBullet(b));
+				newBullets.Clear();
                 if (player.invincibleCountdown <= 0 && !godMode &&
 					lives >= 0 && Physics.Touches(player, enemy))
                 {
@@ -568,7 +572,10 @@ namespace SpiritPurger
                 if (boss.health > 0)
                 {
                     // Increment the time the boss is in its pattern.
-                    boss.Update(ref enemyBullets, gameRenderer, player.Location, rand);
+					boss.Update(out newBullets, player.Location, rand);
+					foreach (BulletProp b in newBullets)
+						enemyBullets.Add(gameRenderer.MakeBullet(b));
+					newBullets.Clear();
                 }
                 else
                 {
