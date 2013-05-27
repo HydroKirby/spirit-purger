@@ -430,14 +430,6 @@ namespace SpiritPurger
 			return bulletCreator.MakeBulletSprite(index);
 		}
 
-		public CenterSprite MakeBulletSprite(int sizeIndex, int colorIndex)
-		{
-			// This is a temporary function. Remove when colorIndex and sizeIndex
-			// are removed from the codebase entirely.
-			int index = sizeIndex * 5 + colorIndex;
-			return MakeBulletSprite(index);
-		}
-
 		public Bullet MakeBullet(int index)
 		{
 			return bulletCreator.MakeBullet(index);
@@ -460,6 +452,11 @@ namespace SpiritPurger
 
 		public Bullet MakeBullet(Bullet b) { return bulletCreator.MakeBullet(b); }
 		public Bullet MakeBullet(Bullet b, Vector2f dir) { return bulletCreator.MakeBullet(b, dir); }
+		
+		public Bullet MakeBullet(BulletProp b)
+		{
+			return bulletCreator.MakeBullet(b);
+		}
 
         public void Update(double dt)
         {

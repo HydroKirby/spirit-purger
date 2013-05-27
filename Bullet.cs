@@ -61,14 +61,6 @@ namespace SpiritPurger
 			return new CenterSprite((Texture)bulletImages[type.ImageIndex], type.SubRect);
 		}
 
-		public CenterSprite MakeBulletSprite(int sizeIndex, int colorIndex)
-		{
-			// This is a temporary function. Remove when colorIndex and sizeIndex
-			// are removed from the codebase entirely.
-			int index = sizeIndex * 5 + colorIndex;
-			return MakeBulletSprite(index);
-		}
-
 		protected Bullet MakeBullet(BulletType type)
 		{
 			int radius = type.Radius;
@@ -127,8 +119,22 @@ namespace SpiritPurger
 			bullet.Direction = dir;
 			return bullet;
 		}
+
+		public Bullet MakeBullet(BulletProp b)
+		{
+			BulletType type = (BulletType)bulletTypes[b.typeID];
+			return new Bullet( new CenterSprite(
+				(Texture)bulletImages[type.ImageIndex], type.SubRect),
+				type.Radius, b.Location,
+				b.Direction, b.Speed);
+		}
 	}
 
+	/// <summary>
+	/// Defines how a bullet behaves and appears.
+	/// Rendering details like its sprite and sound effects are stored.
+	/// Behavior like its radius and trajectory pattern are stored.
+	/// </summary>
 	public class BulletType
 	{
 		protected int radius;
@@ -137,6 +143,7 @@ namespace SpiritPurger
 		// The sprite to take from the sprite sheet.
 		protected IntRect subRect;
 		protected bool rotates;
+		protected int sfxIndex;
 
 		public BulletType(int radius, int imgIndex, IntRect rect)
 		{
@@ -144,10 +151,12 @@ namespace SpiritPurger
 			subRect = rect;
 			this.radius = radius;
 			rotates = false;
+			sfxIndex = 0;
 		}
 
 		public int Radius { get { return radius; } }
 		public int ImageIndex { get { return imageIndex; } }
+		public int SFXIndex { get { return sfxIndex; } }
 		public IntRect SubRect { get { return subRect; } }
 		public bool Rotates
 		{
@@ -156,10 +165,79 @@ namespace SpiritPurger
 		}
 	}
 
+	/// <summary>
+	/// Properties that provide a template for making a bullet instance.
+	/// Stores the type of bullet it will become along with the bullet's
+	/// instantiation variables.
+	/// </summary>
+	public class BulletProp
+	{
+		public int typeID = 0;
+		protected double _speed = 0.0;
+		protected Vector2f _location;
+		protected Vector2f _direction;
+
+		public double Speed
+		{
+			get { return _speed; }
+			set { _speed = value; }
+		}
+
+		public Vector2f Location
+		{
+			get { return _location; }
+			set { _location = new Vector2f(value.X, value.Y); }
+		}
+
+		public Vector2f Direction
+		{
+			get { return _direction; }
+			set { _direction = new Vector2f(value.X, value.Y); }
+		}
+
+		public BulletProp()
+		{
+			_location = new Vector2f();
+			_direction = new Vector2f();
+		}
+
+		public BulletProp(int type) : this()
+		{
+			typeID = type;
+		}
+
+		public BulletProp(int type, Vector2f loc)
+		{
+			typeID = type;
+			Location = loc;
+			_direction = new Vector2f();
+		}
+
+		public BulletProp(int type, Vector2f loc, Vector2f dir)
+		{
+			typeID = type;
+			Location = loc;
+			Direction = dir;
+		}
+
+		public BulletProp(int type, Vector2f loc, Vector2f dir, double speed)
+			: this(type, loc, dir)
+		{
+			this._speed = speed;
+		}
+		
+		public BulletProp(Bullet b)
+			: this(b.typeID, b.location, b.Direction, b.Speed)
+		{ }
+
+		public BulletProp(Bullet b, Vector2f direction)
+			: this(b.typeID, b.location, direction, b.Speed)
+		{ }
+	}
+
 	public class Bullet {
 		public const uint LIFETIME_DEFAULT = 4000;
 		public const uint LIFETIME_PARTICLE = 5;
-		public enum BulletColors {Red, Orange, Green, Blue, Violet, EndColors};
 		// The program will load the different types of bullets and
 		// assign them typeIDs to differentiate the base types.
 		public int typeID = 0;
@@ -216,10 +294,7 @@ namespace SpiritPurger
 		public uint Lifetime
 		{
 			get { return lifetime; }
-			set
-			{
-				lifetime = value;
-			}
+			set { lifetime = value; }
 		}
 		
 		public Bullet() {
@@ -256,42 +331,6 @@ namespace SpiritPurger
 			Speed = speed;
 		}
 		
-		/*
-		public Bullet(int colorIndex, int sizeIndex) {
-			this.typeID = colorIndex;
-			location = new Vector2f();
-			Direction = new Vector2f(dx, dy);
-			Radius = RADII[sizeIndex];
-		}
-		
-		public Bullet(int colorIndex, int sizeIndex, Vector2f location) {
-			this.typeID = colorIndex;
-			this.sizeIndex = sizeIndex;
-			this.location = new Vector2f(location.X, location.Y);
-			Direction = new Vector2f(dx, dy);
-			Radius = RADII[sizeIndex];
-		}
-		
-		public Bullet(int colorIndex, int sizeIndex, Vector2f location,
-		              Vector2f direction) {
-			this.typeID = colorIndex;
-			this.sizeIndex = sizeIndex;
-			this.location = new Vector2f(location.X, location.Y);
-			Direction = new Vector2f(direction.X, direction.Y);
-			Radius = RADII[sizeIndex];
-		}
-		
-		public Bullet(int colorIndex, int sizeIndex, Vector2f location,
-		              Vector2f direction, double speed) {
-			this.typeID = colorIndex;
-			this.sizeIndex = sizeIndex;
-            this.location = new Vector2f(location.X, location.Y);
-            Direction = new Vector2f(direction.X, direction.Y);
-			Radius = RADII[sizeIndex];
-			Speed = speed;
-		}
-		 * */
-		
 		public Bullet(Bullet bullet) {
 			typeID = bullet.typeID;
 			location = new Vector2f(bullet.location.X, bullet.location.Y);
@@ -300,6 +339,17 @@ namespace SpiritPurger
 			speed = bullet.speed;
 			Direction = new Vector2f(bullet.direction.X, bullet.direction.Y);
 			Radius = bullet.radius;
+		}
+
+		// Note: This is the master constructor which is the only one to use.
+		public Bullet(CenterSprite sprite, int radius, Vector2f loc,
+			Vector2f dir, double speed)
+		{
+			this.sprite = sprite;
+			Radius = radius;
+			location = new Vector2f(loc.X, loc.Y);
+			Direction = new Vector2f(dir.X, dir.Y);
+			Speed = speed;
 		}
 
         ~Bullet()
@@ -357,41 +407,6 @@ namespace SpiritPurger
 		/// Simply sets the bullet's lifetime to zero.
 		/// </summary>
 		public void Kill() { lifetime = 0; }
-		
-		/// <summary>
-		/// Returns a color based on the index in the pre-generated bullet
-		/// images array.
-		/// </summary>
-		/// <param name="colorIndex">The array index relating to bullet color.</param>
-		/// <returns>The Color value of the bullet.</returns>
-		public static Color GetColorByIndex(int colorIndex) {
-			switch ((BulletColors) colorIndex) {
-				case BulletColors.Blue: return Color.Blue;
-				case BulletColors.Green: return Color.Green;
-				case BulletColors.Orange: return Color.Cyan;
-				case BulletColors.Red: return Color.Red;
-				case BulletColors.Violet: return Color.Magenta;
-				default: return Color.Black;
-			}
-		}
-
-        /// <summary>
-        /// Returns a color's name as a string.
-        /// </summary>
-        /// <param name="colorIndex">The array index relating to bullet color.</param>
-        /// <returns>The name of the color.</returns>
-        public static String GetColorByName(int colorIndex)
-        {
-            switch ((BulletColors)colorIndex)
-            {
-                case BulletColors.Blue: return "blue";
-                case BulletColors.Green: return "green";
-                case BulletColors.Orange: return "orange";
-                case BulletColors.Red: return "red";
-                case BulletColors.Violet: return "violet";
-                default: return "black";
-            }
-        }
 
 		public void UpdateDisplayPos()
 		{
