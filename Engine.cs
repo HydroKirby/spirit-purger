@@ -144,17 +144,17 @@ namespace SpiritPurger
             gameState = GameState.MainMenu;
             paintHandler = new PaintHandler(PaintMenu);
 
-			if (ReadOptions())
-				MainLoop(app);
-			else
-			{
-				// Produce default options and write that to the config.
-			}
-        }
+			Options options = new Options();
+			AssignOptions(options);
+			MainLoop(app);
+		}
 
-		protected bool ReadOptions()
+		/// <summary>
+		/// Takes the read-in options and sets variables to them.
+		/// </summary>
+		/// <param name="options">The assigned options.</param>
+		private void AssignOptions(Options options)
 		{
-			return true;
 		}
 
 		/// <summary>
