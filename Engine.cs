@@ -155,6 +155,8 @@ namespace SpiritPurger
 		/// <param name="options">The assigned options.</param>
 		private void AssignOptions(Options options)
 		{
+			Dictionary<string, object> settings = options.Settings;
+			gameRenderer.bgRotSpeed = (double) settings["bg swirl speed"];
 		}
 
 		/// <summary>

@@ -5,76 +5,48 @@ using System.Text;
 
 namespace SpiritPurger
 {
-	/// <summary>
-	/// Stores a stringly-typed value.
-	/// </summary>
-	abstract class OptionVal
-	{
-		public enum DATA_TYPE {INT, DOUBLE, STRING};
-		protected DATA_TYPE dataType;
-		protected string data;
-
-		public DATA_TYPE Type { get { return dataType; } }
-
-		public string Data { get { return data; } }
-
-		public OptionVal(DATA_TYPE type, string dat)
-		{
-			dataType = type;
-			data = dat;
-		}
-	}
-
-	class OptionValInt : OptionVal
-	{
-		public OptionValInt(string dat)
-			: base(DATA_TYPE.INT, dat)
-		{ }
-	}
-
-	class OptionValDouble : OptionVal
-	{
-		public OptionValDouble(string dat)
-			: base(DATA_TYPE.DOUBLE, dat)
-		{ }
-	}
-
-	class OptionValString : OptionVal
-	{
-		public OptionValString(string dat)
-			: base(DATA_TYPE.STRING, dat)
-		{ }
-	}
-
 	class Options
 	{
 		public const String CONFIG_FILE = "config.cfg";
-		protected Dictionary<string, OptionVal> options;
+		protected Dictionary<string, object> settings;
+
+		public Dictionary<string, object> Settings
+		{
+			get { return settings; }
+		}
 
 		public Options()
 		{
-			SetDefaults(out options);
+			SetDefaults(out settings);
 			Dictionary<string, string> tempOptions;
 			if (ReadConfigFile(out tempOptions))
-				TranslateOptions(tempOptions);
+			{
+				if (!TranslateOptions(tempOptions))
+				{
+					WriteDefaultConfig();
+				}
+			}
 			else
+			{
 				WriteDefaultConfig();
+			}
 		}
 
-		protected void SetDefaults(out Dictionary<string, OptionVal> options)
+		protected void SetDefaults(out Dictionary<string, object> options)
 		{
-			options = new Dictionary<string, OptionVal>();
-			options["sfx volume"] = new OptionValDouble("1.0");
-			options["bgm volume"] = new OptionValDouble("1.0");
-			options["player animation type"] = new OptionValString("pingpong");
-			options["boss animation type"] = new OptionValString("replay");
-			options["player animation speed"] = new OptionValInt("4");
-			options["boss animation speed"] = new OptionValInt("5");
+			options = new Dictionary<string, object>();
+			options["sfx volume"] = 1.0;
+			options["bgm volume"] = 1.0;
+			options["player animation type"] = "pingpong";
+			options["boss animation type"] = "replay";
+			options["player animation speed"] = 4;
+			options["boss animation speed"] = 5;
+			options["bg swirl speed"] = 3.0;
 		}
 
-		protected bool ReadConfigFile(out Dictionary<string,string> tempOptions)
+		protected bool ReadConfigFile(out Dictionary<string, string> tempOptions)
 		{
-			tempOptions = new Dictionary<string,string>();
+			tempOptions = new Dictionary<string, string>();
 			bool good = true;
 			string[] lines = {};
 			try
@@ -116,11 +88,55 @@ namespace SpiritPurger
 			return false;
 		}
 
-		protected void TranslateOptions(Dictionary<string, string> tempOptions)
+		/// <summary>
+		/// Turns stringly typed values into ints, doubles, or strings.
+		/// On failure, the default options are regenerated.
+		/// </summary>
+		/// <param name="tempOptions">The assignments read-in from the config file.</param>
+		/// <returns>True if all values could be converted correctly.</returns>
+		protected bool TranslateOptions(Dictionary<string, string> tempOptions)
 		{
+			bool success = true;
 			foreach (KeyValuePair<string, string> kvp in tempOptions)
 			{
+				// For future and backwards compatibility, ignore unknown options.
+				if (settings.ContainsKey(kvp.Key))
+				{
+					// Get the data type of the value and try to re-parse
+					// the assigned data to that.
+					System.Type type = settings[kvp.Key].GetType();
+					if (settings[kvp.Key] is int)
+					{
+						int result;
+						if (!int.TryParse(kvp.Value, out result))
+						{
+							success = false;
+							break;
+						}
+						else
+							settings[kvp.Key] = result;
+					}
+					else if (settings[kvp.Key] is double)
+					{
+						double result;
+						if (!double.TryParse(kvp.Value, out result))
+						{
+							success = false;
+							break;
+						}
+						else
+							settings[kvp.Key] = result;
+					}
+					else
+					{
+						// Keep the data type as a string.
+						settings[kvp.Key] = kvp.Value;
+					}
+				}
+				if (!success)
+					SetDefaults(out settings);
 			}
+			return success;
 		}
 	}
 }

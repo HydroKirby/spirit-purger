@@ -256,6 +256,8 @@ namespace SpiritPurger
 		public Sprite bgSprite;
 		public Sprite borderSprite;
 
+		public double bgRotSpeed;
+
 		public GameRenderer()
 		{
 			commonTextColor = Color.Black;
@@ -422,7 +424,7 @@ namespace SpiritPurger
             timeLeftToShowPatternResult--;
             if (timeLeftToShowPatternResult < 0)
                 timeLeftToShowPatternResult = 0;
-			bgSprite.Rotation += 1;
+			bgSprite.Rotation += (float) bgRotSpeed;
 			if (bgSprite.Rotation >= 360)
 				bgSprite.Rotation -= 360;
         }
