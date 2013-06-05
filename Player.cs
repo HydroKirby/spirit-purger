@@ -103,6 +103,7 @@ namespace SpiritPurger {
 		// the reentry sequence.
 		public int reentryCountdown = 0;
 		public CenterSprite sprite;
+		public AniPlayer animation;
 		public CenterSprite hitBoxSprite;
 		protected STATE _state;
 
@@ -157,6 +158,7 @@ namespace SpiritPurger {
 		public void UpdateDisplayPos()
 		{
 			sprite.setPosition(Location + Renderer.FieldUpperLeft);
+			animation.Update(0, Location + Renderer.FieldUpperLeft);
 			hitBoxSprite.setPosition(Location + Renderer.FieldUpperLeft);
 		}
 
@@ -176,6 +178,7 @@ namespace SpiritPurger {
 		}
 
 		public void Update() {
+			animation.Update(1);
 			timeSinceLastFire++;
 			if (invincibleCountdown > 0)
 				invincibleCountdown--;

@@ -86,6 +86,7 @@ namespace SpiritPurger
         protected ArrayList hitSparks = new ArrayList();
 
         // Rendering variables.
+		protected ImageManager imageManager;
         protected Renderer renderer;
 		protected MenuRenderer menuRenderer;
 		protected GameRenderer gameRenderer;
@@ -121,6 +122,7 @@ namespace SpiritPurger
             app.KeyReleased += new EventHandler<KeyEventArgs>(app_KeyReleased);
 
             // Load all resources.
+			imageManager = new ImageManager();
 			renderer = new Renderer();
             menuRenderer = new MenuRenderer();
 			gameRenderer = new GameRenderer();
@@ -130,6 +132,7 @@ namespace SpiritPurger
 			player = new Player(new Hitbox(bulletCreator.GetSprite(15), 2, new Vector2f(),
 				new Vector2f(), 0.0));
 			player.SetImage(gameRenderer.GetCenterSprite("p_fly"));
+			player.animation = new AniPlayer(imageManager, Animation.ANIM_STYLE.LOOP, 6);
 			player.UpdateDisplayPos();
 			boss.SetImage(gameRenderer.GetCenterSprite("boss_fly"));
 			boss.UpdateDisplayPos();
@@ -888,7 +891,8 @@ namespace SpiritPurger
 			}
 			// Draw the player, boss, and enemies.
 			if (lives >= 0)
-				app.Draw(player.sprite);
+				player.animation.Draw(app);
+				//app.Draw(player.sprite);
             if (bossState == BossState.Active)
                 app.Draw(boss.sprite);
             else if (bossState == BossState.Intro &&

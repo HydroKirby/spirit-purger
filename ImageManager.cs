@@ -130,7 +130,7 @@ namespace SpiritPurger
 	/// </summary>
 	public class Animation
 	{
-		public enum ANIM_STYLE { LOOP, PINGPONG, END_STYLES }
+		public enum ANIM_STYLE { LOOP, PINGPONG, UNANIMATED, END_STYLES }
 		protected ANIM_STYLE _style;
 		protected String _imageName;
 		protected List<Sprite> _sprites;
@@ -180,11 +180,55 @@ namespace SpiritPurger
 		/// <summary>
 		/// Updates the animation by incrementing the frame.
 		/// </summary>
-		/// <param name="pos">The new position of the object.</param>
 		/// <param name="elapsed">How much time has passed since the last draw.</param>
-		public void Update(Vector2f pos, int elapsed)
+		public void Update(int elapsed)
 		{
 			_frame -= elapsed;
+			if (Frame <= 0)
+			{
+				// Save the old position to give to the new sprite.
+				Vector2f oldPos = _sprites[_currentSprite].Position;
+				if (Style == ANIM_STYLE.LOOP)
+				{
+					_currentSprite += 1;
+					if (_currentSprite >= Sprites.Count)
+						_currentSprite = 0;
+				}
+				else if (Style == ANIM_STYLE.PINGPONG)
+				{
+					if (_spriteTransitionBackwards)
+					{
+						_currentSprite -= 1;
+						if (_currentSprite < 0)
+						{
+							_currentSprite = 0;
+							_spriteTransitionBackwards = false;
+						}
+					}
+					else
+					{
+						_currentSprite += 1;
+						if (_currentSprite >= Sprites.Count)
+						{
+							_currentSprite -= 2;
+							_spriteTransitionBackwards = true;
+						}
+					}
+				}
+				// Give the old position to the new sprite.
+				_sprites[_currentSprite].Position = oldPos;
+				_frame = _anim_speed;
+			}
+		}
+
+		/// <summary>
+		/// Updates the animation by incrementing the frame.
+		/// </summary>
+		/// <param name="pos">The new position of the object.</param>
+		/// <param name="elapsed">How much time has passed since the last draw.</param>
+		public void Update(int elapsed, Vector2f pos)
+		{
+			Update(elapsed);
 			_sprites[_currentSprite].Position = pos;
 		}
 
@@ -215,7 +259,6 @@ namespace SpiritPurger
 
 		public AniPlayer(ImageManager imgMan, Animation.ANIM_STYLE style, int anim_speed)
 		{
-			_state = ANI_STATE.FORWARD;
 			if (_forwardAni == null)
 				_forwardAni = new Animation(imgMan, ImageManager.PLAYER_FORWARD,
 					style, anim_speed);
@@ -225,6 +268,7 @@ namespace SpiritPurger
 			if (false && _rightAni == null)
 				_rightAni = new Animation(imgMan, ImageManager.PLAYER_RIGHT,
 					style, anim_speed);
+			State = ANI_STATE.FORWARD;
 		}
 
 		protected void SetCurrentAnimation()
@@ -242,9 +286,14 @@ namespace SpiritPurger
 		/// </summary>
 		/// <param name="pos">The new position of the object.</param>
 		/// <param name="elapsed">How much time has passed since the last draw.</param>
-		public void Update(Vector2f pos, int elapsed)
+		public void Update(int elapsed, Vector2f pos)
 		{
-			_currAni.Update(pos, elapsed);
+			_currAni.Update(elapsed, pos);
+		}
+
+		public void Update(int elapsed)
+		{
+			_currAni.Update(elapsed);
 		}
 
 		public void Draw(RenderWindow app)
