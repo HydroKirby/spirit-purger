@@ -221,8 +221,6 @@ namespace SpiritPurger
 		{
 			"bg",
 			"border",
-			"p_fly",
-			"boss_fly",
 		};
 
 		// Game Sprites. Let the objects have (not own) the sprites so that

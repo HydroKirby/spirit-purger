@@ -102,8 +102,7 @@ namespace SpiritPurger {
 		// bottom of the screen after dying. The player can't move during
 		// the reentry sequence.
 		public int reentryCountdown = 0;
-		public CenterSprite sprite;
-		public AniPlayer animation;
+		protected AniPlayer animation;
 		public CenterSprite hitBoxSprite;
 		protected STATE _state;
 
@@ -126,20 +125,16 @@ namespace SpiritPurger {
 			}
 		}
 
-		public Player(Hitbox hitbox)
+		public Player(AniPlayer anim, Hitbox hitbox)
 		{
 			_state = STATE.REVIVING;
+			animation = anim;
 			// Do not use the base class' constructor because hitbox
 			// must be initialized to set Player's Location.
 			this.hitbox = hitbox;
 			hitBoxSprite = hitbox.Sprite;
 			Location = new Vector2f(0, 0);
 			Size = new Vector2u(20, 20);
-		}
-
-		public void SetImage(CenterSprite s) {
-            s.setPosition(Location + Renderer.FieldUpperLeft);
-			sprite = s;
 		}
 
 		public void SetHitboxSprite(CenterSprite s)
@@ -157,7 +152,6 @@ namespace SpiritPurger {
 
 		public void UpdateDisplayPos()
 		{
-			sprite.setPosition(Location + Renderer.FieldUpperLeft);
 			animation.Update(0, Location + Renderer.FieldUpperLeft);
 			hitBoxSprite.setPosition(Location + Renderer.FieldUpperLeft);
 		}
@@ -186,6 +180,11 @@ namespace SpiritPurger {
 				deathCountdown--;
 			if (reentryCountdown > 0)
 				reentryCountdown--;
+		}
+
+		public void Draw(RenderWindow app)
+		{
+			animation.Draw(app);
 		}
 
         /*
@@ -232,7 +231,7 @@ namespace SpiritPurger {
          */
 	}
 
-    public class Enemy : Entity
+    public class Boss : Entity
     {
         public enum MoveStyle { NoMove, Accel, Decel, Constant }
         protected int updateCount = 0;
@@ -279,12 +278,13 @@ namespace SpiritPurger {
         protected double dy = 1.0;
         // Refers to moving towards aimFor.
         protected MoveStyle moveStyle = MoveStyle.NoMove;
-        public CenterSprite sprite;
+		protected AniBoss animation;
 
-        public Enemy()
+        public Boss(AniBoss anim)
             : base(new Vector2f(), new Vector2u(25, 25))
         {
             health = fullHealth[0];
+			animation = anim;
         }
 
         public double Speed
@@ -307,8 +307,6 @@ namespace SpiritPurger {
                 this.RefreshVelocity();
             }
         }
-
-        public void SetImage(CenterSprite b) { sprite = b; }
 
         /// <summary>
         /// Resets dx and dy so that the overall velocity is correct in
@@ -733,13 +731,24 @@ namespace SpiritPurger {
                 }
             }
 			UpdateDisplayPos();
+			animation.Update(1);
             updateCount++;
             return finishedMoving;
         }
 
+		public void Update(int elapsed)
+		{
+			animation.Update(elapsed);
+		}
+
 		public void UpdateDisplayPos()
 		{
-			sprite.setPosition(Location + Renderer.FieldUpperLeft);
+			animation.Update(0, Location + Renderer.FieldUpperLeft);
+		}
+
+		public void Draw(RenderWindow app)
+		{
+			animation.Draw(app);
 		}
 	}
 }

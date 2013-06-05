@@ -18,7 +18,9 @@ namespace SpiritPurger
 		public const String BG = "bg";
 		public const String SPARK_GRAZE = "spark_graze";
 		public const String SPARK_HIT = "spark_nailed_foe";
-		public const String BOSS_FORWARD = "boss_fly";
+		public const String BOSS_FORWARD = "boss_forward";
+		public const String BOSS_LEFT = "boss_left";
+		public const String BOSS_RIGHT = "boss_right";
 		public const String PLAYER_FORWARD = "p_forward";
 		public const String PLAYER_LEFT = "p_left";
 		public const String PLAYER_RIGHT = "p_right";
@@ -175,6 +177,18 @@ namespace SpiritPurger
 			_frame = speed;
 			imgMan.LoadPNG(filename);
 			_sprites = imgMan.GetSpriteSheet(filename);
+			if (_sprites.Count == 1)
+				Style = ANIM_STYLE.UNANIMATED;
+		}
+
+		public static ANIM_STYLE GetStyleFromString(String str)
+		{
+			if (str.CompareTo("pingpong") == 0)
+				return ANIM_STYLE.PINGPONG;
+			else if (str.CompareTo("loop") == 0)
+				return ANIM_STYLE.LOOP;
+			else
+				return ANIM_STYLE.UNANIMATED;
 		}
 
 		/// <summary>
@@ -201,7 +215,7 @@ namespace SpiritPurger
 						_currentSprite -= 1;
 						if (_currentSprite < 0)
 						{
-							_currentSprite = 0;
+							_currentSprite = 1;
 							_spriteTransitionBackwards = false;
 						}
 					}
@@ -281,19 +295,73 @@ namespace SpiritPurger
 				_currAni = _rightAni;
 		}
 
-		/// <summary>
-		/// Updates the animation by incrementing the frame.
-		/// </summary>
-		/// <param name="pos">The new position of the object.</param>
-		/// <param name="elapsed">How much time has passed since the last draw.</param>
+		public void Update(int elapsed)
+		{
+			_currAni.Update(elapsed);
+		}
+
 		public void Update(int elapsed, Vector2f pos)
 		{
 			_currAni.Update(elapsed, pos);
 		}
 
+		public void Draw(RenderWindow app)
+		{
+			_currAni.Draw(app);
+		}
+	}
+
+	public class AniBoss
+	{
+		public enum ANI_STATE { FORWARD, LEFT, RIGHT };
+		protected ANI_STATE _state;
+		protected static Animation _forwardAni = null;
+		protected static Animation _leftAni = null;
+		protected static Animation _rightAni = null;
+		protected Animation _currAni;
+
+		public ANI_STATE State
+		{
+			get { return _state; }
+			set
+			{
+				_state = value;
+				SetCurrentAnimation();
+			}
+		}
+
+		public AniBoss(ImageManager imgMan, Animation.ANIM_STYLE style, int anim_speed)
+		{
+			if (_forwardAni == null)
+				_forwardAni = new Animation(imgMan, ImageManager.BOSS_FORWARD,
+					style, anim_speed);
+			if (false && _leftAni == null)
+				_leftAni = new Animation(imgMan, ImageManager.BOSS_LEFT,
+					style, anim_speed);
+			if (false && _rightAni == null)
+				_rightAni = new Animation(imgMan, ImageManager.BOSS_RIGHT,
+					style, anim_speed);
+			State = ANI_STATE.FORWARD;
+		}
+
+		protected void SetCurrentAnimation()
+		{
+			if (_state == ANI_STATE.FORWARD)
+				_currAni = _forwardAni;
+			else if (_state == ANI_STATE.LEFT)
+				_currAni = _leftAni;
+			else if (_state == ANI_STATE.RIGHT)
+				_currAni = _rightAni;
+		}
+
 		public void Update(int elapsed)
 		{
 			_currAni.Update(elapsed);
+		}
+
+		public void Update(int elapsed, Vector2f pos)
+		{
+			_currAni.Update(elapsed, pos);
 		}
 
 		public void Draw(RenderWindow app)

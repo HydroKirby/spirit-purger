@@ -65,7 +65,7 @@ namespace SpiritPurger
 
         // Boss-related variables.
         public enum BossState { NotArrived, Intro, Active, Killed };
-        protected Enemy boss = new Enemy();
+        protected Boss boss;
         protected BossState bossState = BossState.Intro;
         // How long the boss has been doing the intro sequence.
         protected int bossIntroTime = 0;
@@ -116,6 +116,9 @@ namespace SpiritPurger
 
         public void Run(RenderWindow app)
         {
+			Options options = new Options();
+			Dictionary<string, object> settings = options.Settings;
+
             // Apply extra things to the window.
             app.SetKeyRepeatEnabled(false);
             app.KeyPressed += new EventHandler<KeyEventArgs>(app_KeyPressed);
@@ -129,12 +132,17 @@ namespace SpiritPurger
 			bulletCreator = new BulletCreator(gameRenderer);
 
 			// Assign sprites.
-			player = new Player(new Hitbox(bulletCreator.GetSprite(15), 2, new Vector2f(),
-				new Vector2f(), 0.0));
-			player.SetImage(gameRenderer.GetCenterSprite("p_fly"));
-			player.animation = new AniPlayer(imageManager, Animation.ANIM_STYLE.LOOP, 6);
+			player = new Player(
+				new AniPlayer(imageManager,
+					Animation.GetStyleFromString((string)settings["player animation type"]),
+					(int)settings["player animation speed"]),
+				new Hitbox(bulletCreator.GetSprite(15), 2, new Vector2f(),
+					new Vector2f(), 0.0));
 			player.UpdateDisplayPos();
-			boss.SetImage(gameRenderer.GetCenterSprite("boss_fly"));
+			boss = new Boss(
+				new AniBoss(imageManager,
+					Animation.GetStyleFromString((string)settings["boss animation type"]),
+					(int)settings["boss animation speed"]));
 			boss.UpdateDisplayPos();
 			bombBlast = new Bomb(bulletCreator.GetSprite(16), 0, new Vector2f(),
 				new Vector2f(), 0.0);
@@ -147,7 +155,6 @@ namespace SpiritPurger
             gameState = GameState.MainMenu;
             paintHandler = new PaintHandler(PaintMenu);
 
-			Options options = new Options();
 			AssignOptions(options);
 			MainLoop(app);
 		}
@@ -179,7 +186,7 @@ namespace SpiritPurger
 			boss.UpdateDisplayPos();
             boss.currentPattern = -1;
             boss.NextPattern();
-            patternTime = Enemy.patternDuration[boss.currentPattern];
+            patternTime = Boss.patternDuration[boss.currentPattern];
             bossState = BossState.Intro;
             disallowRapidSelection = true;
             playerBullets.Clear();
@@ -473,7 +480,7 @@ namespace SpiritPurger
                         }
                         else
                             patternTime = 1 +
-                                Enemy.patternDuration[boss.currentPattern];
+                                Boss.patternDuration[boss.currentPattern];
                     }
                 }
             }
@@ -544,7 +551,7 @@ namespace SpiritPurger
         public void UpdateEnemies()
         {
 			List<BulletProp> newBullets;
-            foreach (Enemy enemy in enemies)
+            foreach (Boss enemy in enemies)
             {
                 if (enemy.health <= 0)
                     // TODO: Make enemies go pop.
@@ -582,6 +589,7 @@ namespace SpiritPurger
                 }
                 else
                 {
+					boss.Update(1);
                     // Increment the boss' time transitioning between patterns.
                     transitionFrames++;
                     if (transitionFrames >= PATTERN_TRANSITION_PAUSE)
@@ -598,7 +606,7 @@ namespace SpiritPurger
 						{
 							// Activate the next pattern.
 							patternTime =
-								Enemy.patternDuration[boss.currentPattern];
+								Boss.patternDuration[boss.currentPattern];
 							// Tell the renderer the new health value.
 							gameRenderer.SetBossHealth(boss.health);
 						}
@@ -793,7 +801,7 @@ namespace SpiritPurger
                 else
                 {
                     bool scoreUp = false;
-                    foreach (Enemy enemy in enemies)
+                    foreach (Boss enemy in enemies)
                         if (Physics.Touches(enemy, bullet))
                         {
                             enemy.health -= 2;
@@ -891,10 +899,9 @@ namespace SpiritPurger
 			}
 			// Draw the player, boss, and enemies.
 			if (lives >= 0)
-				player.animation.Draw(app);
-				//app.Draw(player.sprite);
+				player.Draw(app);
             if (bossState == BossState.Active)
-                app.Draw(boss.sprite);
+                boss.Draw(app);
             else if (bossState == BossState.Intro &&
                      bossIntroTime > BOSS_PRE_INTRO_FRAMES)
             {
@@ -908,7 +915,7 @@ namespace SpiritPurger
                     (float)BOSS_INTRO_FRAMES * 255.0F));
                  */
                 // TODO: Temporary code is below. Swap for the above.
-				app.Draw(boss.sprite);
+				boss.Draw(app);
             }
 
 			// Draw the bullets and hitsparks.

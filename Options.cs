@@ -38,7 +38,7 @@ namespace SpiritPurger
 			options["sfx volume"] = 1.0;
 			options["bgm volume"] = 1.0;
 			options["player animation type"] = "pingpong";
-			options["boss animation type"] = "replay";
+			options["boss animation type"] = "loop";
 			options["player animation speed"] = 4;
 			options["boss animation speed"] = 5;
 			options["bg swirl speed"] = 0.3;
