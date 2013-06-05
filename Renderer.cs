@@ -8,43 +8,16 @@ using SFML.Graphics;
 namespace SpiritPurger
 {
 	/// <summary>
-	/// A sprite whose origin is at the image's center.
-	/// Used to keep track of which sprites are centered or not.
+	/// Holds all images in the game.
+	/// It should provide sprites for objects.
 	/// </summary>
-	public class CenterSprite : Sprite
+	public class Renderer
 	{
-		public CenterSprite(Texture img)
-		{
-			Texture = img;
-			Origin = new Vector2f(Texture.Size.X * 0.5F,
-				Texture.Size.Y * 0.5F);
-		}
-
-		public CenterSprite(Texture img, IntRect subRect)
-		{
-			Texture = img;
-			TextureRect = subRect;
-			Origin = new Vector2f(subRect.Width * 0.5F,
-				subRect.Height * 0.5F);
-		}
-
-		public void setPosition(Vector2f v)
-		{
-			Position = new Vector2f(v.X, v.Y);
-		}
-	}
-
-    /// <summary>
-    /// Holds all images in the game.
-    /// It should provide sprites for objects.
-    /// </summary>
-    public class Renderer
-    {
 		// Fonts and images generated solely to display text.
-        protected Font menuFont;
-        // The size of the whole application window when not scaled.
-        public const uint APP_BASE_WIDTH = 640;
-        public const uint APP_BASE_HEIGHT = 480;
+		protected static Font menuFont = null;
+		// The size of the whole application window when not scaled.
+		public const uint APP_BASE_WIDTH = 640;
+		public const uint APP_BASE_HEIGHT = 480;
 		// The size of the gameplay field.
 		public const uint FIELD_TOP = 50;
 		public const uint FIELD_LEFT = 50;
@@ -55,18 +28,19 @@ namespace SpiritPurger
 		private static Vector2f fieldUpperLeft;
 		private static Vector2f fieldSize;
 
-        public Renderer()
-        {
-            menuFont = new Font("arial.ttf");
+		public Renderer()
+		{
+			if (menuFont == null)
+				menuFont = new Font(@"res\ttf-bitstream-vera-1.10\Vera.ttf");
 			appBaseSize = new Vector2u(APP_BASE_WIDTH, APP_BASE_HEIGHT);
 			fieldUpperLeft = new Vector2f(FIELD_LEFT, FIELD_TOP);
 			fieldSize = new Vector2f(FIELD_WIDTH, FIELD_HEIGHT);
-        }
+		}
 
-        public Font MenuFont
-        {
-            get { return menuFont; }
-        }
+		public Font MenuFont
+		{
+			get { return menuFont; }
+		}
 
 		public static Vector2u AppBaseSize
 		{
@@ -83,57 +57,57 @@ namespace SpiritPurger
 			get { return fieldSize; }
 		}
 
-        /// <summary>
-        /// Loads an image and gives a replacement on failure.
-        /// </summary>
-        /// <param name="filename">Where the image is.</param>
-        /// <returns>The loaded image on success or a 1x1 Texture otherwise.</returns>
-        public Texture LoadImage(String filename)
-        {
-            Texture img;
-            try
-            {
-                img = new Texture("res/" + filename);
-            }
-            catch (ArgumentException)
-            {
-                img = new Texture(1, 1);
-            }
-            return img;
-        }
+		/// <summary>
+		/// Loads an image and gives a replacement on failure.
+		/// </summary>
+		/// <param name="filename">Where the image is.</param>
+		/// <returns>The loaded image on success or a 1x1 Texture otherwise.</returns>
+		public Texture LoadImage(String filename)
+		{
+			Texture img;
+			try
+			{
+				img = new Texture("res/" + filename);
+			}
+			catch (ArgumentException)
+			{
+				img = new Texture(1, 1);
+			}
+			return img;
+		}
 
-        public Sprite GetSprite(Texture img)
-        {
-            return new Sprite(img);
-        }
+		public Sprite GetSprite(Texture img)
+		{
+			return new Sprite(img);
+		}
 
 		public CenterSprite GetCenterSprite(Texture img)
 		{
 			return new CenterSprite(img);
 		}
-    }
+	}
 
-    public class MenuRenderer : Renderer
-    {
+	public class MenuRenderer : Renderer
+	{
 		protected Color commonTextColor;
-        protected Text cursorText;
+		protected Text cursorText;
 		protected Text startText;
 		protected Text godModeText;
 		protected Text funBombText;
 		protected Text repulsiveText;
 		protected Text scaleText;
 		protected Text exitText;
-		
+
 		/// <summary>
 		/// Makes a MenuRenderer and optionally sets the intial selected menu item.
 		/// </summary>
 		/// <param name="selection">Which menu item is currently focused.</param>
-        public MenuRenderer(MainMenu selection=0)
-        {
+		public MenuRenderer(MainMenu selection = 0)
+		{
 			commonTextColor = Color.Blue;
 
-            cursorText = new Text(">", menuFont, 12);
-            startText = new Text("Start", menuFont, 12);
+			cursorText = new Text(">", menuFont, 12);
+			startText = new Text("Start", menuFont, 12);
 			exitText = new Text("Exit", menuFont, 12);
 
 			// These text images set their own properties when you call their methods.
@@ -147,10 +121,10 @@ namespace SpiritPurger
 			SetSelection(selection);
 			startText.Position = new Vector2f(145, 130 + (float)MainMenu.Play * 15.0F);
 			exitText.Position = new Vector2f(145, 130 + (float)MainMenu.Exit * 15.0F);
-			
+
 			// Set the color of the remaining text images.
 			startText.Color = exitText.Color = commonTextColor;
-        }
+		}
 
 		/// <summary>
 		/// Tells the renderer which menu item is focused.
@@ -201,45 +175,45 @@ namespace SpiritPurger
 			app.Draw(scaleText);
 			app.Draw(exitText);
 		}
-    }
+	}
 
 	public class GameRenderer : Renderer
 	{
-        // Refers to when a boss pattern has completed. It's the time to wait
-        // until initiating the next pattern.
-        public const int PATTERN_TRANSITION_PAUSE = 80;
+		// Refers to when a boss pattern has completed. It's the time to wait
+		// until initiating the next pattern.
+		public const int PATTERN_TRANSITION_PAUSE = 80;
 
 		// Text/font variables.
 		protected Color commonTextColor;
 		protected Text labelBombs;
 		protected Vector2f labelBombsPos;
-        protected Text labelLives;
+		protected Text labelLives;
 		protected Vector2f labelLivesPos;
-        protected Text labelScore;
+		protected Text labelScore;
 		protected Vector2f labelScorePos;
-        protected Text labelPaused;
-        protected Text labelPausedToEnd;
-        protected Text labelPausedToPlay;
+		protected Text labelPaused;
+		protected Text labelPausedToEnd;
+		protected Text labelPausedToPlay;
 		protected Text labelBullets;
 		protected Vector2f labelBulletsPos;
-        protected Text labelBombCombo;
-        protected Vector2f labelBombComboPos;
-        protected Text labelBossHealth;
-        protected Vector2f labelBossHealthPos;
-        // How long a boss has before terminating a pattern on its own.
-        protected Text labelPatternTime;
-        protected Vector2f labelPatternTimePos;
-        // The result of a finishing a boss pattern.
-        protected Text labelPatternResult;
-        protected Vector2f labelPatternResultPos;
-        protected Text labelGameOver;
-		
-        protected bool isPaused;
-        protected bool isInBossPattern;
-        protected bool isBombComboShown;
-        protected bool isGameOver;
-        protected int _bombComboTimeCountdown;
-        protected int timeLeftToShowPatternResult;
+		protected Text labelBombCombo;
+		protected Vector2f labelBombComboPos;
+		protected Text labelBossHealth;
+		protected Vector2f labelBossHealthPos;
+		// How long a boss has before terminating a pattern on its own.
+		protected Text labelPatternTime;
+		protected Vector2f labelPatternTimePos;
+		// The result of a finishing a boss pattern.
+		protected Text labelPatternResult;
+		protected Vector2f labelPatternResultPos;
+		protected Text labelGameOver;
+
+		protected bool isPaused;
+		protected bool isInBossPattern;
+		protected bool isBombComboShown;
+		protected bool isGameOver;
+		protected int _bombComboTimeCountdown;
+		protected int timeLeftToShowPatternResult;
 
 		// Game Textures.
 		protected Dictionary<string, Texture> textures;
@@ -250,13 +224,16 @@ namespace SpiritPurger
 			"p_fly",
 			"boss_fly",
 		};
-		
+
 		// Game Sprites. Let the objects have (not own) the sprites so that
 		// the objects can request drawing, swapping, and alterations of sprites.
 		public Sprite bgSprite;
 		public Sprite borderSprite;
 
-		public double bgRotSpeed;
+		// Animation variables.
+		public double bgRotSpeed = 1.0;
+		public int playerAnimSpeed = 5;
+		public int bossAnimSpeed = 5;
 
 		public GameRenderer()
 		{
@@ -273,38 +250,38 @@ namespace SpiritPurger
 			bgSprite.Position = bgSprite.Origin - FieldUpperLeft;
 			borderSprite = GetSprite(textures["border"]);
 
-            // Set the positions for constantly regenerating labels.
+			// Set the positions for constantly regenerating labels.
 			float rightmost = FIELD_LEFT + FIELD_WIDTH;
-            labelScorePos = new Vector2f(rightmost + 50, FIELD_TOP + 10);
-            labelLivesPos = new Vector2f(rightmost + 50, FIELD_TOP + 20);
+			labelScorePos = new Vector2f(rightmost + 50, FIELD_TOP + 10);
+			labelLivesPos = new Vector2f(rightmost + 50, FIELD_TOP + 20);
 			labelBombsPos = new Vector2f(rightmost + 50, FIELD_TOP + 30);
-            labelBulletsPos = new Vector2f(rightmost + 50, FIELD_TOP + 40);
-            labelBombComboPos = new Vector2f(FIELD_LEFT + 15F, FIELD_TOP + 35F);
-            labelBossHealthPos = new Vector2f(FIELD_LEFT + 30F, FIELD_TOP + 5F);
-            labelPatternTimePos = new Vector2f(FIELD_LEFT + 200, FIELD_TOP + 5F);
+			labelBulletsPos = new Vector2f(rightmost + 50, FIELD_TOP + 40);
+			labelBombComboPos = new Vector2f(FIELD_LEFT + 15F, FIELD_TOP + 35F);
+			labelBossHealthPos = new Vector2f(FIELD_LEFT + 30F, FIELD_TOP + 5F);
+			labelPatternTimePos = new Vector2f(FIELD_LEFT + 200, FIELD_TOP + 5F);
 			labelPatternResultPos = new Vector2f(FIELD_LEFT + FIELD_WIDTH / 6, FIELD_TOP + FIELD_HEIGHT / 3);
 
 			// Create the labels that are constantly regenerated.
 			SetScore(0);
 			SetBullets(0);
-            SetBombs(0);
-            SetBombCombo(0, 0);
-            SetBossHealth(0);
-            SetPatternTime(0);
-            SetPatternResult(false, 0);
-            timeLeftToShowPatternResult = 0;
+			SetBombs(0);
+			SetBombCombo(0, 0);
+			SetBossHealth(0);
+			SetPatternTime(0);
+			SetPatternResult(false, 0);
+			timeLeftToShowPatternResult = 0;
 
-            // Create the labels that are only created once.
+			// Create the labels that are only created once.
 			labelPaused = new Text("Paused", menuFont, 12);
 			labelPausedToPlay = new Text("Press Escape to Play", menuFont, 12);
 			labelPausedToEnd = new Text("Tap Bomb to End", menuFont, 12);
-            labelGameOver = new Text("Game Over... Press Shoot", menuFont, 16);
+			labelGameOver = new Text("Game Over... Press Shoot", menuFont, 16);
 
-            // Set the positions for labels that are made only one time.
+			// Set the positions for labels that are made only one time.
 			labelPaused.Position = new Vector2f(92, 98);
 			labelPausedToPlay.Position = new Vector2f(79, 121);
 			labelPausedToEnd.Position = new Vector2f(92, 144);
-            labelGameOver.Position = new Vector2f(70, 70);
+			labelGameOver.Position = new Vector2f(70, 70);
 
 			labelPaused.Color = labelGameOver.Color =
 				labelPausedToEnd.Color = labelPausedToPlay.Color = commonTextColor;
@@ -320,16 +297,16 @@ namespace SpiritPurger
 			return new CenterSprite(textures[key]);
 		}
 
-        public int BombComboTimeCountdown
-        {
-            get { return _bombComboTimeCountdown; }
-            set
-            {
-                _bombComboTimeCountdown = value;
-                if (value <= 0)
-                    isBombComboShown = false;
-            }
-        }
+		public int BombComboTimeCountdown
+		{
+			get { return _bombComboTimeCountdown; }
+			set
+			{
+				_bombComboTimeCountdown = value;
+				if (value <= 0)
+					isBombComboShown = false;
+			}
+		}
 
 		public bool IsPaused
 		{
@@ -337,11 +314,11 @@ namespace SpiritPurger
 			set { isPaused = value; }
 		}
 
-        public bool IsGameOver
-        {
-            get { return isGameOver; }
-            set { isGameOver = value; }
-        }
+		public bool IsGameOver
+		{
+			get { return isGameOver; }
+			set { isGameOver = value; }
+		}
 
 		public void SetScore(long val)
 		{
@@ -352,11 +329,11 @@ namespace SpiritPurger
 
 		public void SetLives(int val)
 		{
-            // The last life is life 0. When lives = -1, it's game over.
-            if (val < 0)
-                val = 0;
-            else
-                isGameOver = false;
+			// The last life is life 0. When lives = -1, it's game over.
+			if (val < 0)
+				val = 0;
+			else
+				isGameOver = false;
 			String livesString = "Lives: " + val;
 			labelLives = new Text(livesString, menuFont, 12);
 			labelLives.Position = labelLivesPos;
@@ -371,63 +348,63 @@ namespace SpiritPurger
 			labelBombs.Color = commonTextColor;
 		}
 
-        public void SetBombCombo(int combo, int score)
-        {
-            isBombComboShown = combo > 0;
-            if (isBombComboShown)
-            {
-                labelBombCombo = new Text(
-                    combo.ToString() + " Bomb Combo! Score + " + score.ToString(),
-                    menuFont, 12);
-                labelBombCombo.Position = labelBombComboPos;
-                labelBombCombo.Color = commonTextColor;
-            }
-        }
+		public void SetBombCombo(int combo, int score)
+		{
+			isBombComboShown = combo > 0;
+			if (isBombComboShown)
+			{
+				labelBombCombo = new Text(
+					combo.ToString() + " Bomb Combo! Score + " + score.ToString(),
+					menuFont, 12);
+				labelBombCombo.Position = labelBombComboPos;
+				labelBombCombo.Color = commonTextColor;
+			}
+		}
 
 		public void SetBullets(int val)
 		{
 			labelBullets = new Text("Bullets: " + val.ToString(), menuFont, 12);
-            labelBullets.Position = labelBulletsPos;
-            labelBullets.Color = commonTextColor;
+			labelBullets.Position = labelBulletsPos;
+			labelBullets.Color = commonTextColor;
 		}
 
-        public void SetBossHealth(int val)
-        {
-            labelBossHealth = new Text("Health: " + val.ToString(), menuFont, 16);
-            labelBossHealth.Color = commonTextColor;
-            labelBossHealth.Position = labelBossHealthPos;
-        }
+		public void SetBossHealth(int val)
+		{
+			labelBossHealth = new Text("Health: " + val.ToString(), menuFont, 16);
+			labelBossHealth.Color = commonTextColor;
+			labelBossHealth.Position = labelBossHealthPos;
+		}
 
-        public void SetPatternTime(int val)
-        {
-            isInBossPattern = val > 0;
-            if (isInBossPattern)
-            {
-                labelPatternTime = new Text("Time: " + val.ToString(), menuFont, 12);
-                labelPatternTime.Position = labelPatternTimePos;
-                labelPatternTime.Color = commonTextColor;
-            }
-        }
+		public void SetPatternTime(int val)
+		{
+			isInBossPattern = val > 0;
+			if (isInBossPattern)
+			{
+				labelPatternTime = new Text("Time: " + val.ToString(), menuFont, 12);
+				labelPatternTime.Position = labelPatternTimePos;
+				labelPatternTime.Color = commonTextColor;
+			}
+		}
 
-        public void SetPatternResult(bool success, long score)
-        {
-            // Reset the amount of time to show the pattern result.
-            timeLeftToShowPatternResult = PATTERN_TRANSITION_PAUSE;
-            labelPatternResult = new Text((success ? "Pattern Success! Score + " :
-                "Survival Failure... Score + ") + score.ToString(), menuFont, 16);
-            labelPatternResult.Color = commonTextColor;
-            labelPatternResult.Position = labelPatternResultPos;
-        }
+		public void SetPatternResult(bool success, long score)
+		{
+			// Reset the amount of time to show the pattern result.
+			timeLeftToShowPatternResult = PATTERN_TRANSITION_PAUSE;
+			labelPatternResult = new Text((success ? "Pattern Success! Score + " :
+				"Survival Failure... Score + ") + score.ToString(), menuFont, 16);
+			labelPatternResult.Color = commonTextColor;
+			labelPatternResult.Position = labelPatternResultPos;
+		}
 
 		public void Update(double dt)
-        {
-            timeLeftToShowPatternResult--;
-            if (timeLeftToShowPatternResult < 0)
-                timeLeftToShowPatternResult = 0;
-			bgSprite.Rotation += (float) bgRotSpeed;
+		{
+			timeLeftToShowPatternResult--;
+			if (timeLeftToShowPatternResult < 0)
+				timeLeftToShowPatternResult = 0;
+			bgSprite.Rotation += (float)bgRotSpeed;
 			if (bgSprite.Rotation >= 360)
 				bgSprite.Rotation -= 360;
-        }
+		}
 
 		public void UpdatePlayer(ref Player p)
 		{
@@ -436,8 +413,8 @@ namespace SpiritPurger
 		public void Paint(object sender)
 		{
 			RenderWindow app = (RenderWindow)sender;
-            if (isGameOver)
-                app.Draw(labelGameOver);
+			if (isGameOver)
+				app.Draw(labelGameOver);
 			app.Draw(borderSprite);
 			app.Draw(labelScore);
 			app.Draw(labelBombs);

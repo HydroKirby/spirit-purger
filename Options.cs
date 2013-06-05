@@ -34,19 +34,19 @@ namespace SpiritPurger
 
 		protected void SetDefaults(out Dictionary<string, object> options)
 		{
-			options = new Dictionary<string, object>();
+			options = new Dictionary<string, object>(StringComparer.Ordinal);
 			options["sfx volume"] = 1.0;
 			options["bgm volume"] = 1.0;
 			options["player animation type"] = "pingpong";
 			options["boss animation type"] = "replay";
 			options["player animation speed"] = 4;
 			options["boss animation speed"] = 5;
-			options["bg swirl speed"] = 3.0;
+			options["bg swirl speed"] = 0.3;
 		}
 
 		protected bool ReadConfigFile(out Dictionary<string, string> tempOptions)
 		{
-			tempOptions = new Dictionary<string, string>();
+			tempOptions = new Dictionary<string, string>(StringComparer.Ordinal);
 			bool good = true;
 			string[] lines = {};
 			try
@@ -55,7 +55,6 @@ namespace SpiritPurger
 			}
 			catch
 			{
-				WriteDefaultConfig();
 				good = false;
 			}
 
@@ -85,7 +84,24 @@ namespace SpiritPurger
 
 		protected bool WriteDefaultConfig()
 		{
-			return false;
+			// Create the full string to write to the file in one go.
+			String output = "";
+			output += "# This is a comment. It is not parsed by the game.\n";
+			output += "# Valid animation styles are 'pingpong' and 'replay'.\n";
+			foreach (KeyValuePair<string, object> kvp in settings)
+			{
+				string val;
+				if (kvp.Value is double)
+					val = String.Format("{0:F2}", kvp.Value);
+				else
+					val = kvp.Value.ToString();
+				output += String.Join("", kvp.Key, "=", val, "\n");
+			}
+			using (System.IO.StreamWriter file = new System.IO.StreamWriter(CONFIG_FILE))
+			{
+				file.Write(output);
+			}
+			return true;
 		}
 
 		/// <summary>
