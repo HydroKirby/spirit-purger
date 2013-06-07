@@ -35,8 +35,9 @@ namespace SpiritPurger
 		protected void SetDefaults(out Dictionary<string, object> options)
 		{
 			options = new Dictionary<string, object>(StringComparer.Ordinal);
-			options["sfx volume"] = 1.0;
-			options["bgm volume"] = 1.0;
+			options["version"] = 1.0;
+			options["sfx volume"] = 100;
+			options["bgm volume"] = 100;
 			options["player animation type"] = "pingpong";
 			options["boss animation type"] = "loop";
 			options["player animation speed"] = 4;

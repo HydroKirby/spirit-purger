@@ -41,7 +41,7 @@ namespace SpiritPurger
 			Texture img;
 			try
 			{
-				img = new Texture("res/" + name + ".png");
+				img = new Texture("res/img/" + name + ".png");
 			}
 			catch (ArgumentException)
 			{

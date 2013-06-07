@@ -18,18 +18,18 @@ namespace SpiritPurger
 		// Stores distinct bullets based on radius, sprite, etc.
 		protected ArrayList bulletTypes;
 
-		public BulletCreator(Renderer renderer)
+		public BulletCreator(ImageManager imageManager)
 		{
 			bulletImages = new ArrayList();
 			bulletTypes = new ArrayList();
-			LoadBulletImages(renderer);
+			LoadBulletImages(imageManager);
 		}
 
 		/// <summary>
 		/// Makes all bullet images for the first time.
 		/// All images are put into the bulletImages array.
 		/// </summary>
-		private void LoadBulletImages(Renderer renderer)
+		private void LoadBulletImages(ImageManager imageManager)
 		{
 			string[] filenames =
 			{
@@ -44,7 +44,8 @@ namespace SpiritPurger
 			};
 			for (int i = 0; i < filenames.Length; ++i)
 			{
-				Texture spriteSheetImage = renderer.LoadImage(filenames[i] + ".png");
+				imageManager.LoadPNG(filenames[i]);
+				Texture spriteSheetImage = imageManager.GetImage(filenames[i]);
 				bulletImages.Add(spriteSheetImage);
 				// The images are vertically aligned.
 				// There should be 5 images per sheet.

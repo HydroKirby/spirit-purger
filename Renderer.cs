@@ -56,35 +56,6 @@ namespace SpiritPurger
 		{
 			get { return fieldSize; }
 		}
-
-		/// <summary>
-		/// Loads an image and gives a replacement on failure.
-		/// </summary>
-		/// <param name="filename">Where the image is.</param>
-		/// <returns>The loaded image on success or a 1x1 Texture otherwise.</returns>
-		public Texture LoadImage(String filename)
-		{
-			Texture img;
-			try
-			{
-				img = new Texture("res/" + filename);
-			}
-			catch (ArgumentException)
-			{
-				img = new Texture(1, 1);
-			}
-			return img;
-		}
-
-		public Sprite GetSprite(Texture img)
-		{
-			return new Sprite(img);
-		}
-
-		public CenterSprite GetCenterSprite(Texture img)
-		{
-			return new CenterSprite(img);
-		}
 	}
 
 	public class MenuRenderer : Renderer
@@ -233,20 +204,23 @@ namespace SpiritPurger
 		public int playerAnimSpeed = 5;
 		public int bossAnimSpeed = 5;
 
-		public GameRenderer()
+		public GameRenderer(ImageManager imageManager)
 		{
 			commonTextColor = Color.Black;
 
 			// Create images.
 			textures = new Dictionary<string, Texture>(StringComparer.Ordinal);
 			foreach (string filename in PNG_FILENAMES)
-				textures.Add(filename, LoadImage(filename + ".png"));
+			{
+				imageManager.LoadPNG(filename);
+				textures.Add(filename, imageManager.GetImage(filename));
+			}
 
-			bgSprite = GetSprite(textures["bg"]);
+			bgSprite = imageManager.GetSprite("bg");
 			bgSprite.Origin = new Vector2f(bgSprite.TextureRect.Width / 2,
 				bgSprite.TextureRect.Height / 2);
 			bgSprite.Position = bgSprite.Origin - FieldUpperLeft;
-			borderSprite = GetSprite(textures["border"]);
+			borderSprite = imageManager.GetSprite("border");
 
 			// Set the positions for constantly regenerating labels.
 			float rightmost = FIELD_LEFT + FIELD_WIDTH;

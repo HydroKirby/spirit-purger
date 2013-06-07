@@ -92,6 +92,9 @@ namespace SpiritPurger
 		protected GameRenderer gameRenderer;
         protected double appScale = 1.0;
 
+		// Sound variables.
+		protected SoundManager soundManager;
+
         // Current-game variables.
 		protected BulletCreator bulletCreator;
         // This is the number of seconds left to complete a pattern.
@@ -128,8 +131,9 @@ namespace SpiritPurger
 			imageManager = new ImageManager();
 			renderer = new Renderer();
             menuRenderer = new MenuRenderer();
-			gameRenderer = new GameRenderer();
-			bulletCreator = new BulletCreator(gameRenderer);
+			gameRenderer = new GameRenderer(imageManager);
+			bulletCreator = new BulletCreator(imageManager);
+			//soundManager = new SoundManager();
 
 			// Assign sprites.
 			player = new Player(
