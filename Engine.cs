@@ -133,7 +133,7 @@ namespace SpiritPurger
             menuRenderer = new MenuRenderer();
 			gameRenderer = new GameRenderer(imageManager);
 			bulletCreator = new BulletCreator(imageManager);
-			//soundManager = new SoundManager();
+			soundManager = new SoundManager();
 
 			// Assign sprites.
 			player = new Player(
@@ -247,6 +247,7 @@ namespace SpiritPurger
                         UpdateGame(app, lastUpdate);
                     else if (gameState == GameState.MainMenu)
                         UpdateMenu(app, lastUpdate);
+					soundManager.Update();
                     // TODO: Reset is bad logic.
                     // We should subtract the old time so no ticks are lost.
                     timer.Reset();
@@ -319,6 +320,7 @@ namespace SpiritPurger
                     menuChoice - 1;
 				menuRenderer.SetSelection(menuChoice);
                 disallowRapidSelection = false;
+				soundManager.QueueToPlay("menu move");
             }
             if (keys.down == 2)
             {
@@ -326,6 +328,7 @@ namespace SpiritPurger
                     menuChoice + 1;
 				menuRenderer.SetSelection(menuChoice);
                 disallowRapidSelection = false;
+				soundManager.QueueToPlay("menu move");
             }
             // Disallow rapid selection while patch flag is on.
             // But allow non-rapid selection even if patch flag is on.
@@ -515,7 +518,6 @@ namespace SpiritPurger
 							player.Location.Y),
 							VectorLogic.AngleToVector(VectorLogic.Radians(270)),
 							9.0);
-                        // The color (index) doesn't matter.
                         Bullet bullet = bulletCreator.MakeBullet(prop);
                         playerBullets.Add(bullet);
 						prop.Renew();
@@ -561,8 +563,11 @@ namespace SpiritPurger
                     // TODO: Make enemies go pop.
                     break;
                 enemy.Update(out newBullets, player.Location, rand);
-				foreach (BulletProp b in newBullets)
-					enemyBullets.Add(bulletCreator.MakeBullet(b));
+				if (newBullets.Count > 0)
+				{
+					foreach (BulletProp b in newBullets)
+						enemyBullets.Add(bulletCreator.MakeBullet(b));
+				}
 				newBullets.Clear();
                 if (player.invincibleCountdown <= 0 && !godMode &&
 					lives >= 0 && Physics.Touches(player, enemy))
@@ -656,6 +661,7 @@ namespace SpiritPurger
             // of bullets that will need removal.
             toRemove.Clear();
 
+			// Do bomb logic. Affects other bullets in the bomb blast radius.
             if (!bombBlast.IsGone())
             {
                 bool bombMadeCombo = true;
@@ -741,6 +747,7 @@ namespace SpiritPurger
                 toRemove.Clear();
             }
 
+			// Do enemy bullet logic. They can cause the player to graze or die.
             for (int i = 0; i < enemyBullets.Count; i++)
             {
                 Bullet bullet = (Bullet)enemyBullets[i];
@@ -757,6 +764,7 @@ namespace SpiritPurger
                         if (!bullet.grazed)
                         {
                             grazeCount++;
+							soundManager.QueueToPlay("graze");
                             if (repulsive)
                                 // Make the bullet point directly away from
                                 // the player.
@@ -794,6 +802,7 @@ namespace SpiritPurger
                 enemyBullets.RemoveAt(i);
             toRemove.Clear();
 
+			// Do player bullet logic. It can hit enemies and bosses.
             // TODO: Cram both bullets together.
             bool hitBoss = false;
             for (int i = 0; i < playerBullets.Count; i++)
@@ -805,12 +814,14 @@ namespace SpiritPurger
                 else
                 {
                     bool scoreUp = false;
-                    foreach (Boss enemy in enemies)
-                        if (Physics.Touches(enemy, bullet))
-                        {
-                            enemy.health -= 2;
-                            toRemove.Add(i);
-                            // Make 2 hitsparks to show that the enemy was hit.
+					// See if bullets hit any enemies.
+					foreach (Boss enemy in enemies)
+					{
+						if (Physics.Touches(enemy, bullet))
+						{
+							enemy.health -= 2;
+							toRemove.Add(i);
+							// Make 2 hitsparks to show that the enemy was hit.
 							for (int k = 0; k < 2; k++)
 							{
 								// Makes a hitspark shoot downwards at an angle
@@ -824,12 +835,19 @@ namespace SpiritPurger
 								h.Lifetime = Bullet.LIFETIME_PARTICLE;
 								hitSparks.Add(h);
 							}
-                            score += 20;
-                            scoreUp = true;
-                        }
+							soundManager.QueueToPlay("hit foe");
+							score += 20;
+							scoreUp = true;
+						}
+					}
+					// See if bullets hit the boss.
                     if (bossState == BossState.Active && Physics.Touches(boss, bullet))
                     {
                         hitBoss = true;
+						if (boss.health >= 50)
+							soundManager.QueueToPlay("hit foe");
+						else
+							soundManager.QueueToPlay("hit foe weak");
                         if (boss.DealDamage(2))
                         {
                             // The boss has no more health.
@@ -847,7 +865,7 @@ namespace SpiritPurger
                         {
                             Bullet h = bulletCreator.MakeBullet(new BulletProp(18,
                                 new Vector2f(bullet.location.X,
-                                    boss.Location.Y + boss.Size.Y),
+                                    bullet.location.Y),
                                 VectorLogic.AngleToVector(VectorLogic.Radians(
                                     60.0 + rand.NextDouble() * 60.0)), 2.5));
 							h.Lifetime = Bullet.LIFETIME_PARTICLE;
