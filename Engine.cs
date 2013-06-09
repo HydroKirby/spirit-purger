@@ -320,7 +320,7 @@ namespace SpiritPurger
                     menuChoice - 1;
 				menuRenderer.SetSelection(menuChoice);
                 disallowRapidSelection = false;
-				soundManager.QueueToPlay("menu move");
+				soundManager.QueueToPlay(SoundManager.SFX.MENU_MOVE);
             }
             if (keys.down == 2)
             {
@@ -328,7 +328,7 @@ namespace SpiritPurger
                     menuChoice + 1;
 				menuRenderer.SetSelection(menuChoice);
                 disallowRapidSelection = false;
-				soundManager.QueueToPlay("menu move");
+				soundManager.QueueToPlay(SoundManager.SFX.MENU_MOVE);
             }
             // Disallow rapid selection while patch flag is on.
             // But allow non-rapid selection even if patch flag is on.
@@ -764,7 +764,7 @@ namespace SpiritPurger
                         if (!bullet.grazed)
                         {
                             grazeCount++;
-							soundManager.QueueToPlay("graze");
+							soundManager.QueueToPlay(SoundManager.SFX.GRAZE);
                             if (repulsive)
                                 // Make the bullet point directly away from
                                 // the player.
@@ -835,7 +835,7 @@ namespace SpiritPurger
 								h.Lifetime = Bullet.LIFETIME_PARTICLE;
 								hitSparks.Add(h);
 							}
-							soundManager.QueueToPlay("hit foe");
+							soundManager.QueueToPlay(SoundManager.SFX.HIT_FOE);
 							score += 20;
 							scoreUp = true;
 						}
@@ -845,9 +845,9 @@ namespace SpiritPurger
                     {
                         hitBoss = true;
 						if (boss.health >= 50)
-							soundManager.QueueToPlay("hit foe");
+							soundManager.QueueToPlay(SoundManager.SFX.HIT_FOE);
 						else
-							soundManager.QueueToPlay("hit foe weak");
+							soundManager.QueueToPlay(SoundManager.SFX.HIT_FOE_WEAKENED);
                         if (boss.DealDamage(2))
                         {
                             // The boss has no more health.

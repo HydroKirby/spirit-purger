@@ -6,8 +6,17 @@ namespace SpiritPurger
 {
 	class SoundManager
 	{
-		protected Dictionary<string, SoundBuffer> _sfx;
-		protected List<String> _queuedSFX;
+		public enum SFX
+		{
+			MENU_MOVE,
+			MENU_SELECT,
+			HIT_FOE,
+			HIT_FOE_WEAKENED,
+			GRAZE,
+			END_SFX
+		}
+		protected List<SoundBuffer> _sfx;
+		protected List<SFX> _queuedSFX;
 		protected List<Sound> _playingSounds;
 		public const int MAX_SIMULT_SFX = 126;
 		protected int _currSFX = 0;
@@ -15,7 +24,7 @@ namespace SpiritPurger
 		public SoundManager()
 		{
 			AssignAllSFX(out _sfx);
-			_queuedSFX = new List<string>(MAX_SIMULT_SFX);
+			_queuedSFX = new List<SFX>(MAX_SIMULT_SFX);
 			_playingSounds = new List<Sound>(MAX_SIMULT_SFX);
 			for (int i = 0; i < MAX_SIMULT_SFX; ++i)
 			{
@@ -23,18 +32,20 @@ namespace SpiritPurger
 			}
 		}
 
-		/// <summary>
-		/// Creates a dictionary relating game actions to SFX.
-		/// </summary>
-		/// <returns>A dictionary relating actions to SFX filenames.</returns>
-		private void CreateSFXList(out Dictionary<string, string> sfxActions)
+		protected String GetSFXFilename(SFX action)
 		{
-			sfxActions = new Dictionary<string, string>(StringComparer.Ordinal);
-			sfxActions["menu move"] = "button-31.wav";
-			sfxActions["menu select"] = "button-31.wav";
-			sfxActions["hit foe"] = "hit_foe.wav";
-			sfxActions["hit foe weak"] = "hit_foe_weak.wav";
-			sfxActions["graze"] = "button-15.wav";
+			String ret = "";
+			if (action == SFX.MENU_MOVE)
+				ret = "button-31.wav";
+			else if (action == SFX.MENU_SELECT)
+				ret = "button-31.wav";
+			else if (action == SFX.HIT_FOE)
+				ret = "hit_foe.wav";
+			else if (action == SFX.HIT_FOE_WEAKENED)
+				ret = "hit_foe_weak.wav";
+			else if (action == SFX.GRAZE)
+				ret = "button-15.wav";
+			return ret;
 		}
 
 		/// <summary>
@@ -42,20 +53,19 @@ namespace SpiritPurger
 		/// </summary>
 		/// <param name="sfxList">A Dictionary relating SFX filenames to SFX SoundBuffers.</param>
 		/// <returns>True if all loads succeeded. False otherwise.</returns>
-		private bool LoadAllSFX(out Dictionary<string, string> sfxActions,
-			out Dictionary<string, SoundBuffer> sfxFileInstances)
+		private bool LoadAllSFX(out Dictionary<string, SoundBuffer> sfxFileInstances)
 		{
 			bool success = true;;
-			CreateSFXList(out sfxActions);
-
+			
 			sfxFileInstances = new Dictionary<string, SoundBuffer>(StringComparer.Ordinal);
-			foreach (KeyValuePair<string, string> kvp in sfxActions)
+			for (int i = 0; i < (int)SFX.END_SFX; ++i)
 			{
-				if (kvp.Value.Length > 0 && !sfxFileInstances.ContainsKey(kvp.Value))
+				String action = GetSFXFilename((SFX)i);
+				if (action.Length > 0 && !sfxFileInstances.ContainsKey(action))
 				{
 					try
 					{
-						sfxFileInstances[kvp.Value] = new SoundBuffer("res/se/" + kvp.Value);
+						sfxFileInstances[action] = new SoundBuffer("res/se/" + action);
 					}
 					catch (SFML.LoadingFailedException)
 					{
@@ -76,18 +86,17 @@ namespace SpiritPurger
 		/// </summary>
 		/// <param name="sfx">A dictionary of actions set to SFX SoundBuffers.</param>
 		/// <returns>True if all loads succeeded. False otherwise.</returns>
-		private bool AssignAllSFX(out Dictionary<string, SoundBuffer> sfx)
+		private bool AssignAllSFX(out List<SoundBuffer> sfx)
 		{
-			Dictionary<string, string> sfxActions;
 			Dictionary<string, SoundBuffer> sfxFileInstances;
-			bool success = LoadAllSFX(out sfxActions, out sfxFileInstances);
+			bool success = LoadAllSFX(out sfxFileInstances);
 
-			sfx = new Dictionary<string, SoundBuffer>(StringComparer.Ordinal);
+			sfx = new List<SoundBuffer>((int) SFX.END_SFX);
 			if (success)
 			{
-				foreach (KeyValuePair<string, string> kvp in sfxActions)
+				for (int i = 0; i < (int)SFX.END_SFX; ++i)
 				{
-					sfx[kvp.Key] = sfxFileInstances[kvp.Value];
+					sfx.Add(sfxFileInstances[GetSFXFilename((SFX)i)]);
 				}
 			}
 			// TODO: Load mute sounds otherwise.
@@ -95,10 +104,10 @@ namespace SpiritPurger
 			return success;
 		}
 
-		protected void Play(String action)
+		protected void Play(SFX action)
 		{
 			_playingSounds[_currSFX].Stop();
-			_playingSounds[_currSFX].SoundBuffer = _sfx[action];
+			_playingSounds[_currSFX].SoundBuffer = _sfx[(int)action];
 			_playingSounds[_currSFX].Play();
 			++_currSFX;
 			if (_currSFX >= MAX_SIMULT_SFX)
@@ -109,7 +118,7 @@ namespace SpiritPurger
 		/// Adds a sound to play for the next update.
 		/// </summary>
 		/// <param name="action">The action associated with a sound.</param>
-		public void QueueToPlay(String action)
+		public void QueueToPlay(SFX action)
 		{
 			if (!_queuedSFX.Contains(action))
 				_queuedSFX.Add(action);
@@ -121,10 +130,10 @@ namespace SpiritPurger
 		public void Update()
 		{
 			// Only inform the player that the boss is weakened.
-			if (_queuedSFX.Contains("hit foe") && _queuedSFX.Contains("hit foe weak"))
-				_queuedSFX.Remove("hit foe");
+			if (_queuedSFX.Contains(SFX.HIT_FOE) && _queuedSFX.Contains(SFX.HIT_FOE_WEAKENED))
+				_queuedSFX.Remove(SFX.HIT_FOE);
 
-			foreach (String action in _queuedSFX)
+			foreach (SFX action in _queuedSFX)
 			{
 				Play(action);
 			}
