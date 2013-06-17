@@ -24,6 +24,7 @@ namespace SpiritPurger
 		public const String PLAYER_FORWARD = "p_forward";
 		public const String PLAYER_LEFT = "p_left";
 		public const String PLAYER_RIGHT = "p_right";
+		public const String HEALTHBAR_BORDER = "healthbar";
 
 		public ImageManager()
 		{

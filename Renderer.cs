@@ -223,7 +223,7 @@ namespace SpiritPurger
 				bgSprite.TextureRect.Height / 2);
 			bgSprite.Position = bgSprite.Origin - FieldUpperLeft;
 			borderSprite = imageManager.GetSprite("border");
-			bossHealthbar = new Healthbar();
+			bossHealthbar = new Healthbar(imageManager);
 
 			// Set the positions for constantly regenerating labels.
 			float rightmost = FIELD_LEFT + FIELD_WIDTH;
@@ -426,6 +426,7 @@ namespace SpiritPurger
 		protected int _maxHealth;
 		protected int _currHealth;
 		protected RectangleShape rectShape;
+		protected Sprite healthbarBorder;
 
 		public float MaxWidth
 		{
@@ -446,13 +447,23 @@ namespace SpiritPurger
 
 		public Vector2f Position
 		{
-			set { rectShape.Position = new Vector2f(value.X, value.Y); }
+			set
+			{
+				rectShape.Position = new Vector2f(value.X, value.Y);
+				healthbarBorder.Position = new Vector2f(
+					(float)((rectShape.Position.X + MaxWidth * 0.5) - healthbarBorder.Texture.Size.X * 0.5),
+					(float)((rectShape.Position.Y + rectShape.Size.Y * 0.5) - healthbarBorder.Texture.Size.Y * 0.5));
+			}
 			get { return rectShape.Position; }
 		}
 
 		public int MaxHealth
 		{
-			set { _maxHealth = value; }
+			set
+			{
+				_maxHealth = value;
+				CurrentHealth = value;
+			}
 			get { return _maxHealth; }
 		}
 
@@ -463,34 +474,27 @@ namespace SpiritPurger
 				if (_currHealth != value)
 				{
 					_currHealth = value;
-					double percent = (double)_currHealth / _maxHealth;
+					double percent = (double)CurrentHealth / MaxHealth;
 					Size = new Vector2f((float)(MaxWidth * percent), Size.Y);
 				}
 			}
 			get { return _currHealth; }
 		}
 
-		public Healthbar()
+		public Healthbar(ImageManager imageManager)
 		{
 			_maxHealth = 0;
 			_currHealth = 0;
 			rectShape = new RectangleShape();
 			rectShape.FillColor = Color.Red;
-		}
-
-		public Healthbar(Vector2f size, Vector2f position)
-		{
-			_maxHealth = 0;
-			_currHealth = 0;
-			rectShape = new RectangleShape();
-			rectShape.FillColor = Color.Red;
-			Size = size;
-			Position = position;
+			imageManager.LoadPNG(ImageManager.HEALTHBAR_BORDER);
+			healthbarBorder = imageManager.GetSprite(ImageManager.HEALTHBAR_BORDER);
 		}
 
 		public void Draw(RenderWindow app)
 		{
 			app.Draw(rectShape);
+			app.Draw(healthbarBorder);
 		}
 	}
 }

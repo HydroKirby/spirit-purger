@@ -499,8 +499,7 @@ namespace SpiritPurger
 						{
 							patternTime = 1 +
 								Boss.patternDuration[boss.currentPattern];
-							gameRenderer.bossHealthbar.MaxHealth =
-								Boss.fullHealth[boss.currentPattern];
+							gameRenderer.bossHealthbar.MaxHealth = boss.health;
 						}
                     }
                 }
@@ -631,8 +630,8 @@ namespace SpiritPurger
 							patternTime =
 								Boss.patternDuration[boss.currentPattern];
 							// Tell the renderer the new health value.
-							gameRenderer.SetBossHealth(boss.health);
 							gameRenderer.bossHealthbar.MaxHealth = boss.health;
+							gameRenderer.SetBossHealth(boss.health);
 						}
                     }
                 }
@@ -645,9 +644,8 @@ namespace SpiritPurger
 					// The boss is no longer in the intro sequence.
 					bossState = BossState.Active;
 					// Tell the renderer the health of the first pattern.
-					// Tell the renderer the new health value.
-					gameRenderer.SetBossHealth(boss.health);
 					gameRenderer.bossHealthbar.MaxHealth = boss.health;
+					gameRenderer.SetBossHealth(boss.health);
 				}
             }
         }
