@@ -35,7 +35,9 @@ namespace SpiritPurger
 		protected void SetDefaults(out Dictionary<string, object> options)
 		{
 			options = new Dictionary<string, object>(StringComparer.Ordinal);
-			options["version"] = 1.0;
+			options["version"] = 1.01;
+			// ver 1.00
+			// sfx volume, bgm volume changed from double to int at ver 1.0.
 			options["sfx volume"] = 100;
 			options["bgm volume"] = 100;
 			options["player animation type"] = "pingpong";
@@ -43,6 +45,12 @@ namespace SpiritPurger
 			options["player animation speed"] = 4;
 			options["boss animation speed"] = 5;
 			options["bg swirl speed"] = 0.3;
+			// ver 1.01
+			options["healthbar width"] = 250;
+			options["healthbar height"] = 10;
+			options["healthbar x"] = 20;
+			options["healthbar y"] = 10;
+			// ver 1.02
 		}
 
 		protected bool ReadConfigFile(out Dictionary<string, string> tempOptions)

@@ -20,6 +20,30 @@ namespace SpiritPurger
 		protected List<Sound> _playingSounds;
 		public const int MAX_SIMULT_SFX = 126;
 		protected int _currSFX = 0;
+		protected int volumeSFX = 100;
+		protected int volumeMusic = 100;
+
+		public int VolumeSFX
+		{
+			get { return volumeSFX; }
+			set
+			{
+				volumeSFX = value;
+				foreach (Sound sfx in _playingSounds)
+				{
+					sfx.Volume = volumeSFX;
+				}
+			}
+		}
+
+		public int VolumeMusic
+		{
+			get { return volumeMusic; }
+			set
+			{
+				volumeMusic = value;
+			}
+		}
 
 		public SoundManager()
 		{

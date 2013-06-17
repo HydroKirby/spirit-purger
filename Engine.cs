@@ -171,6 +171,14 @@ namespace SpiritPurger
 		{
 			Dictionary<string, object> settings = options.Settings;
 			gameRenderer.bgRotSpeed = (double) settings["bg swirl speed"];
+			soundManager.VolumeSFX = (int)settings["sfx volume"];
+			soundManager.VolumeMusic = (int)settings["bgm volume"];
+			gameRenderer.bossHealthbar.Size = new Vector2f(
+				(int)settings["healthbar width"],
+				(int)settings["healthbar height"]);
+			gameRenderer.bossHealthbar.Position = new Vector2f(
+				(int)settings["healthbar x"] + GameRenderer.FIELD_LEFT,
+				(int)settings["healthbar y"] + GameRenderer.FIELD_TOP);
 		}
 
 		/// <summary>
@@ -191,6 +199,8 @@ namespace SpiritPurger
             boss.currentPattern = -1;
             boss.NextPattern();
             patternTime = Boss.patternDuration[boss.currentPattern];
+			gameRenderer.bossHealthbar.MaxHealth =
+				Boss.fullHealth[boss.currentPattern];
             bossState = BossState.Intro;
             disallowRapidSelection = true;
             playerBullets.Clear();
@@ -480,14 +490,18 @@ namespace SpiritPurger
                     {
                         // Ran out of time trying to beat the pattern.
                         beatThisPattern = false;
-                        if (!boss.NextPattern())
-                        {
-                            bossState = BossState.Killed;
-                            gameOver = true;
-                        }
-                        else
-                            patternTime = 1 +
-                                Boss.patternDuration[boss.currentPattern];
+						if (!boss.NextPattern())
+						{
+							bossState = BossState.Killed;
+							gameOver = true;
+						}
+						else
+						{
+							patternTime = 1 +
+								Boss.patternDuration[boss.currentPattern];
+							gameRenderer.bossHealthbar.MaxHealth =
+								Boss.fullHealth[boss.currentPattern];
+						}
                     }
                 }
             }
@@ -618,6 +632,7 @@ namespace SpiritPurger
 								Boss.patternDuration[boss.currentPattern];
 							// Tell the renderer the new health value.
 							gameRenderer.SetBossHealth(boss.health);
+							gameRenderer.bossHealthbar.MaxHealth = boss.health;
 						}
                     }
                 }
@@ -632,6 +647,7 @@ namespace SpiritPurger
 					// Tell the renderer the health of the first pattern.
 					// Tell the renderer the new health value.
 					gameRenderer.SetBossHealth(boss.health);
+					gameRenderer.bossHealthbar.MaxHealth = boss.health;
 				}
             }
         }
@@ -844,7 +860,7 @@ namespace SpiritPurger
                     if (bossState == BossState.Active && Physics.Touches(boss, bullet))
                     {
                         hitBoss = true;
-						if (boss.health >= 50)
+						if (boss.health >= 75)
 							soundManager.QueueToPlay(SoundManager.SFX.HIT_FOE);
 						else
 							soundManager.QueueToPlay(SoundManager.SFX.HIT_FOE_WEAKENED);
@@ -878,9 +894,12 @@ namespace SpiritPurger
                         gameRenderer.SetScore(score);
                 }
             }
-            if (hitBoss)
-                // Tell the renderer that the boss' health changed.
-                gameRenderer.SetBossHealth(boss.health);
+			if (hitBoss)
+			{
+				// Tell the renderer that the boss' health changed.
+				gameRenderer.SetBossHealth(boss.health);
+				gameRenderer.bossHealthbar.CurrentHealth = boss.health;
+			}
 
             if (toRemove.Count > 1)
                 toRemove.Sort(new ReversedSortInt());

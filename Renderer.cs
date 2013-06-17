@@ -198,6 +198,7 @@ namespace SpiritPurger
 		// the objects can request drawing, swapping, and alterations of sprites.
 		public Sprite bgSprite;
 		public Sprite borderSprite;
+		public Healthbar bossHealthbar;
 
 		// Animation variables.
 		public double bgRotSpeed = 1.0;
@@ -216,11 +217,13 @@ namespace SpiritPurger
 				textures.Add(filename, imageManager.GetImage(filename));
 			}
 
+			// Instantiate various sprites and other renderables.
 			bgSprite = imageManager.GetSprite("bg");
 			bgSprite.Origin = new Vector2f(bgSprite.TextureRect.Width / 2,
 				bgSprite.TextureRect.Height / 2);
 			bgSprite.Position = bgSprite.Origin - FieldUpperLeft;
 			borderSprite = imageManager.GetSprite("border");
+			bossHealthbar = new Healthbar();
 
 			// Set the positions for constantly regenerating labels.
 			float rightmost = FIELD_LEFT + FIELD_WIDTH;
@@ -345,6 +348,7 @@ namespace SpiritPurger
 			labelBossHealth = new Text("Health: " + val.ToString(), menuFont, 16);
 			labelBossHealth.Color = commonTextColor;
 			labelBossHealth.Position = labelBossHealthPos;
+			bossHealthbar.CurrentHealth = val;
 		}
 
 		public void SetPatternTime(int val)
@@ -398,7 +402,8 @@ namespace SpiritPurger
 			if (isInBossPattern)
 			{
 				app.Draw(labelPatternTime);
-				app.Draw(labelBossHealth);
+				//app.Draw(labelBossHealth);
+				bossHealthbar.Draw(app);
 			}
 
 			if (timeLeftToShowPatternResult > 0)
@@ -412,6 +417,80 @@ namespace SpiritPurger
 				app.Draw(labelPausedToPlay);
 				app.Draw(labelPausedToEnd);
 			}
+		}
+	}
+
+	public class Healthbar
+	{
+		protected float _maxWidth;
+		protected int _maxHealth;
+		protected int _currHealth;
+		protected RectangleShape rectShape;
+
+		public float MaxWidth
+		{
+			set { _maxWidth = value; }
+			get { return _maxWidth; }
+		}
+
+		public Vector2f Size
+		{
+			set
+			{
+				rectShape.Size = new Vector2f(value.X, value.Y);
+				if (value.X > MaxWidth)
+					MaxWidth = value.X;
+			}
+			get { return rectShape.Size; }
+		}
+
+		public Vector2f Position
+		{
+			set { rectShape.Position = new Vector2f(value.X, value.Y); }
+			get { return rectShape.Position; }
+		}
+
+		public int MaxHealth
+		{
+			set { _maxHealth = value; }
+			get { return _maxHealth; }
+		}
+
+		public int CurrentHealth
+		{
+			set
+			{
+				if (_currHealth != value)
+				{
+					_currHealth = value;
+					double percent = (double)_currHealth / _maxHealth;
+					Size = new Vector2f((float)(MaxWidth * percent), Size.Y);
+				}
+			}
+			get { return _currHealth; }
+		}
+
+		public Healthbar()
+		{
+			_maxHealth = 0;
+			_currHealth = 0;
+			rectShape = new RectangleShape();
+			rectShape.FillColor = Color.Red;
+		}
+
+		public Healthbar(Vector2f size, Vector2f position)
+		{
+			_maxHealth = 0;
+			_currHealth = 0;
+			rectShape = new RectangleShape();
+			rectShape.FillColor = Color.Red;
+			Size = size;
+			Position = position;
+		}
+
+		public void Draw(RenderWindow app)
+		{
+			app.Draw(rectShape);
 		}
 	}
 }
