@@ -4,15 +4,43 @@ using SFML.Audio;
 
 namespace SpiritPurger
 {
+	/// <summary>
+	/// Loads and plays sounds and music.
+	/// 
+	/// The SoundManager loads all sounds upon construction.
+	/// To play a sound, call QueueToPlay() using the class' SFX enum.
+	/// For example: managerInstance.QueueToPlay(SoundManager.SFX.UNASSIGNED);
+	/// When it is time to update the game, call Update() to play sound effects.
+	/// </summary>
 	class SoundManager
 	{
 		public enum SFX
 		{
+			// Use the first entry for unimplemented SFX.
+			UNASSIGNED,
+			
+			// Menu SFX
 			MENU_MOVE,
 			MENU_SELECT,
-			HIT_FOE,
-			HIT_FOE_WEAKENED,
-			GRAZE,
+
+			// Game SFX
+			PLAYER_GRAZE,
+			PLAYER_SHOT_BULLET,
+			PLAYER_BULLET_GAVE_DAMAGE,
+			PLAYER_TOOK_DAMAGE,
+			PLAYER_SHOT_BOMB,
+			BOMB_ACTIVE,
+			BOMB_DEACTIVATED,
+			BOMB_ATE_BULLET,
+			FOE_SHOT_BULLET,
+			FOE_TOOK_DAMAGE,
+			FOE_TOOK_DAMAGED_WEAKENED,
+			FOE_DESTROYED,
+			BOSS_DESTROYED,
+			FANFARE_PATTERN_SUCCESS,
+			FANFARE_PATTERN_FAILURE,
+
+			// Use the last entry to count the number of enums.
 			END_SFX
 		}
 		protected List<SoundBuffer> _sfx;
@@ -56,6 +84,13 @@ namespace SpiritPurger
 			}
 		}
 
+		/// <summary>
+		/// Gets the filename of the sound in relation to a sound effect.
+		/// If a new sound effect file was added as a resource to the game,
+		/// it should be added into this function.
+		/// </summary>
+		/// <param name="action">The action that causes a sound effect.</param>
+		/// <returns>A filename for an SFX or silent sound's filename for unassigned SFX.</returns>
 		protected String GetSFXFilename(SFX action)
 		{
 			String ret = "";
@@ -63,12 +98,14 @@ namespace SpiritPurger
 				ret = "button-31.wav";
 			else if (action == SFX.MENU_SELECT)
 				ret = "button-31.wav";
-			else if (action == SFX.HIT_FOE)
+			else if (action == SFX.FOE_TOOK_DAMAGE)
 				ret = "hit_foe.wav";
-			else if (action == SFX.HIT_FOE_WEAKENED)
+			else if (action == SFX.FOE_TOOK_DAMAGED_WEAKENED)
 				ret = "hit_foe_weak.wav";
-			else if (action == SFX.GRAZE)
+			else if (action == SFX.PLAYER_GRAZE)
 				ret = "button-15.wav";
+			else
+				ret = "silence.wav";
 			return ret;
 		}
 
@@ -123,7 +160,16 @@ namespace SpiritPurger
 					sfx.Add(sfxFileInstances[GetSFXFilename((SFX)i)]);
 				}
 			}
-			// TODO: Load mute sounds otherwise.
+			else
+			{
+				// Load silent sounds into all of the SFX.
+				// TODO: Create error report.
+				SoundBuffer silent = sfxFileInstances[GetSFXFilename(SFX.UNASSIGNED)];
+				for (int i = 0; i < (int)SFX.END_SFX; ++i)
+				{
+					sfx.Add(silent);
+				}
+			}
 
 			return success;
 		}
@@ -154,8 +200,8 @@ namespace SpiritPurger
 		public void Update()
 		{
 			// Only inform the player that the boss is weakened.
-			if (_queuedSFX.Contains(SFX.HIT_FOE) && _queuedSFX.Contains(SFX.HIT_FOE_WEAKENED))
-				_queuedSFX.Remove(SFX.HIT_FOE);
+			if (_queuedSFX.Contains(SFX.FOE_TOOK_DAMAGE) && _queuedSFX.Contains(SFX.FOE_TOOK_DAMAGED_WEAKENED))
+				_queuedSFX.Remove(SFX.FOE_TOOK_DAMAGE);
 
 			foreach (SFX action in _queuedSFX)
 			{

@@ -381,6 +381,7 @@ namespace SpiritPurger
                         ((RenderWindow)sender).Close();
                         break;
                 }
+				soundManager.QueueToPlay(SoundManager.SFX.MENU_SELECT);
                 disallowRapidSelection = false;
             }
         }
@@ -508,9 +509,14 @@ namespace SpiritPurger
             MovePlayer();
 
 			if (godMode && keys.slow == 2 && !bombBlast.IsGone())
-                bombBlast.Kill();
+			{
+				bombBlast.Kill();
+				soundManager.QueueToPlay(SoundManager.SFX.BOMB_DEACTIVATED);
+			}
+
             if (gameOver)
             {
+				// Press the Shot button to return to the main menu.
                 if (keys.shoot == 2)
                 {
                     this.Reset();
@@ -521,11 +527,13 @@ namespace SpiritPurger
             }
             else
             {
+				// Press the Shot button to fire bullets.
                 if (keys.shoot > 0 && player.deathCountdown <= 0 &&
                     player.reentryCountdown <= 0)
                 {
                     if (player.TryShoot())
                     {
+						// Fire bullets from the player.
 						BulletProp prop = new BulletProp(19, new Vector2f(
 							player.Location.X - 4,
 							player.Location.Y),
@@ -538,8 +546,11 @@ namespace SpiritPurger
                             4, prop.Location.Y);
 						bullet = bulletCreator.MakeBullet(prop);
                         playerBullets.Add(bullet);
+						soundManager.QueueToPlay(SoundManager.SFX.PLAYER_SHOT_BULLET);
                     }
                 }
+
+				// Press the Bomb button to fire a bomb.
 				if (keys.bomb == 2 && bombBlast.IsGone() && (godMode ||
                     bombs > 0 && player.reentryCountdown <= 0 &&
                     player.deathCountdown <= 0))
@@ -552,6 +563,7 @@ namespace SpiritPurger
                     bombs--;
                     beatThisPattern = false;
 					gameRenderer.SetBombs(bombs);
+					soundManager.QueueToPlay(SoundManager.SFX.PLAYER_SHOT_BOMB);
                 }
             }
 
@@ -572,22 +584,30 @@ namespace SpiritPurger
 			List<BulletProp> newBullets;
             foreach (Boss enemy in enemies)
             {
-                if (enemy.health <= 0)
-                    // TODO: Make enemies go pop.
-                    break;
+				if (enemy.health <= 0)
+				{
+					soundManager.QueueToPlay(SoundManager.SFX.FOE_DESTROYED);
+					break;
+				}
+
                 enemy.Update(out newBullets, player.Location, rand);
+				// TODO: Maybe this should be moved outside of the loop.
 				if (newBullets.Count > 0)
 				{
+					soundManager.QueueToPlay(SoundManager.SFX.FOE_SHOT_BULLET);
 					foreach (BulletProp b in newBullets)
 						enemyBullets.Add(bulletCreator.MakeBullet(b));
+					newBullets.Clear();
 				}
-				newBullets.Clear();
+
                 if (player.invincibleCountdown <= 0 && !godMode &&
 					lives >= 0 && Physics.Touches(player, enemy))
                 {
+					// The player took damage.
                     player.invincibleCountdown = POST_DEATH_INVINC_FRAMES;
                     player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
                     beatThisPattern = false;
+					soundManager.QueueToPlay(SoundManager.SFX.PLAYER_TOOK_DAMAGE);
                 }
             }
 
@@ -596,21 +616,28 @@ namespace SpiritPurger
                 if (player.invincibleCountdown <= 0 && !godMode &&
                     lives >= 0 && Physics.Touches(player, boss))
                 {
+					// The player took damage.
                     player.invincibleCountdown = POST_DEATH_INVINC_FRAMES;
                     player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
                     beatThisPattern = false;
+					soundManager.QueueToPlay(SoundManager.SFX.PLAYER_TOOK_DAMAGE);
                 }
 
                 if (boss.health > 0)
                 {
                     // Increment the time the boss is in its pattern.
 					boss.Update(out newBullets, player.Location, rand);
-					foreach (BulletProp b in newBullets)
-						enemyBullets.Add(bulletCreator.MakeBullet(b));
-					newBullets.Clear();
+					if (newBullets.Count > 0)
+					{
+						soundManager.QueueToPlay(SoundManager.SFX.FOE_SHOT_BULLET);
+						foreach (BulletProp b in newBullets)
+							enemyBullets.Add(bulletCreator.MakeBullet(b));
+						newBullets.Clear();
+					}
                 }
                 else
                 {
+					// The boss lost its health. It might not be dead because it is mid-pattern.
 					boss.Update(1);
                     // Increment the boss' time transitioning between patterns.
                     transitionFrames++;
@@ -623,6 +650,7 @@ namespace SpiritPurger
 						{
 							bossState = BossState.Killed;
 							gameOver = true;
+							soundManager.QueueToPlay(SoundManager.SFX.BOSS_DESTROYED);
 						}
 						else
 						{
@@ -685,6 +713,7 @@ namespace SpiritPurger
                 {
                     if (Physics.Touches(bombBlast, (Bullet)enemyBullets[i]))
                     {
+						// Make the bullet gravitate towards the bomb's center.
                         bombMadeCombo = true;
                         if (!funBomb && finalFrame)
                         {
@@ -706,6 +735,7 @@ namespace SpiritPurger
                             bombCombo++;
                             score += 5;
                             bombComboScore += 5;
+							soundManager.QueueToPlay(SoundManager.SFX.BOMB_ATE_BULLET);
                             continue;
                         }
 
@@ -716,23 +746,25 @@ namespace SpiritPurger
 
                         // If the angle is far (more than 90 degrees), then
                         //   decrease the speed.
-                        if (Math.Abs(towardBombAngle - currentAngle) >=
-                            Math.PI / 2.0)
-                        {
-                            enemyBullet.Speed -= 0.5;
-                            if (enemyBullet.Speed <= 0.0)
-                            {
-                                // This speed change would give a negative
-                                // speed. Instead, change the angle.
-                                enemyBullet.Speed =
-                                    Math.Max(Math.Abs(enemyBullet.Speed), 0.1);
-                                currentAngle = towardBombAngle;
-                            }
-                        }
-                        else
-                            // The angle is small, so increase speed.
-                            enemyBullet.Speed = Math.Min(4.0,
-                                enemyBullet.Speed + 0.5);
+						if (Math.Abs(towardBombAngle - currentAngle) >=
+							Math.PI / 2.0)
+						{
+							enemyBullet.Speed -= 0.5;
+							if (enemyBullet.Speed <= 0.0)
+							{
+								// This speed change would give a negative
+								// speed. Instead, change the angle.
+								enemyBullet.Speed =
+									Math.Max(Math.Abs(enemyBullet.Speed), 0.1);
+								currentAngle = towardBombAngle;
+							}
+						}
+						else
+						{
+							// The angle is small, so increase speed.
+							enemyBullet.Speed = Math.Min(4.0,
+								enemyBullet.Speed + 0.5);
+						}
 
                         // Alter the bullet's current trrajectory by a
                         //   maximum of 0.1 radians.
@@ -769,46 +801,54 @@ namespace SpiritPurger
                 if (bullet.IsOutside(Renderer.FieldSize, 30))
                     // Build a list of "dead" bullets.
                     toRemove.Add(i);
-                else if (player.invincibleCountdown <= 0 && lives >= 0 &&
-                         Math.Abs(player.Location.Y - bullet.location.Y) <=
-                         player.Size.X + bullet.Radius)
-                    // It is kind of close to the player. Check for collison.
-                    if (Physics.Touches(player, bullet))
-                    {
-                        if (!bullet.grazed)
-                        {
-                            grazeCount++;
-							soundManager.QueueToPlay(SoundManager.SFX.GRAZE);
-                            if (repulsive)
-                                // Make the bullet point directly away from
-                                // the player.
-                                bullet.Direction =
-                                    VectorLogic.GetDirectionVector(
-                                    bullet.location, player.Location);
-                            else
-                            {
-                                // Show feedback of a graze with a hitspark.
-                                // The size index does not matter.
-                                Bullet h = bulletCreator.MakeBullet(new BulletProp(17,
-                                    new Vector2f(bullet.location.X, bullet.location.Y),
-                                    VectorLogic.GetDirectionVector(
-                                        bullet.location, player.Location),
-                                    5.0));
+				else if (player.invincibleCountdown <= 0 && lives >= 0 &&
+						 Math.Abs(player.Location.Y - bullet.location.Y) <=
+						 player.Size.X + bullet.Radius)
+				{
+					// The bullet is close to the player. Check for collison.
+					if (Physics.Touches(player, bullet))
+					{
+						if (!bullet.grazed)
+						{
+							// The player grazed the bullet.
+							grazeCount++;
+							soundManager.QueueToPlay(SoundManager.SFX.PLAYER_GRAZE);
+							if (repulsive)
+							{
+								// Make the bullet point directly away from
+								// the player.
+								bullet.Direction =
+									VectorLogic.GetDirectionVector(
+									bullet.location, player.Location);
+							}
+							else
+							{
+								// Show feedback of a graze with a hitspark.
+								// The size index does not matter.
+								Bullet h = bulletCreator.MakeBullet(new BulletProp(17,
+									new Vector2f(bullet.location.X, bullet.location.Y),
+									VectorLogic.GetDirectionVector(
+										bullet.location, player.Location),
+									5.0));
 								h.Lifetime = Bullet.LIFETIME_PARTICLE;
-                                hitSparks.Add(h);
-                                score += 50;
-                            }
-                            bullet.grazed = true;
-                        }
-                        if (!godMode && !repulsive &&
-                            Physics.Touches(bullet, player.hitbox))
-                        {
-                            player.invincibleCountdown =
-                                POST_DEATH_INVINC_FRAMES;
-                            player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
-                            beatThisPattern = false;
-                        }
-                    }
+								hitSparks.Add(h);
+								score += 50;
+							}
+							bullet.grazed = true;
+						}
+
+						if (!godMode && !repulsive &&
+							Physics.Touches(bullet, player.hitbox))
+						{
+							// The player was hit by a bullet.
+							player.invincibleCountdown =
+								POST_DEATH_INVINC_FRAMES;
+							player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
+							beatThisPattern = false;
+							soundManager.QueueToPlay(SoundManager.SFX.PLAYER_TOOK_DAMAGE);
+						}
+					}
+				}
             }
             if (toRemove.Count > 1)
                 toRemove.Sort(new ReversedSortInt());
@@ -849,7 +889,7 @@ namespace SpiritPurger
 								h.Lifetime = Bullet.LIFETIME_PARTICLE;
 								hitSparks.Add(h);
 							}
-							soundManager.QueueToPlay(SoundManager.SFX.HIT_FOE);
+							soundManager.QueueToPlay(SoundManager.SFX.FOE_TOOK_DAMAGE);
 							score += 20;
 							scoreUp = true;
 						}
@@ -859,9 +899,9 @@ namespace SpiritPurger
                     {
                         hitBoss = true;
 						if (boss.health >= 75)
-							soundManager.QueueToPlay(SoundManager.SFX.HIT_FOE);
+							soundManager.QueueToPlay(SoundManager.SFX.FOE_TOOK_DAMAGE);
 						else
-							soundManager.QueueToPlay(SoundManager.SFX.HIT_FOE_WEAKENED);
+							soundManager.QueueToPlay(SoundManager.SFX.FOE_TOOK_DAMAGED_WEAKENED);
                         if (boss.DealDamage(2))
                         {
                             // The boss has no more health.
@@ -872,6 +912,9 @@ namespace SpiritPurger
                             gameRenderer.SetPatternTime(0);
                             // Show the pattern result.
                             gameRenderer.SetPatternResult(beatThisPattern, addScore);
+							soundManager.QueueToPlay(beatThisPattern ?
+								SoundManager.SFX.FANFARE_PATTERN_SUCCESS :
+								SoundManager.SFX.FANFARE_PATTERN_FAILURE);
                         }
                         toRemove.Add(i);
                         // Make 2 hitsparks to show that the enemy was hit.
@@ -892,6 +935,7 @@ namespace SpiritPurger
                         gameRenderer.SetScore(score);
                 }
             }
+
 			if (hitBoss)
 			{
 				// Tell the renderer that the boss' health changed.
