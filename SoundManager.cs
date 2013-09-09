@@ -48,28 +48,18 @@ namespace SpiritPurger
 		protected List<Sound> _playingSounds;
 		public const int MAX_SIMULT_SFX = 126;
 		protected int _currSFX = 0;
-		protected int volumeSFX = 100;
-		protected int volumeMusic = 100;
+		protected int volume = 100;
 
-		public int VolumeSFX
+		public int Volume
 		{
-			get { return volumeSFX; }
+			get { return volume; }
 			set
 			{
-				volumeSFX = value;
+				volume = value;
 				foreach (Sound sfx in _playingSounds)
 				{
-					sfx.Volume = volumeSFX;
+					sfx.Volume = volume;
 				}
-			}
-		}
-
-		public int VolumeMusic
-		{
-			get { return volumeMusic; }
-			set
-			{
-				volumeMusic = value;
 			}
 		}
 
@@ -116,7 +106,7 @@ namespace SpiritPurger
 		/// <returns>True if all loads succeeded. False otherwise.</returns>
 		private bool LoadAllSFX(out Dictionary<string, SoundBuffer> sfxFileInstances)
 		{
-			bool success = true;;
+			bool success = true;
 			
 			sfxFileInstances = new Dictionary<string, SoundBuffer>(StringComparer.Ordinal);
 			for (int i = 0; i < (int)SFX.END_SFX; ++i)

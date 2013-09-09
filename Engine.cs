@@ -94,6 +94,7 @@ namespace SpiritPurger
 
 		// Sound variables.
 		protected SoundManager soundManager;
+		protected MusicManager musicManager;
 
         // Current-game variables.
 		protected BulletCreator bulletCreator;
@@ -134,6 +135,7 @@ namespace SpiritPurger
 			gameRenderer = new GameRenderer(imageManager);
 			bulletCreator = new BulletCreator(imageManager);
 			soundManager = new SoundManager();
+			musicManager = new MusicManager();
 
 			// Assign sprites.
 			player = new Player(
@@ -171,8 +173,8 @@ namespace SpiritPurger
 		{
 			Dictionary<string, object> settings = options.Settings;
 			gameRenderer.bgRotSpeed = (double) settings["bg swirl speed"];
-			soundManager.VolumeSFX = (int)settings["sfx volume"];
-			soundManager.VolumeMusic = (int)settings["bgm volume"];
+			soundManager.Volume = (int)settings["sfx volume"];
+			musicManager.Volume = (int)settings["bgm volume"];
 			gameRenderer.bossHealthbar.Size = new Vector2f(
 				(int)settings["healthbar width"],
 				(int)settings["healthbar height"]);
