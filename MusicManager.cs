@@ -5,6 +5,53 @@ using SFML.Audio;
 
 namespace SpiritPurger
 {
+	/// <summary>
+	/// Stores when a music file should loop and to where.
+	/// </summary>
+	class LoopPointMusic
+	{
+		private String _filename;
+		private bool _hasLoop;
+		private TimeSpan _loopBeginPoint;
+		private TimeSpan _loopEndPoint;
+
+		public String Filename
+		{
+			get { return _filename; }
+		}
+
+		public bool Loops
+		{
+			get { return _hasLoop; }
+		}
+
+		public TimeSpan LoopBegin
+		{
+			get { return _loopBeginPoint; }
+		}
+
+		public TimeSpan LoopEnd
+		{
+			get { return _loopEndPoint; }
+		}
+
+		public LoopPointMusic(String filename, TimeSpan startLoop, TimeSpan endLoop)
+		{
+			_filename = filename;
+			_hasLoop = true;
+			_loopBeginPoint = startLoop;
+			_loopEndPoint = endLoop;
+		}
+
+		public LoopPointMusic(String filename)
+		{
+			_filename = filename;
+			_hasLoop = false;
+			_loopBeginPoint = TimeSpan.FromMilliseconds(0);
+			_loopEndPoint = TimeSpan.FromMilliseconds(1);
+		}
+	}
+
 	class MusicManager
 	{
 		// All playable music selectable in the game.
@@ -22,30 +69,27 @@ namespace SpiritPurger
 			// Use to count the number of music entries if needed.
 			END_LIST
 		}
-		// Says what part of the music the MusicManager is currently playing.
-		public enum PLAYING
-		{
-			OFF,
-			OPENING,
-			LOOPING
-		}
-		protected PLAYING playing;
 		// The chosen music to play.
 		protected MUSIC_LIST choiceNowPlaying;
 		// The literal music files that are playing.
-		protected Music nowPlayingOpening;
-		protected Music nowPlayingLoop;
-		protected bool hasOpening;
+		protected Music music;
+		protected Dictionary<MUSIC_LIST, LoopPointMusic> loopPointMusics;
+		protected LoopPointMusic currentMusic;
 
 		public float Volume
 		{
-			get { return nowPlayingOpening.Volume; }
+			get { return music.Volume; }
 			set
 			{
 				if (value > 100 || value < 0)
 					return;
-				nowPlayingOpening.Volume = value;
+				music.Volume = value;
 			}
+		}
+
+		public SoundStatus Status
+		{
+			get { return music.Status; }
 		}
 
 		public MUSIC_LIST NowPlaying
@@ -57,42 +101,50 @@ namespace SpiritPurger
 					// They chose to play the same music that's playing now.
 					return;
 
-				String[] filenames = GetMusicFilenames(value);
-				bool opening = filenames[0].CompareTo("") == 0;
-				if (!opening && filenames[1].CompareTo("") == 0)
+				String filename = GetMusicFilename(value);
+				if (filename.CompareTo("") == 0)
 				{
 					// There is no music to load.
+					// What was requested was an invalid music selection.
 				}
 				else
 				{
 					// Load the music selected.
+					float vol = 100.0F;
+					if (music != null)
+						vol = music.Volume;
 					choiceNowPlaying = value;
-					if (nowPlayingOpening != null)
+					currentMusic = loopPointMusics[value];
+					if (music != null)
 					{
-						nowPlayingOpening.Stop();
-						nowPlayingOpening.Dispose();
+						music.Stop();
+						music.Dispose();
 					}
-					if (nowPlayingLoop != null)
-					{
-						nowPlayingLoop.Stop();
-						nowPlayingLoop.Dispose();
-					}
-					if (hasOpening)
-					{
-						nowPlayingOpening = new Music("res/music/" + filenames[0]);
-					}
-					nowPlayingLoop = new Music("res/music/" + filenames[1]);
+					music = new Music("res/music/" + filename);
+					music.Volume = vol;
+					music.Play();
+					music.Loop = true;
 				}
 			}
 		}
 
 		public MusicManager()
 		{
-			playing = PLAYING.OFF;
-			hasOpening = false;
+			PopulateMusicList();
 			NowPlaying = MUSIC_LIST.SILENT;
-			nowPlayingOpening.Loop = false;
-			nowPlayingLoop.Loop = true;
+		}
+
+		private void PopulateMusicList()
+		{
+			loopPointMusics = new Dictionary<MUSIC_LIST, LoopPointMusic>();
+			LoopPointMusic silence = new LoopPointMusic(GetMusicFilename(MUSIC_LIST.SILENT));
+			loopPointMusics.Add(MUSIC_LIST.UNASSIGNED, silence);
+			loopPointMusics.Add(MUSIC_LIST.SILENT, silence);
+			loopPointMusics.Add(MUSIC_LIST.TITLE, silence);
+			loopPointMusics.Add(MUSIC_LIST.GAME_WON, silence);
+			loopPointMusics.Add(MUSIC_LIST.GAME_LOST, silence);
+			loopPointMusics.Add(MUSIC_LIST.GAME, new LoopPointMusic(GetMusicFilename(MUSIC_LIST.GAME),
+				TimeSpan.FromSeconds(3.18), TimeSpan.FromSeconds(33.8)));
 		}
 
 		/// <summary>
@@ -101,22 +153,28 @@ namespace SpiritPurger
 		/// it should be added into this function.
 		/// </summary>
 		/// <param name="music">The music to play.</param>
-		/// <returns>A filename for music's opening (subscript 0) and loop (subscript1),
-		/// or a blank string for unassigned music. A blank opening means there is no opening.</returns>
-		protected String[] GetMusicFilenames(MUSIC_LIST music)
+		/// <returns>A filename for music, or a blank filename for unassigned music.</returns>
+		protected String GetMusicFilename(MUSIC_LIST music)
 		{
-			String[] ret = new String[2];
-			ret[0] = "";
-			ret[1] = "";
+			String ret;
 
-			if (music == MUSIC_LIST.SILENT)
+			switch (music)
 			{
-				hasOpening = true;
-				ret[0] = "silence.ogg";
-				ret[1] = "silence.ogg";
+				case MUSIC_LIST.SILENT:
+				case MUSIC_LIST.TITLE:
+					ret = "silence.ogg"; break;
+				case MUSIC_LIST.GAME:
+					ret = "athletic.ogg"; break;
+				default:
+					ret = ""; break;
 			}
 
 			return ret;
+		}
+
+		public void ChangeMusic(MUSIC_LIST choice)
+		{
+			NowPlaying = choice;
 		}
 
 		/// <summary>
@@ -125,18 +183,9 @@ namespace SpiritPurger
 		/// </summary>
 		public void Play()
 		{
-			if (playing == PLAYING.OFF)
+			if (Status != SoundStatus.Playing)
 			{
-				if (hasOpening)
-				{
-					playing = PLAYING.OPENING;
-					nowPlayingOpening.Play();
-				}
-				else
-				{
-					playing = PLAYING.LOOPING;
-					nowPlayingLoop.Play();
-				}
+				music.Play();
 			}
 		}
 
@@ -152,17 +201,24 @@ namespace SpiritPurger
 
 		public void Stop()
 		{
-			playing = PLAYING.OFF;
-			if (nowPlayingOpening != null)
-				nowPlayingOpening.Stop();
-			if (nowPlayingLoop != null)
-				nowPlayingLoop.Stop();
+			if (music != null)
+				music.Stop();
 		}
 
 		public void Replay()
 		{
 			Stop();
 			Play();
+		}
+
+		public void Update()
+		{
+			// Loop the music if needed.
+			if (music.PlayingOffset > currentMusic.LoopEnd)
+			{
+				music.PlayingOffset = currentMusic.LoopBegin +
+					(music.PlayingOffset - currentMusic.LoopEnd);
+			}
 		}
 	}
 }

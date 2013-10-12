@@ -268,6 +268,7 @@ namespace SpiritPurger
                 // Process events.
                 // If we are done, exit the loop immediately.
                 app.DispatchEvents();
+				musicManager.Update();
             }
 			/*
 			 * TODO: Cleanup? This cleanup code was in the old engine.
@@ -354,6 +355,7 @@ namespace SpiritPurger
                 {
                     case MainMenu.Play:
                         gameState = GameState.GamePlay;
+						musicManager.ChangeMusic(MusicManager.MUSIC_LIST.GAME);
                         // Switch the delegate to painting the game.
                         paintHandler = new PaintHandler(PaintGame);
                         break;
@@ -472,6 +474,7 @@ namespace SpiritPurger
                     // End the game.
                     Reset();
                     gameState = GameState.MainMenu;
+					musicManager.ChangeMusic(MusicManager.MUSIC_LIST.TITLE);
                     paintHandler = new PaintHandler(PaintMenu);
                 }
                 return;
@@ -523,6 +526,7 @@ namespace SpiritPurger
                 {
                     this.Reset();
                     gameState = GameState.MainMenu;
+					musicManager.ChangeMusic(MusicManager.MUSIC_LIST.TITLE);
                     paintHandler = new PaintHandler(PaintMenu);
                     return;
                 }
