@@ -221,7 +221,7 @@ namespace SpiritPurger
 			bgSprite = imageManager.GetSprite("bg");
 			bgSprite.Origin = new Vector2f(bgSprite.TextureRect.Width / 2,
 				bgSprite.TextureRect.Height / 2);
-			bgSprite.Position = bgSprite.Origin - FieldUpperLeft;
+			bgSprite.Position = FieldUpperLeft + FieldSize / 2;
 			borderSprite = imageManager.GetSprite("border");
 			bossHealthbar = new Healthbar(imageManager);
 

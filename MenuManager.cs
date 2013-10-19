@@ -28,12 +28,12 @@ namespace SpiritPurger
 		// Engine can handle the complicated operations.
 		public enum REACTION
 		{
+			NONE, // No particular action to take.
 			GENERIC, // Let the Engine take care of the reaction.
 			PLAY_GAME,
 			BIGGER_WINDOW, SMALLER_WINDOW, TO_WINDOWED, TO_FULLSCREEN,
 			MORE_MUSIC_VOL, LESS_MUSIC_VOL, MORE_SOUND_VOL, LESS_SOUND_VOL,
 			END_GAME,
-			NONE, // No particular action to take.
 			END_REACTIONS
 		}
 
@@ -99,28 +99,45 @@ namespace SpiritPurger
 			return current;
 		}
 
-		public void OnDownKey()
+		public REACTION OnDownKey()
 		{
+			selectedItem = LoopSelection(selectedItem, -1,
+				menuLayout[currentMenu].Length);
+			return REACTION.NONE;
 		}
 
-		public void OnUpKey()
+		public REACTION OnUpKey()
 		{
+			selectedItem = LoopSelection(selectedItem, -1,
+				menuLayout[currentMenu].Length);
+			return REACTION.NONE;
 		}
 
-		public void OnLeftKey()
+		public REACTION OnLeftKey()
 		{
+			return REACTION.NONE;
 		}
 
-		public void OnRightKey()
+		public REACTION OnRightKey()
 		{
+			return REACTION.NONE;
 		}
 
-		public void OnSelectKey()
+		public REACTION OnSelectKey()
 		{
+			REACTION react = REACTION.NONE;
+			switch ((MENUITEM) selectedItem)
+			{
+				case MENUITEM.START_GAME: react = REACTION.PLAY_GAME; break;
+				case MENUITEM.EXIT_MAIN: react = REACTION.END_GAME; break;
+				default: react = REACTION.NONE; break;
+			}
+			return react;
 		}
 
-		public void OnCancelKey()
+		public REACTION OnCancelKey()
 		{
+			return REACTION.NONE;
 		}
 
 		/// <summary>
