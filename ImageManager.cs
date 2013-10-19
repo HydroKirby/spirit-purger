@@ -10,6 +10,11 @@ namespace SpiritPurger
 		protected Dictionary<string, Texture> _images;
 		// For consistency, all(?) image names are accessible here.
 		// They should be loadable with LoadPNG.
+		// Game resource images.
+		public const String GAME_ICON = "icon";
+		// Title Screen images.
+		public const String TITLE_BG = "title";
+		// In-game images.
 		public const String BULLET_4 = "b_4";
 		public const String BULLET_8 = "b_8";
 		public const String BULLET_16 = "b_16";

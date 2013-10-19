@@ -131,7 +131,7 @@ namespace SpiritPurger
             // Load all resources.
 			imageManager = new ImageManager();
 			renderer = new Renderer();
-            menuRenderer = new MenuRenderer();
+            menuRenderer = new MenuRenderer(imageManager);
 			gameRenderer = new GameRenderer(imageManager);
 			bulletCreator = new BulletCreator(imageManager);
 			soundManager = new SoundManager();
@@ -152,6 +152,10 @@ namespace SpiritPurger
 			boss.UpdateDisplayPos();
 			bombBlast = new Bomb(bulletCreator.GetSprite(16), 0, new Vector2f(),
 				new Vector2f(), 0.0);
+			imageManager.LoadPNG(ImageManager.GAME_ICON);
+			Texture icon = imageManager.GetImage(ImageManager.GAME_ICON);
+			app.SetIcon(icon.Size.X, icon.Size.Y,
+				icon.CopyToImage().Pixels);
 
             // Prepare the game to be run.
             Reset();

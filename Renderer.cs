@@ -60,6 +60,7 @@ namespace SpiritPurger
 
 	public class MenuRenderer : Renderer
 	{
+		protected Sprite bg;
 		protected Color commonTextColor;
 		protected Text cursorText;
 		protected Text startText;
@@ -73,9 +74,11 @@ namespace SpiritPurger
 		/// Makes a MenuRenderer and optionally sets the intial selected menu item.
 		/// </summary>
 		/// <param name="selection">Which menu item is currently focused.</param>
-		public MenuRenderer(MainMenu selection = 0)
+		public MenuRenderer(ImageManager imageManager, MainMenu selection = 0)
 		{
-			commonTextColor = Color.Blue;
+			imageManager.LoadPNG(ImageManager.TITLE_BG);
+			bg = imageManager.GetSprite(ImageManager.TITLE_BG);
+			commonTextColor = Color.Cyan;
 
 			cursorText = new Text(">", menuFont, 12);
 			startText = new Text("Start", menuFont, 12);
@@ -105,6 +108,23 @@ namespace SpiritPurger
 		{
 			cursorText.Position = new Vector2f(136, 130 + 15 * (int)selection);
 			cursorText.Color = commonTextColor;
+		}
+
+		/// <summary>
+		/// Creates a Text object for rendering on the menu screen.
+		/// </summary>
+		/// <param name="text">The string to render.</param>
+		/// <param name="depth">How many rows below the title to render. Increment in one's.</param>
+		/// <returns>The new Text object with coloring and positioning set.</returns>
+		protected Text MakeTextInstance(String text, int depth)
+		{
+			const int BELOW_TITLE = 150;
+			Text ret = new Text(text, menuFont, 12);
+			ret.Color = commonTextColor;
+			ret.Position = new Vector2f(
+				(ret.CharacterSize * ret.DisplayedString.Length + APP_BASE_WIDTH) / 2,
+				BELOW_TITLE + ret.CharacterSize * depth);
+			return ret;
 		}
 
 		public void SetOptGodMode(bool isOn)
@@ -138,6 +158,7 @@ namespace SpiritPurger
 		public void Paint(object sender)
 		{
 			RenderWindow app = (RenderWindow)sender;
+			app.Draw(bg);
 			app.Draw(cursorText);
 			app.Draw(startText);
 			app.Draw(godModeText);
