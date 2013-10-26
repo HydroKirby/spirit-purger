@@ -5,7 +5,7 @@ using System.Text;
 
 namespace SpiritPurger
 {
-	public class MenuManager
+	public class MenuManager : Subject
 	{
 		public enum SUBMENU
 		{
@@ -40,16 +40,31 @@ namespace SpiritPurger
 		protected Dictionary<SUBMENU, MENUITEM[]> menuLayout;
 		protected SUBMENU currentMenu;
 		protected int selectedItem;
+		protected REACTION state;
 
 		public MENUITEM Selected
 		{
 			get { return (MENUITEM)selectedItem; }
 		}
 
+		public SUBMENU CurrentMenu
+		{
+			get { return currentMenu; }
+		}
+
+		/// <summary>
+		/// Gets the intent of the manager based on the selected menu item.
+		/// </summary>
+		public REACTION State
+		{
+			get { return state; }
+		}
+
 		public MenuManager()
 		{
 			currentMenu = SUBMENU.MAIN;
 			selectedItem = 0;
+			state = REACTION.NONE;
 
 			// Allocate memory for the layout of the menu and submenus.
 			// The number of menu items is hard coded for speed of development.
@@ -82,6 +97,14 @@ namespace SpiritPurger
 			menuLayout[SUBMENU.CREDITS][0] = MENUITEM.EXIT_CREDITS;
 		}
 
+		public MENUITEM[] GetSubmenuLayout(SUBMENU submenu)
+		{
+			MENUITEM[] val;
+			if (!menuLayout.TryGetValue(submenu, out val))
+				val = null;
+			return val;
+		}
+
 		/// <summary>
 		/// Moves the selection up or down and loops on the menu if needed.
 		/// </summary>
@@ -99,45 +122,69 @@ namespace SpiritPurger
 			return current;
 		}
 
-		public REACTION OnDownKey()
+		protected void ChangeState(REACTION newState)
+		{
+			if (newState != state)
+			{
+				state = newState;
+				// Tell all Observers that the state changed.
+				// The Subjects can check the Status property of this class.
+				Notify();
+			}
+		}
+
+		public void OnDownKey()
 		{
 			selectedItem = LoopSelection(selectedItem, -1,
 				menuLayout[currentMenu].Length);
-			return REACTION.NONE;
+			switch (selectedItem)
+			{
+				default: ChangeState(REACTION.NONE); break;
+			}
 		}
 
-		public REACTION OnUpKey()
+		public void OnUpKey()
 		{
 			selectedItem = LoopSelection(selectedItem, -1,
 				menuLayout[currentMenu].Length);
-			return REACTION.NONE;
+			switch (selectedItem)
+			{
+				default: ChangeState(REACTION.NONE); break;
+			}
 		}
 
-		public REACTION OnLeftKey()
+		public void OnLeftKey()
 		{
-			return REACTION.NONE;
+			switch (selectedItem)
+			{
+				default: ChangeState(REACTION.NONE); break;
+			}
 		}
 
-		public REACTION OnRightKey()
+		public void OnRightKey()
 		{
-			return REACTION.NONE;
+			switch (selectedItem)
+			{
+				default: ChangeState(REACTION.NONE); break;
+			}
 		}
 
-		public REACTION OnSelectKey()
+		public void OnSelectKey()
 		{
-			REACTION react = REACTION.NONE;
 			switch ((MENUITEM) selectedItem)
 			{
-				case MENUITEM.START_GAME: react = REACTION.PLAY_GAME; break;
-				case MENUITEM.EXIT_MAIN: react = REACTION.END_GAME; break;
-				default: react = REACTION.NONE; break;
+				case MENUITEM.START_GAME: ChangeState(REACTION.PLAY_GAME); break;
+				case MENUITEM.EXIT_MAIN: ChangeState(REACTION.END_GAME); break;
+				default: ChangeState(REACTION.NONE); break;
 			}
-			return react;
 		}
 
-		public REACTION OnCancelKey()
+		public void OnCancelKey()
 		{
-			return REACTION.NONE;
+			switch (selectedItem)
+			{
+				default: ChangeState(REACTION.NONE); break;
+			}
 		}
 
 		/// <summary>

@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using SFML.Audio;
 using SFML.Window;
 using SFML.Graphics;
+using MENUITEM = SpiritPurger.MenuManager.MENUITEM;
+using SUBMENU = SpiritPurger.MenuManager.SUBMENU;
 
 namespace SpiritPurger
 {
@@ -11,7 +13,7 @@ namespace SpiritPurger
 	/// Holds all images in the game.
 	/// It should provide sprites for objects.
 	/// </summary>
-	public class Renderer
+	public abstract class Renderer : Observer
 	{
 		// Fonts and images generated solely to display text.
 		protected static Font menuFont = null;
@@ -62,6 +64,7 @@ namespace SpiritPurger
 	{
 		protected Sprite bg;
 		protected Color commonTextColor;
+		protected List<List<Text>> submenuLabels;
 		protected Text cursorText;
 		protected Text startText;
 		protected Text godModeText;
@@ -71,14 +74,28 @@ namespace SpiritPurger
 		protected Text exitText;
 
 		/// <summary>
-		/// Makes a MenuRenderer and optionally sets the intial selected menu item.
+		/// Makes a MenuRenderer.
 		/// </summary>
-		/// <param name="selection">Which menu item is currently focused.</param>
-		public MenuRenderer(ImageManager imageManager, MainMenu selection = 0)
+		public MenuRenderer(ImageManager imageManager, MenuManager menuManager)
 		{
 			imageManager.LoadPNG(ImageManager.TITLE_BG);
 			bg = imageManager.GetSprite(ImageManager.TITLE_BG);
 			commonTextColor = Color.Cyan;
+
+			submenuLabels = new List<List<Text>>();
+			MENUITEM[] tempMenuItems;
+			// Make all labels for all menus.
+			for (int i = 0; i < (int)SUBMENU.END_SUBMENUS; i++)
+			{
+				tempMenuItems = menuManager.GetSubmenuLayout((SUBMENU)i);
+				if (tempMenuItems.Length > 0)
+				{
+					List<Text> labels = new List<Text>();
+					// Make labels for each menu item.
+					// Add the new list of labels to the full list of labels.
+					submenuLabels.Add(labels);
+				}
+			}
 
 			cursorText = new Text(">", menuFont, 12);
 			startText = new Text("Start", menuFont, 12);
@@ -92,7 +109,7 @@ namespace SpiritPurger
 
 			// Set the remaining menu strings' positions.
 			// Note: The app window is 290x290.
-			SetSelection(selection);
+			SetSelection(0);
 			startText.Position = new Vector2f(145, 130 + (float)MainMenu.Play * 15.0F);
 			exitText.Position = new Vector2f(145, 130 + (float)MainMenu.Exit * 15.0F);
 
@@ -127,6 +144,34 @@ namespace SpiritPurger
 			return ret;
 		}
 
+		protected String MenuItemToString(MENUITEM item)
+		{
+			String ret;
+			switch (item)
+			{
+				case MENUITEM.ABOUT: ret = "ABOUT"; break;
+				case MENUITEM.START_GAME: ret = "PLAY"; break;
+				case MENUITEM.OPTIONS: ret = "OPTIONS"; break;
+				case MENUITEM.EXIT_MAIN: ret = "QUIT"; break;
+				case MENUITEM.EASY_DIFF: ret = "EASY"; break;
+				case MENUITEM.NORM_DIFF: ret = "NORMAL"; break;
+				case MENUITEM.HARD_DIFF: ret = "HARD"; break;
+				case MENUITEM.EXIT_DIFF: ret = "RETURN"; break;
+				case MENUITEM.WINDOW_SIZE: ret = "WINDOW SIZE"; break;
+				case MENUITEM.WINDOWED: ret = "DISPLAY"; break;
+				case MENUITEM.MUSIC_VOL: ret = "MUSIC VOLUME"; break;
+				case MENUITEM.SOUND_VOL: ret = "SOUND VOLUME"; break;
+				case MENUITEM.EXIT_OPTIONS: ret = "RETURN"; break;
+				case MENUITEM.TUTORIAL: ret = "TUTORIAL"; break;
+				case MENUITEM.CREDITS: ret = "CREDITS"; break;
+				case MENUITEM.EXIT_ABOUT: ret = "RETURN"; break;
+				case MENUITEM.EXIT_TUTORIAL: ret = "RETURN"; break;
+				case MENUITEM.EXIT_CREDITS: ret = "RETURN"; break;
+				default: ret = ""; break;
+			}
+			return ret;
+		}
+
 		public void SetOptGodMode(bool isOn)
 		{
 			godModeText = new Text("God Mode" + (isOn ? " *" : ""), menuFont, 12);
@@ -153,6 +198,11 @@ namespace SpiritPurger
 			scaleText = new Text("Scale: " + scale.ToString(), menuFont, 12);
 			scaleText.Position = new Vector2f(145, 130 + (float)MainMenu.Scale * 15.0F);
 			scaleText.Color = commonTextColor;
+		}
+
+		public override void Update()
+		{
+			throw new NotImplementedException();
 		}
 
 		public void Paint(object sender)
@@ -405,6 +455,11 @@ namespace SpiritPurger
 
 		public void UpdatePlayer(ref Player p)
 		{
+		}
+
+		public override void Update()
+		{
+			throw new NotImplementedException();
 		}
 
 		public void Paint(object sender)

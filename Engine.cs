@@ -26,7 +26,39 @@ namespace SpiritPurger
         }
     }
 
-    class Engine
+	// Below are the classes for doing the Observer Pattern.
+	public abstract class Observer
+	{
+		public abstract void Update();
+	}
+
+	/// <summary>
+	/// Does things and informs all of its Observers.
+	/// </summary>
+	public abstract class Subject
+	{
+		private List<Observer> observers = new List<Observer>();
+
+		public void Attach(Observer observer)
+		{
+			observers.Add(observer);
+		}
+
+		public void Detach(Observer observer)
+		{
+			observers.Remove(observer);
+		}
+
+		public void Notify()
+		{
+			foreach (Observer o in observers)
+			{
+				o.Update();
+			}
+		}
+	}
+
+    class Engine : Observer
     {
         // The ticks to wait after the redraw before updating the game.
         // Division by 1,000 turns the seconds value into the milliseconds
@@ -87,7 +119,6 @@ namespace SpiritPurger
 
         // Rendering variables.
 		protected ImageManager imageManager;
-        protected Renderer renderer;
 		protected MenuRenderer menuRenderer;
 		protected GameRenderer gameRenderer;
         protected double appScale = 1.0;
@@ -97,6 +128,7 @@ namespace SpiritPurger
 		protected MusicManager musicManager;
 
         // Current-game variables.
+		protected MenuManager menuManager;
 		protected BulletCreator bulletCreator;
         // This is the number of seconds left to complete a pattern.
         protected int patternTime = 0;
@@ -130,12 +162,14 @@ namespace SpiritPurger
 
             // Load all resources.
 			imageManager = new ImageManager();
-			renderer = new Renderer();
-            menuRenderer = new MenuRenderer(imageManager);
+			menuManager = new MenuManager();
+            menuRenderer = new MenuRenderer(imageManager, menuManager);
 			gameRenderer = new GameRenderer(imageManager);
 			bulletCreator = new BulletCreator(imageManager);
 			soundManager = new SoundManager();
 			musicManager = new MusicManager();
+			menuManager.Attach(this);
+			menuManager.Attach(menuRenderer);
 
 			// Assign sprites.
 			player = new Player(
@@ -326,6 +360,11 @@ namespace SpiritPurger
         /// <param name="ticks">The ticks since the last call to this.</param>
         protected void UpdateMenu(object sender, double ticks)
         {
+			// When MenuManager is functional, work with this setup and remove the old code.
+			// MenuManager will begin to issue Update() calls to Observers like this Engine.
+			if (keys.left == 2 && false)
+				menuManager.OnLeftKey();
+
             // The comparisons to 2 accounts for how KEY_UP and KEY_DOWN change
             // the key hold-times to 1, but an immediately following Update()
             // makes those 1s into 2s.
@@ -463,7 +502,15 @@ namespace SpiritPurger
 				player.UpdateDisplayPos();
 			}
 		}
-        
+
+		/// <summary>
+		/// Reacts to the state of its Subjects.
+		/// </summary>
+		public override void Update()
+		{
+			throw new NotImplementedException();
+		}
+
         /// <summary>
         /// Updates the game.
         /// </summary>
