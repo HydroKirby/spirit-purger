@@ -17,8 +17,9 @@ namespace SpiritPurger
         {
             // Create the game and run it.
             SpiritPurger.Engine engine = new SpiritPurger.Engine();
-            // Create the main window.
-            RenderWindow app = new RenderWindow(new VideoMode(640, 480), "Spirit Purger");
+            // Create the main window. Disable resizing.
+            RenderWindow app = new RenderWindow(new VideoMode(640, 480), "Spirit Purger",
+				Styles.Default & ~Styles.Resize);
             app.Closed += new EventHandler(OnClose);
             engine.Run(app);
         }

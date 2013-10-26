@@ -88,10 +88,38 @@ namespace SpiritPurger
 			for (int i = 0; i < (int)SUBMENU.END_SUBMENUS; i++)
 			{
 				tempMenuItems = menuManager.GetSubmenuLayout((SUBMENU)i);
-				if (tempMenuItems.Length > 0)
+				if (tempMenuItems != null && tempMenuItems.Length > 0)
 				{
 					List<Text> labels = new List<Text>();
 					// Make labels for each menu item.
+					for (int j = 0; j < tempMenuItems.Length; j++)
+					{
+						// For unique cases, interact with them separately.
+						switch (tempMenuItems[j])
+						{
+							case MENUITEM.MUSIC_VOL:
+								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								break;
+							case MENUITEM.SOUND_VOL:
+								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								break;
+							case MENUITEM.CREDITS:
+								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								break;
+							case MENUITEM.TUTORIAL:
+								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								break;
+							case MENUITEM.WINDOW_SIZE:
+								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								break;
+							case MENUITEM.WINDOWED:
+								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								break;
+							default:
+								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								break;
+						}
+					}
 					// Add the new list of labels to the full list of labels.
 					submenuLabels.Add(labels);
 				}
@@ -135,39 +163,53 @@ namespace SpiritPurger
 		/// <returns>The new Text object with coloring and positioning set.</returns>
 		protected Text MakeTextInstance(String text, int depth)
 		{
-			const int BELOW_TITLE = 150;
-			Text ret = new Text(text, menuFont, 12);
+			const int BELOW_TITLE = 250;
+			Text ret = new Text(text, menuFont, 24);
 			ret.Color = commonTextColor;
+
+			char[] all_chars = ret.DisplayedString.ToCharArray();
+			int short_letters = 0;
+			for (int i = 0; false &&  i < all_chars.Length; i++)
+				if (all_chars[i] == 'i' || all_chars[i] == 'I' || all_chars[i] == 'l')
+					short_letters += 1;
+
 			ret.Position = new Vector2f(
-				(ret.CharacterSize * ret.DisplayedString.Length + APP_BASE_WIDTH) / 2,
+				APP_BASE_WIDTH / 2 -
+				(ret.CharacterSize * (ret.DisplayedString.Length - short_letters)) / 2,
 				BELOW_TITLE + ret.CharacterSize * depth);
 			return ret;
 		}
 
-		protected String MenuItemToString(MENUITEM item)
+		/// <summary>
+		/// Creates a Text object for rendering on the menu screen.
+		/// </summary>
+		/// <param name="item">The menu item to turn into a string.</param>
+		/// <param name="depth">How many rows below the title to render. Increment in one's.</param>
+		/// <returns>The new Text object with coloring and positioning set.</returns>
+		protected Text MakeTextInstance(MENUITEM item, int depth)
 		{
-			String ret;
+			Text ret;
 			switch (item)
 			{
-				case MENUITEM.ABOUT: ret = "ABOUT"; break;
-				case MENUITEM.START_GAME: ret = "PLAY"; break;
-				case MENUITEM.OPTIONS: ret = "OPTIONS"; break;
-				case MENUITEM.EXIT_MAIN: ret = "QUIT"; break;
-				case MENUITEM.EASY_DIFF: ret = "EASY"; break;
-				case MENUITEM.NORM_DIFF: ret = "NORMAL"; break;
-				case MENUITEM.HARD_DIFF: ret = "HARD"; break;
-				case MENUITEM.EXIT_DIFF: ret = "RETURN"; break;
-				case MENUITEM.WINDOW_SIZE: ret = "WINDOW SIZE"; break;
-				case MENUITEM.WINDOWED: ret = "DISPLAY"; break;
-				case MENUITEM.MUSIC_VOL: ret = "MUSIC VOLUME"; break;
-				case MENUITEM.SOUND_VOL: ret = "SOUND VOLUME"; break;
-				case MENUITEM.EXIT_OPTIONS: ret = "RETURN"; break;
-				case MENUITEM.TUTORIAL: ret = "TUTORIAL"; break;
-				case MENUITEM.CREDITS: ret = "CREDITS"; break;
-				case MENUITEM.EXIT_ABOUT: ret = "RETURN"; break;
-				case MENUITEM.EXIT_TUTORIAL: ret = "RETURN"; break;
-				case MENUITEM.EXIT_CREDITS: ret = "RETURN"; break;
-				default: ret = ""; break;
+				case MENUITEM.ABOUT: ret = MakeTextInstance("ABOUT", depth); break;
+				case MENUITEM.START_GAME: ret = MakeTextInstance("PLAY", depth); break;
+				case MENUITEM.OPTIONS: ret = MakeTextInstance("OPTIONS", depth); break;
+				case MENUITEM.EXIT_MAIN: ret = MakeTextInstance("QUIT", depth); break;
+				case MENUITEM.EASY_DIFF: ret = MakeTextInstance("EASY", depth); break;
+				case MENUITEM.NORM_DIFF: ret = MakeTextInstance("NORMAL", depth); break;
+				case MENUITEM.HARD_DIFF: ret = MakeTextInstance("HARD", depth); break;
+				case MENUITEM.EXIT_DIFF: ret = MakeTextInstance("RETURN", depth); break;
+				case MENUITEM.WINDOW_SIZE: ret = MakeTextInstance("WINDOW SIZE", depth); break;
+				case MENUITEM.WINDOWED: ret = MakeTextInstance("DISPLAY", depth); break;
+				case MENUITEM.MUSIC_VOL: ret = MakeTextInstance("MUSIC VOLUME", depth); break;
+				case MENUITEM.SOUND_VOL: ret = MakeTextInstance("SOUND VOLUME", depth); break;
+				case MENUITEM.EXIT_OPTIONS: ret = MakeTextInstance("RETURN", depth); break;
+				case MENUITEM.TUTORIAL: ret = MakeTextInstance("TUTORIAL", depth); break;
+				case MENUITEM.CREDITS: ret = MakeTextInstance("CREDITS", depth); break;
+				case MENUITEM.EXIT_ABOUT: ret = MakeTextInstance("RETURN", depth); break;
+				case MENUITEM.EXIT_TUTORIAL: ret = MakeTextInstance("RETURN", depth); break;
+				case MENUITEM.EXIT_CREDITS: ret = MakeTextInstance("RETURN", depth); break;
+				default: ret = MakeTextInstance("", depth); break;
 			}
 			return ret;
 		}
@@ -209,6 +251,10 @@ namespace SpiritPurger
 		{
 			RenderWindow app = (RenderWindow)sender;
 			app.Draw(bg);
+			foreach (Text label in submenuLabels[0])
+			{
+				app.Draw(label);
+			}
 			app.Draw(cursorText);
 			app.Draw(startText);
 			app.Draw(godModeText);
