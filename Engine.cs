@@ -249,7 +249,7 @@ namespace SpiritPurger
             enemies.Clear();
             beatThisPattern = true;
             gameOver = false;
-            paused = false;
+			gameRenderer.IsPaused = paused = false;
             transitionFrames = 0;
             bossIntroTime = 0;
             bombBlast.Kill();
@@ -257,12 +257,11 @@ namespace SpiritPurger
             bombComboTimeCountdown = 0;
             bombComboScore = 0;
             grazeCount = 0;
-            lives = 2;
-            bombs = 3;
-            score = 0;
+			gameRenderer.SetPatternTime(0);
+            gameRenderer.SetScore(score = 0);
 			// TODO: Reset gameRenderer and menuRenderer.
-			gameRenderer.SetLives(lives);
-			gameRenderer.SetBombs(bombs);
+			gameRenderer.SetLives(lives = 2);
+			gameRenderer.SetBombs(bombs = 3);
         }
 
         /// <summary>
@@ -335,8 +334,11 @@ namespace SpiritPurger
         {
             if (e.Code == Keyboard.Key.Escape)
             {
-                Window app = (Window)sender;
-                app.Close();
+				if (gameState == GameState.GamePlay)
+				{
+					// Toggle pausing the game.
+					gameRenderer.IsPaused = paused = !paused;
+				}
             }
             else
             {
@@ -520,7 +522,7 @@ namespace SpiritPurger
         {
             if (paused)
             {
-                if (keys.TappedBomb)
+                if (keys.bomb > 60)
                 {
                     // End the game.
                     Reset();
