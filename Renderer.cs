@@ -65,6 +65,8 @@ namespace SpiritPurger
 		protected Sprite bg;
 		protected Color commonTextColor;
 		protected List<List<Text>> submenuLabels;
+		protected Sprite selectBraceLeft;
+		protected Sprite selectBraceRight;
 		protected Text cursorText;
 		protected Text startText;
 		protected Text godModeText;
@@ -80,6 +82,10 @@ namespace SpiritPurger
 		{
 			imageManager.LoadPNG(ImageManager.TITLE_BG);
 			bg = imageManager.GetSprite(ImageManager.TITLE_BG);
+			imageManager.LoadPNG(ImageManager.MAIN_MENU_LEFT_BRACE);
+			selectBraceLeft = imageManager.GetSprite(ImageManager.MAIN_MENU_LEFT_BRACE);
+			imageManager.LoadPNG(ImageManager.MAIN_MENU_RIGHT_BRACE);
+			selectBraceRight = imageManager.GetSprite(ImageManager.MAIN_MENU_RIGHT_BRACE);
 			commonTextColor = Color.Cyan;
 
 			submenuLabels = new List<List<Text>>();
@@ -137,7 +143,8 @@ namespace SpiritPurger
 
 			// Set the remaining menu strings' positions.
 			// Note: The app window is 290x290.
-			SetSelection(0);
+			SetSelection((MainMenu)0);
+			SetSelection(menuManager);
 			startText.Position = new Vector2f(145, 130 + (float)MainMenu.Play * 15.0F);
 			exitText.Position = new Vector2f(145, 130 + (float)MainMenu.Exit * 15.0F);
 
@@ -156,12 +163,40 @@ namespace SpiritPurger
 		}
 
 		/// <summary>
+		/// Tells the renderer which menu item is focused.
+		/// The renderer shows focus on the new menu item by moving its form of focus
+		/// to the newly selected menu item.
+		/// </summary>
+		/// <param name="menuManager">The logical backend controlling the menu.</param>
+		public void SetSelection(MenuManager menuManager)
+		{
+			// Make a translucent spotlight behind the menu entry.
+			Text label = GetLabel(menuManager);
+			float x = label.Position.X;
+			float y = label.Position.Y;
+			uint width = (uint)(label.DisplayedString.Length * label.CharacterSize);
+			uint height = (uint)(label.CharacterSize);
+
+			selectBraceLeft.Position = new Vector2f(x - selectBraceLeft.TextureRect.Width, y);
+			selectBraceRight.Position = new Vector2f(x + width, y);
+		}
+
+		protected Text GetLabel(MenuManager menuManager)
+		{
+			SUBMENU submenu = menuManager.CurrentMenu;
+			MENUITEM selection = menuManager.Selected;
+			// Make a translucent spotlight behind the menu entry.
+			return submenuLabels[(int)submenu][(int)selection];
+		}
+
+		/// <summary>
 		/// Creates a Text object for rendering on the menu screen.
 		/// </summary>
 		/// <param name="text">The string to render.</param>
 		/// <param name="depth">How many rows below the title to render. Increment in one's.</param>
+		/// <param name="hint_rightwards">How many pixels to push the label to the right.</param>
 		/// <returns>The new Text object with coloring and positioning set.</returns>
-		protected Text MakeTextInstance(String text, int depth)
+		protected Text MakeTextInstance(String text, int depth, int hint_rightwards=0)
 		{
 			const int BELOW_TITLE = 250;
 			Text ret = new Text(text, menuFont, 24);
@@ -169,12 +204,12 @@ namespace SpiritPurger
 
 			char[] all_chars = ret.DisplayedString.ToCharArray();
 			int short_letters = 0;
-			for (int i = 0; false &&  i < all_chars.Length; i++)
+			for (int i = 0; true &&  i < all_chars.Length; i++)
 				if (all_chars[i] == 'i' || all_chars[i] == 'I' || all_chars[i] == 'l')
 					short_letters += 1;
 
 			ret.Position = new Vector2f(
-				APP_BASE_WIDTH / 2 -
+				hint_rightwards + APP_BASE_WIDTH / 2 -
 				(ret.CharacterSize * (ret.DisplayedString.Length - short_letters)) / 2,
 				BELOW_TITLE + ret.CharacterSize * depth);
 			return ret;
@@ -194,7 +229,7 @@ namespace SpiritPurger
 				case MENUITEM.ABOUT: ret = MakeTextInstance("ABOUT", depth); break;
 				case MENUITEM.START_GAME: ret = MakeTextInstance("PLAY", depth); break;
 				case MENUITEM.OPTIONS: ret = MakeTextInstance("OPTIONS", depth); break;
-				case MENUITEM.EXIT_MAIN: ret = MakeTextInstance("QUIT", depth); break;
+				case MENUITEM.EXIT_MAIN: ret = MakeTextInstance("QUIT", depth, -10); break;
 				case MENUITEM.EASY_DIFF: ret = MakeTextInstance("EASY", depth); break;
 				case MENUITEM.NORM_DIFF: ret = MakeTextInstance("NORMAL", depth); break;
 				case MENUITEM.HARD_DIFF: ret = MakeTextInstance("HARD", depth); break;
@@ -262,6 +297,8 @@ namespace SpiritPurger
 			app.Draw(repulsiveText);
 			app.Draw(scaleText);
 			app.Draw(exitText);
+			app.Draw(selectBraceLeft);
+			app.Draw(selectBraceRight);
 		}
 	}
 
@@ -366,7 +403,7 @@ namespace SpiritPurger
 			// Create the labels that are only created once.
 			labelPaused = new Text("Paused", menuFont, 12);
 			labelPausedToPlay = new Text("Press Escape to Play", menuFont, 12);
-			labelPausedToEnd = new Text("Tap Bomb to End", menuFont, 12);
+			labelPausedToEnd = new Text("Hold Bomb to Return to Title Screen", menuFont, 12);
 			labelGameOver = new Text("Game Over... Press Shoot", menuFont, 16);
 
 			// Set the positions for labels that are made only one time.

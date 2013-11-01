@@ -219,6 +219,9 @@ namespace SpiritPurger
 			gameRenderer.bossHealthbar.Position = new Vector2f(
 				(int)settings["healthbar x"] + GameRenderer.FIELD_LEFT,
 				(int)settings["healthbar y"] + GameRenderer.FIELD_TOP);
+			menuRenderer.SetOptGodMode(godMode = (int)settings["god mode"] != 0);
+			menuRenderer.SetOptFunBomb(funBomb = (int)settings["fun bomb"] != 0);
+			menuRenderer.SetOptRepulsive(repulsive = (int)settings["repulsive"] != 0);
 		}
 
 		/// <summary>

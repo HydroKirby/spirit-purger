@@ -51,6 +51,10 @@ namespace SpiritPurger
 			options["healthbar x"] = 20;
 			options["healthbar y"] = 10;
 			// ver 1.02
+			options["god mode"] = 0;
+			options["fun bomb"] = 0;
+			options["repulsive"] = 0;
+			// ver 1.03
 		}
 
 		protected bool ReadConfigFile(out Dictionary<string, string> tempOptions)
