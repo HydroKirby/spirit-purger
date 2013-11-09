@@ -6,6 +6,7 @@ using SFML.Window;
 using SFML.Graphics;
 using MENUITEM = SpiritPurger.MenuManager.MENUITEM;
 using SUBMENU = SpiritPurger.MenuManager.SUBMENU;
+using REACTION = SpiritPurger.MenuManager.REACTION;
 
 namespace SpiritPurger
 {
@@ -101,6 +102,7 @@ namespace SpiritPurger
 
 	public class MenuRenderer : Renderer
 	{
+		protected MenuManager menuManager;
 		protected Sprite bg;
 		protected Color commonTextColor;
 		protected List<List<Text>> submenuLabels;
@@ -120,6 +122,7 @@ namespace SpiritPurger
 		/// </summary>
 		public MenuRenderer(ImageManager imageManager, MenuManager menuManager)
 		{
+			this.menuManager = menuManager;
 			imageManager.LoadPNG(ImageManager.TITLE_BG);
 			bg = imageManager.GetSprite(ImageManager.TITLE_BG);
 			commonTextColor = Color.Cyan;
@@ -329,7 +332,14 @@ namespace SpiritPurger
 
 		public override void Update()
 		{
-			throw new NotImplementedException();
+			// React to whatever the menu manager wants.
+			REACTION action = menuManager.State;
+			if (action != REACTION.NONE)
+			{
+			}
+
+			// Move the menu selection's focus.
+			SetSelection(menuManager);
 		}
 
 		public void Paint(object sender)

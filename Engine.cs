@@ -168,7 +168,6 @@ namespace SpiritPurger
 			bulletCreator = new BulletCreator(imageManager);
 			soundManager = new SoundManager();
 			musicManager = new MusicManager();
-			menuManager.Attach(this);
 			menuManager.Attach(menuRenderer);
 
 			// Assign sprites.
@@ -367,8 +366,22 @@ namespace SpiritPurger
         {
 			// When MenuManager is functional, work with this setup and remove the old code.
 			// MenuManager will begin to issue Update() calls to Observers like this Engine.
-			if (keys.left == 2 && false)
-				menuManager.OnLeftKey();
+			bool refresh = false;
+			if (keys.up == 2)
+			{
+				menuManager.OnUpKey();
+				refresh = true;
+			}
+			else if (keys.down == 2)
+			{
+				menuManager.OnDownKey();
+				refresh = true;
+			}
+
+			if (refresh)
+			{
+				menuManager.Notify();
+			}
 
             // The comparisons to 2 accounts for how KEY_UP and KEY_DOWN change
             // the key hold-times to 1, but an immediately following Update()

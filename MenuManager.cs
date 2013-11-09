@@ -115,10 +115,10 @@ namespace SpiritPurger
 		private int LoopSelection(int current, int direction, int max)
 		{
 			current += direction;
-			if (current > max)
+			if (current >= max)
 				current = 0;
 			else if (current < 0)
-				current = max;
+				current = max - 1;
 			return current;
 		}
 
@@ -135,7 +135,7 @@ namespace SpiritPurger
 
 		public void OnDownKey()
 		{
-			selectedItem = LoopSelection(selectedItem, -1,
+			selectedItem = LoopSelection(selectedItem, 1,
 				menuLayout[currentMenu].Length);
 			switch (selectedItem)
 			{
