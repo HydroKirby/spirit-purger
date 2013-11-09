@@ -107,13 +107,6 @@ namespace SpiritPurger
 		protected Color commonTextColor;
 		protected List<List<Text>> submenuLabels;
 		protected EllipseShape focusCircle;
-		protected Text cursorText;
-		protected Text startText;
-		protected Text godModeText;
-		protected Text funBombText;
-		protected Text repulsiveText;
-		protected Text scaleText;
-		protected Text exitText;
 		// From the top of the game screen, how far down the 1st menu item is drawn.
 		protected const int BELOW_TITLE = 250;
 
@@ -194,34 +187,7 @@ namespace SpiritPurger
 				}
 			}
 
-			cursorText = new Text(">", menuFont, 12);
-			startText = new Text("Start", menuFont, 12);
-			exitText = new Text("Exit", menuFont, 12);
-
-			// These text images set their own properties when you call their methods.
-			SetOptGodMode(false);
-			SetOptFunBomb(false);
-			SetOptRepulsive(false);
-			SetOptScale(1.0);
-
-			// Set the remaining menu strings' positions.
-			SetSelection((MainMenu)0);
 			SetSelection(menuManager);
-			startText.Position = new Vector2f(145, 130 + (float)MainMenu.Play * 15.0F);
-			exitText.Position = new Vector2f(145, 130 + (float)MainMenu.Exit * 15.0F);
-
-			// Set the color of the remaining text images.
-			startText.Color = exitText.Color = commonTextColor;
-		}
-
-		/// <summary>
-		/// Tells the renderer which menu item is focused.
-		/// </summary>
-		/// <param name="selection">The selected menu item.</param>
-		public void SetSelection(MainMenu selection)
-		{
-			cursorText.Position = new Vector2f(136, 130 + 15 * (int)selection);
-			cursorText.Color = commonTextColor;
 		}
 
 		/// <summary>
@@ -302,34 +268,6 @@ namespace SpiritPurger
 			return ret;
 		}
 
-		public void SetOptGodMode(bool isOn)
-		{
-			godModeText = new Text("God Mode" + (isOn ? " *" : ""), menuFont, 12);
-			godModeText.Position = new Vector2f(145, 130 + (float)MainMenu.GodMode * 15.0F);
-			godModeText.Color = commonTextColor;
-		}
-
-		public void SetOptFunBomb(bool isOn)
-		{
-			funBombText = new Text("Fun Bomb" + (isOn ? " *" : ""), menuFont, 12);
-			funBombText.Position = new Vector2f(145, 130 + (float)MainMenu.FunBomb * 15.0F);
-			funBombText.Color = commonTextColor;
-		}
-
-		public void SetOptRepulsive(bool isOn)
-		{
-			repulsiveText = new Text("Repulsive" + (isOn ? " *" : ""), menuFont, 12);
-			repulsiveText.Position = new Vector2f(145, 130 + (float)MainMenu.Repulsive * 15.0F);
-			repulsiveText.Color = commonTextColor;
-		}
-
-		public void SetOptScale(double scale)
-		{
-			scaleText = new Text("Scale: " + scale.ToString(), menuFont, 12);
-			scaleText.Position = new Vector2f(145, 130 + (float)MainMenu.Scale * 15.0F);
-			scaleText.Color = commonTextColor;
-		}
-
 		public override void Update()
 		{
 			// React to whatever the menu manager wants.
@@ -351,13 +289,6 @@ namespace SpiritPurger
 			{
 				app.Draw(label);
 			}
-			app.Draw(cursorText);
-			app.Draw(startText);
-			app.Draw(godModeText);
-			app.Draw(funBombText);
-			app.Draw(repulsiveText);
-			app.Draw(scaleText);
-			app.Draw(exitText);
 		}
 	}
 

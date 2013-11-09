@@ -6,6 +6,7 @@ using System.Text;
 using SFML.Audio;
 using SFML.Window;
 using SFML.Graphics;
+using REACTION = SpiritPurger.MenuManager.REACTION;
 
 namespace SpiritPurger
 {
@@ -118,6 +119,7 @@ namespace SpiritPurger
         protected ArrayList hitSparks = new ArrayList();
 
         // Rendering variables.
+		protected RenderWindow app;
 		protected ImageManager imageManager;
 		protected MenuRenderer menuRenderer;
 		protected GameRenderer gameRenderer;
@@ -128,6 +130,7 @@ namespace SpiritPurger
 		protected MusicManager musicManager;
 
         // Current-game variables.
+		protected bool isPlaying;
 		protected MenuManager menuManager;
 		protected BulletCreator bulletCreator;
         // This is the number of seconds left to complete a pattern.
@@ -161,6 +164,7 @@ namespace SpiritPurger
             app.KeyReleased += new EventHandler<KeyEventArgs>(app_KeyReleased);
 
             // Load all resources.
+			this.app = app;
 			imageManager = new ImageManager();
 			menuManager = new MenuManager();
             menuRenderer = new MenuRenderer(imageManager, menuManager);
@@ -168,6 +172,7 @@ namespace SpiritPurger
 			bulletCreator = new BulletCreator(imageManager);
 			soundManager = new SoundManager();
 			musicManager = new MusicManager();
+			menuManager.Attach(this);
 			menuManager.Attach(menuRenderer);
 
 			// Assign sprites.
@@ -191,6 +196,7 @@ namespace SpiritPurger
 				icon.CopyToImage().Pixels);
 
             // Prepare the game to be run.
+			isPlaying = true;
             Reset();
             // Disable the patch because the annoyance is only when going from
             //   the game to the menu - not during startup.
@@ -218,9 +224,6 @@ namespace SpiritPurger
 			gameRenderer.bossHealthbar.Position = new Vector2f(
 				(int)settings["healthbar x"] + GameRenderer.FIELD_LEFT,
 				(int)settings["healthbar y"] + GameRenderer.FIELD_TOP);
-			menuRenderer.SetOptGodMode(godMode = (int)settings["god mode"] != 0);
-			menuRenderer.SetOptFunBomb(funBomb = (int)settings["fun bomb"] != 0);
-			menuRenderer.SetOptRepulsive(repulsive = (int)settings["repulsive"] != 0);
 		}
 
 		/// <summary>
@@ -279,7 +282,7 @@ namespace SpiritPurger
             Color clearColor = new Color(250, 250, 250);
             
             // Start the game loop
-            while (app.IsOpen())
+            while (app.IsOpen() && isPlaying)
             {
                 // Begin rendering.
                 app.Clear(clearColor);
@@ -293,7 +296,6 @@ namespace SpiritPurger
                 {
                     // DispatchEvents made all key states up-to-date.
                     // Now, increment the time they were held down.
-                    keys.Update();
                     if (gameState == GameState.GamePlay)
                         UpdateGame(app, lastUpdate);
                     else if (gameState == GameState.MainMenu)
@@ -302,6 +304,7 @@ namespace SpiritPurger
                     // TODO: Reset is bad logic.
                     // We should subtract the old time so no ticks are lost.
                     timer.Reset();
+					keys.Update();
                 }
 
                 // Process events.
@@ -309,6 +312,9 @@ namespace SpiritPurger
                 app.DispatchEvents();
 				musicManager.Update();
             }
+
+			if (!app.IsOpen())
+				app.Close();
 			/*
 			 * TODO: Cleanup? This cleanup code was in the old engine.
 			 * 
@@ -364,92 +370,52 @@ namespace SpiritPurger
         /// <param name="ticks">The ticks since the last call to this.</param>
         protected void UpdateMenu(object sender, double ticks)
         {
-			// When MenuManager is functional, work with this setup and remove the old code.
-			// MenuManager will begin to issue Update() calls to Observers like this Engine.
-			bool refresh = false;
-			if (keys.up == 2)
+			bool moved = false;
+			bool acted = false;
+
+			// Only accept one directional key.
+			if (keys.up == 1)
 			{
 				menuManager.OnUpKey();
-				refresh = true;
+				moved = true;
 			}
-			else if (keys.down == 2)
+			else if (keys.down == 1)
 			{
 				menuManager.OnDownKey();
-				refresh = true;
+				moved = true;
 			}
-
-			if (refresh)
+			else if (keys.left == 1)
 			{
-				menuManager.Notify();
+				menuManager.OnLeftKey();
+				moved = true;
+			}
+			else if (keys.right == 1)
+			{
+				menuManager.OnRightKey();
+				moved = true;
 			}
 
-            // The comparisons to 2 accounts for how KEY_UP and KEY_DOWN change
-            // the key hold-times to 1, but an immediately following Update()
-            // makes those 1s into 2s.
+			// Only accept one of either accept or cancel keys.
+			if (keys.shoot == 1)
+			{
+				menuManager.OnSelectKey();
+				acted = true;
+			}
+			else if (keys.bomb == 1)
+			{
+				menuManager.OnCancelKey();
+				acted = true;
+			}
 
-            // The logic looks backwards for up/down, but it works.
-            if (keys.up == 2)
-            {
-                menuChoice = menuChoice <= 0 ? MainMenu.EndChoices - 1 :
-                    menuChoice - 1;
-				menuRenderer.SetSelection(menuChoice);
-                disallowRapidSelection = false;
+			if (moved)
 				soundManager.QueueToPlay(SoundManager.SFX.MENU_MOVE);
-            }
-            if (keys.down == 2)
-            {
-                menuChoice = menuChoice > MainMenu.EndChoices - 2 ? 0 :
-                    menuChoice + 1;
-				menuRenderer.SetSelection(menuChoice);
-                disallowRapidSelection = false;
-				soundManager.QueueToPlay(SoundManager.SFX.MENU_MOVE);
-            }
-            // Disallow rapid selection while patch flag is on.
-            // But allow non-rapid selection even if patch flag is on.
-            // Rapid selection flag patch is disabled when any action is done
-            //   within the menu.
-            if (keys.shoot == 2)
-            {
-                if (disallowRapidSelection && keys.TappedShoot)
-                    return;
-                switch ((MainMenu)menuChoice)
-                {
-                    case MainMenu.Play:
-                        gameState = GameState.GamePlay;
-						musicManager.ChangeMusic(MusicManager.MUSIC_LIST.GAME);
-                        // Switch the delegate to painting the game.
-                        paintHandler = new PaintHandler(PaintGame);
-                        break;
-                    case MainMenu.GodMode:
-                        godMode = !godMode;
-						menuRenderer.SetOptGodMode(godMode);
-                        break;
-                    case MainMenu.FunBomb:
-                        funBomb = !funBomb;
-						menuRenderer.SetOptFunBomb(funBomb);
-                        break;
-                    case MainMenu.Repulsive:
-                        repulsive = !repulsive;
-						menuRenderer.SetOptRepulsive(repulsive);
-                        break;
-					case MainMenu.Scale:
-						if (appScale == 1.0)
-							appScale = 2.0;
-						else if (appScale == 2.0)
-							appScale = 1.0;
-						RenderWindow app = (RenderWindow)sender;
-						app.Size = new Vector2u( (uint) (Renderer.APP_BASE_WIDTH * appScale),
-							(uint) (Renderer.APP_BASE_HEIGHT * appScale) );
-						menuRenderer.SetOptScale(appScale);
-						break;
-                    case MainMenu.Exit:
-                        ((RenderWindow)sender).Close();
-                        break;
-                }
+
+			if (acted)
 				soundManager.QueueToPlay(SoundManager.SFX.MENU_SELECT);
-                disallowRapidSelection = false;
-            }
-        }
+
+			if (acted || moved)
+				menuManager.Notify();
+		}
 
 
         /* --- Game Logic Code --- */
@@ -526,7 +492,29 @@ namespace SpiritPurger
 		/// </summary>
 		public override void Update()
 		{
-			throw new NotImplementedException();
+			if (gameState == GameState.MainMenu)
+			{
+				switch (menuManager.State)
+				{
+					case REACTION.PLAY_GAME:
+						gameState = GameState.GamePlay;
+						musicManager.ChangeMusic(MusicManager.MUSIC_LIST.GAME);
+						// Switch the delegate to painting the game.
+						paintHandler = new PaintHandler(PaintGame);
+						break;
+					case REACTION.SMALLER_WINDOW:
+						if (appScale == 1.0)
+							appScale = 2.0;
+						else if (appScale == 2.0)
+							appScale = 1.0;
+						app.Size = new Vector2u( (uint) (Renderer.APP_BASE_WIDTH * appScale),
+							(uint) (Renderer.APP_BASE_HEIGHT * appScale) );
+						break;
+					case REACTION.END_GAME:
+						isPlaying = false;
+						break;
+				}
+			}
 		}
 
         /// <summary>
