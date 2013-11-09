@@ -14,8 +14,6 @@ namespace SpiritPurger
 		public const String GAME_ICON = "icon";
 		// Title Screen images.
 		public const String TITLE_BG = "title";
-		public const String MAIN_MENU_LEFT_BRACE = "menu_brace_left";
-		public const String MAIN_MENU_RIGHT_BRACE = "menu_brace_right";
 		// In-game images.
 		public const String BULLET_4 = "b_4";
 		public const String BULLET_8 = "b_8";

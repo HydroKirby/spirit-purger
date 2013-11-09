@@ -10,6 +10,45 @@ using SUBMENU = SpiritPurger.MenuManager.SUBMENU;
 namespace SpiritPurger
 {
 	/// <summary>
+	/// An Ellipse for rendering.
+	/// Full example provided by SFML's tutorials.
+	/// http://www.sfml-dev.org/tutorials/2.1/graphics-shape.php
+	/// </summary>
+	public class EllipseShape : Shape
+	{
+		protected Vector2f radius;
+		public EllipseShape(Vector2f radius)
+		{
+			this.radius = radius;
+			Update();
+		}
+
+		public Vector2f Radius
+		{
+			get { return radius; }
+			set
+			{
+				radius = value;
+				Update();
+			}
+		}
+
+		public override uint GetPointCount()
+		{
+			return 30;
+		}
+
+		public override Vector2f GetPoint(uint index)
+		{
+			float angle = (float)(index * 2 * Math.PI / GetPointCount() - Math.PI / 2);
+			float x = (float)(Math.Cos(angle) * radius.X);
+			float y = (float)(Math.Sin(angle) * radius.Y);
+
+			return new Vector2f(radius.X + x, radius.Y + y);
+		}
+	}
+
+	/// <summary>
 	/// Holds all images in the game.
 	/// It should provide sprites for objects.
 	/// </summary>
@@ -65,8 +104,7 @@ namespace SpiritPurger
 		protected Sprite bg;
 		protected Color commonTextColor;
 		protected List<List<Text>> submenuLabels;
-		protected Sprite selectBraceLeft;
-		protected Sprite selectBraceRight;
+		protected EllipseShape focusCircle;
 		protected Text cursorText;
 		protected Text startText;
 		protected Text godModeText;
@@ -74,6 +112,8 @@ namespace SpiritPurger
 		protected Text repulsiveText;
 		protected Text scaleText;
 		protected Text exitText;
+		// From the top of the game screen, how far down the 1st menu item is drawn.
+		protected const int BELOW_TITLE = 250;
 
 		/// <summary>
 		/// Makes a MenuRenderer.
@@ -82,14 +122,16 @@ namespace SpiritPurger
 		{
 			imageManager.LoadPNG(ImageManager.TITLE_BG);
 			bg = imageManager.GetSprite(ImageManager.TITLE_BG);
-			imageManager.LoadPNG(ImageManager.MAIN_MENU_LEFT_BRACE);
-			selectBraceLeft = imageManager.GetSprite(ImageManager.MAIN_MENU_LEFT_BRACE);
-			imageManager.LoadPNG(ImageManager.MAIN_MENU_RIGHT_BRACE);
-			selectBraceRight = imageManager.GetSprite(ImageManager.MAIN_MENU_RIGHT_BRACE);
 			commonTextColor = Color.Cyan;
+
+			// Create the selection focus halo.
+			focusCircle = new EllipseShape(new Vector2f(50, 100));
+			focusCircle.FillColor = new Color(255, 255, 0, 250);
 
 			submenuLabels = new List<List<Text>>();
 			MENUITEM[] tempMenuItems;
+			float maxLabelWidth = 0F;
+			float maxLabelHeight = 0F;
 			// Make all labels for all menus.
 			for (int i = 0; i < (int)SUBMENU.END_SUBMENUS; i++)
 			{
@@ -100,34 +142,52 @@ namespace SpiritPurger
 					// Make labels for each menu item.
 					for (int j = 0; j < tempMenuItems.Length; j++)
 					{
+						Text label;
 						// For unique cases, interact with them separately.
 						switch (tempMenuItems[j])
 						{
 							case MENUITEM.MUSIC_VOL:
-								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								label = MakeTextInstance(tempMenuItems[j], j);
 								break;
 							case MENUITEM.SOUND_VOL:
-								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								label = MakeTextInstance(tempMenuItems[j], j);
 								break;
 							case MENUITEM.CREDITS:
-								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								label = MakeTextInstance(tempMenuItems[j], j);
 								break;
 							case MENUITEM.TUTORIAL:
-								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								label = MakeTextInstance(tempMenuItems[j], j);
 								break;
 							case MENUITEM.WINDOW_SIZE:
-								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								label = MakeTextInstance(tempMenuItems[j], j);
 								break;
 							case MENUITEM.WINDOWED:
-								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								label = MakeTextInstance(tempMenuItems[j], j);
 								break;
 							default:
-								labels.Add(MakeTextInstance(tempMenuItems[j], j));
+								label = MakeTextInstance(tempMenuItems[j], j);
 								break;
 						}
+						if (label.GetLocalBounds().Width > maxLabelWidth)
+							maxLabelWidth = label.GetLocalBounds().Width;
+						if (label.GetLocalBounds().Height > maxLabelHeight)
+							maxLabelHeight = label.GetLocalBounds().Height;
+						labels.Add(label);
 					}
 					// Add the new list of labels to the full list of labels.
 					submenuLabels.Add(labels);
+				}
+			}
+
+			// Assign consistent positions to all of the labels.
+			for (int i = 0; i < submenuLabels.Count; i++)
+			{
+				for (int depth = 0; depth < submenuLabels[i].Count; depth++)
+				{
+					Text label = submenuLabels[i][depth];
+					label.Position = new Vector2f(
+						APP_BASE_WIDTH / 2 - label.GetLocalBounds().Width / 2,
+						BELOW_TITLE + maxLabelHeight * depth);
 				}
 			}
 
@@ -142,7 +202,6 @@ namespace SpiritPurger
 			SetOptScale(1.0);
 
 			// Set the remaining menu strings' positions.
-			// Note: The app window is 290x290.
 			SetSelection((MainMenu)0);
 			SetSelection(menuManager);
 			startText.Position = new Vector2f(145, 130 + (float)MainMenu.Play * 15.0F);
@@ -174,18 +233,17 @@ namespace SpiritPurger
 			Text label = GetLabel(menuManager);
 			float x = label.Position.X;
 			float y = label.Position.Y;
-			uint width = (uint)(label.DisplayedString.Length * label.CharacterSize);
-			uint height = (uint)(label.CharacterSize);
+			uint width = (uint)(label.GetLocalBounds().Width);
+			uint height = (uint)(label.GetLocalBounds().Height);
 
-			selectBraceLeft.Position = new Vector2f(x - selectBraceLeft.TextureRect.Width, y);
-			selectBraceRight.Position = new Vector2f(x + width, y);
+			focusCircle.Radius = new Vector2f(width / 2 + 20, height / 2);
+			focusCircle.Position = new Vector2f(x - 20, y +4);
 		}
 
 		protected Text GetLabel(MenuManager menuManager)
 		{
 			SUBMENU submenu = menuManager.CurrentMenu;
 			MENUITEM selection = menuManager.Selected;
-			// Make a translucent spotlight behind the menu entry.
 			return submenuLabels[(int)submenu][(int)selection];
 		}
 
@@ -194,24 +252,16 @@ namespace SpiritPurger
 		/// </summary>
 		/// <param name="text">The string to render.</param>
 		/// <param name="depth">How many rows below the title to render. Increment in one's.</param>
-		/// <param name="hint_rightwards">How many pixels to push the label to the right.</param>
 		/// <returns>The new Text object with coloring and positioning set.</returns>
-		protected Text MakeTextInstance(String text, int depth, int hint_rightwards=0)
+		protected Text MakeTextInstance(String text, int depth)
 		{
-			const int BELOW_TITLE = 250;
 			Text ret = new Text(text, menuFont, 24);
+
 			ret.Color = commonTextColor;
-
-			char[] all_chars = ret.DisplayedString.ToCharArray();
-			int short_letters = 0;
-			for (int i = 0; true &&  i < all_chars.Length; i++)
-				if (all_chars[i] == 'i' || all_chars[i] == 'I' || all_chars[i] == 'l')
-					short_letters += 1;
-
 			ret.Position = new Vector2f(
-				hint_rightwards + APP_BASE_WIDTH / 2 -
-				(ret.CharacterSize * (ret.DisplayedString.Length - short_letters)) / 2,
-				BELOW_TITLE + ret.CharacterSize * depth);
+				APP_BASE_WIDTH / 2 - ret.GetLocalBounds().Width / 2,
+				BELOW_TITLE + ret.GetLocalBounds().Height * depth);
+
 			return ret;
 		}
 
@@ -229,7 +279,7 @@ namespace SpiritPurger
 				case MENUITEM.ABOUT: ret = MakeTextInstance("ABOUT", depth); break;
 				case MENUITEM.START_GAME: ret = MakeTextInstance("PLAY", depth); break;
 				case MENUITEM.OPTIONS: ret = MakeTextInstance("OPTIONS", depth); break;
-				case MENUITEM.EXIT_MAIN: ret = MakeTextInstance("QUIT", depth, -10); break;
+				case MENUITEM.EXIT_MAIN: ret = MakeTextInstance("QUIT", depth); break;
 				case MENUITEM.EASY_DIFF: ret = MakeTextInstance("EASY", depth); break;
 				case MENUITEM.NORM_DIFF: ret = MakeTextInstance("NORMAL", depth); break;
 				case MENUITEM.HARD_DIFF: ret = MakeTextInstance("HARD", depth); break;
@@ -286,6 +336,7 @@ namespace SpiritPurger
 		{
 			RenderWindow app = (RenderWindow)sender;
 			app.Draw(bg);
+			app.Draw(focusCircle);
 			foreach (Text label in submenuLabels[0])
 			{
 				app.Draw(label);
@@ -297,8 +348,6 @@ namespace SpiritPurger
 			app.Draw(repulsiveText);
 			app.Draw(scaleText);
 			app.Draw(exitText);
-			app.Draw(selectBraceLeft);
-			app.Draw(selectBraceRight);
 		}
 	}
 
