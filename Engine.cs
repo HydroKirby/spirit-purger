@@ -502,6 +502,9 @@ namespace SpiritPurger
 						// Switch the delegate to painting the game.
 						paintHandler = new PaintHandler(PaintGame);
 						break;
+					case REACTION.MENU_TO_OPTIONS:
+						
+						break;
 					case REACTION.SMALLER_WINDOW:
 						if (appScale == 1.0)
 							appScale = 2.0;

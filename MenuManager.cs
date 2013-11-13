@@ -14,12 +14,12 @@ namespace SpiritPurger
 
 		public enum MENUITEM
 		{
-			START_GAME, OPTIONS, ABOUT, EXIT_MAIN,
-			EASY_DIFF, NORM_DIFF, HARD_DIFF, EXIT_DIFF,
-			WINDOW_SIZE, WINDOWED, MUSIC_VOL, SOUND_VOL, EXIT_OPTIONS,
-			TUTORIAL, CREDITS, EXIT_ABOUT,
-			EXIT_TUTORIAL,
-			EXIT_CREDITS,
+			IDX_MENU_STARTGAME, START_GAME, OPTIONS, ABOUT, EXIT_MAIN,
+			IDX_MENU_DIFFMENU, EASY_DIFF, NORM_DIFF, HARD_DIFF, EXIT_DIFF,
+			IDX_MENU_OPTIONS, WINDOW_SIZE, WINDOWED, MUSIC_VOL, SOUND_VOL, EXIT_OPTIONS,
+			IDX_MENU_ABOUT, TUTORIAL, CREDITS, EXIT_ABOUT,
+			IDX_MENU_TUTORIAL, EXIT_TUTORIAL,
+			IDX_MENU_CREDITS, EXIT_CREDITS,
 			END_MENU_ITEMS
 		}
 
@@ -33,6 +33,8 @@ namespace SpiritPurger
 			PLAY_GAME,
 			BIGGER_WINDOW, SMALLER_WINDOW, TO_WINDOWED, TO_FULLSCREEN,
 			MORE_MUSIC_VOL, LESS_MUSIC_VOL, MORE_SOUND_VOL, LESS_SOUND_VOL,
+			// Menu Transitions. All of them are hard-coded.
+			MENU_TO_OPTIONS, MENU_TO_ABOUT,
 			END_GAME,
 			END_REACTIONS
 		}
@@ -42,9 +44,30 @@ namespace SpiritPurger
 		protected int selectedItem;
 		protected REACTION state;
 
-		public MENUITEM Selected
+		public int SelectedIndex
 		{
-			get { return (MENUITEM)selectedItem; }
+			get { return selectedItem; }
+		}
+
+		public MENUITEM SelectedMenuItem
+		{
+			get
+			{
+				MENUITEM item = (MENUITEM)selectedItem;
+				// Offset the menu item by its index in the submenus.
+				switch (currentMenu)
+				{
+					case SUBMENU.MAIN: item += (int)MENUITEM.IDX_MENU_STARTGAME; break;
+					case SUBMENU.OPTIONS: item += (int)MENUITEM.IDX_MENU_OPTIONS; break;
+					case SUBMENU.DIFFICULTY: item += (int)MENUITEM.IDX_MENU_DIFFMENU; break;
+					case SUBMENU.ABOUT: item += (int)MENUITEM.IDX_MENU_ABOUT; break;
+					case SUBMENU.TUTORIAL: item += (int)MENUITEM.IDX_MENU_TUTORIAL; break;
+					case SUBMENU.CREDITS: item += (int)MENUITEM.IDX_MENU_CREDITS; break;
+				}
+				item += 1;
+				MENUITEM unused = (MENUITEM)item;
+				return item;
+			}
 		}
 
 		public SUBMENU CurrentMenu
@@ -171,9 +194,17 @@ namespace SpiritPurger
 
 		public void OnSelectKey()
 		{
-			switch ((MENUITEM) selectedItem)
+			MENUITEM item = SelectedMenuItem;
+
+			// Create a reaction based on the selected menu item.
+			switch (item)
 			{
 				case MENUITEM.START_GAME: ChangeState(REACTION.PLAY_GAME); break;
+				case MENUITEM.OPTIONS:
+					currentMenu = SUBMENU.OPTIONS;
+					selectedItem = 0;
+					ChangeState(REACTION.MENU_TO_OPTIONS);
+					break;
 				case MENUITEM.EXIT_MAIN: ChangeState(REACTION.END_GAME); break;
 				default: ChangeState(REACTION.NONE); break;
 			}

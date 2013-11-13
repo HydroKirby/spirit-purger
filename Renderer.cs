@@ -106,6 +106,7 @@ namespace SpiritPurger
 		protected Sprite bg;
 		protected Color commonTextColor;
 		protected List<List<Text>> submenuLabels;
+		protected int currMenu;
 		protected EllipseShape focusCircle;
 		// From the top of the game screen, how far down the 1st menu item is drawn.
 		protected const int BELOW_TITLE = 250;
@@ -124,6 +125,7 @@ namespace SpiritPurger
 			focusCircle = new EllipseShape(new Vector2f(50, 100));
 			focusCircle.FillColor = new Color(255, 255, 0, 250);
 
+			currMenu = 0;
 			submenuLabels = new List<List<Text>>();
 			MENUITEM[] tempMenuItems;
 			float maxLabelWidth = 0F;
@@ -212,8 +214,7 @@ namespace SpiritPurger
 		protected Text GetLabel(MenuManager menuManager)
 		{
 			SUBMENU submenu = menuManager.CurrentMenu;
-			MENUITEM selection = menuManager.Selected;
-			return submenuLabels[(int)submenu][(int)selection];
+			return submenuLabels[(int)submenu][menuManager.SelectedIndex];
 		}
 
 		/// <summary>
@@ -271,9 +272,12 @@ namespace SpiritPurger
 		public override void Update()
 		{
 			// React to whatever the menu manager wants.
-			REACTION action = menuManager.State;
-			if (action != REACTION.NONE)
+			switch (menuManager.State)
 			{
+				case REACTION.MENU_TO_OPTIONS:
+					currMenu = (int)menuManager.CurrentMenu;
+					SetSelection(menuManager);
+					break;
 			}
 
 			// Move the menu selection's focus.
@@ -285,7 +289,7 @@ namespace SpiritPurger
 			RenderWindow app = (RenderWindow)sender;
 			app.Draw(bg);
 			app.Draw(focusCircle);
-			foreach (Text label in submenuLabels[0])
+			foreach (Text label in submenuLabels[currMenu])
 			{
 				app.Draw(label);
 			}
