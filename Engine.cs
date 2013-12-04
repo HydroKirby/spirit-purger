@@ -347,6 +347,11 @@ namespace SpiritPurger
 					// Toggle pausing the game.
 					gameRenderer.IsPaused = paused = !paused;
 				}
+				else if (gameState == GameState.MainMenu)
+				{
+					// Make the menu focus the last item in the submenu.
+					keys.bomb = 1;
+				}
             }
             else
             {
@@ -501,9 +506,6 @@ namespace SpiritPurger
 						musicManager.ChangeMusic(MusicManager.MUSIC_LIST.GAME);
 						// Switch the delegate to painting the game.
 						paintHandler = new PaintHandler(PaintGame);
-						break;
-					case REACTION.MENU_TO_OPTIONS:
-						
 						break;
 					case REACTION.SMALLER_WINDOW:
 						if (appScale == 1.0)

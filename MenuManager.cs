@@ -7,19 +7,24 @@ namespace SpiritPurger
 {
 	public class MenuManager : Subject
 	{
+		// A list of the menus that can be traversed in the menu screen.
 		public enum SUBMENU
 		{
 			MAIN, DIFFICULTY, OPTIONS, ABOUT, TUTORIAL, CREDITS, END_SUBMENUS
 		}
 
+		// Every selectable menu item from every submenu.
 		public enum MENUITEM
 		{
+			// The IDX enums allow coders to determine where each submenu's
+			// items begin. Each submenu also ends with an enum named EXIT.
 			IDX_MENU_STARTGAME, START_GAME, OPTIONS, ABOUT, EXIT_MAIN,
 			IDX_MENU_DIFFMENU, EASY_DIFF, NORM_DIFF, HARD_DIFF, EXIT_DIFF,
 			IDX_MENU_OPTIONS, WINDOW_SIZE, WINDOWED, MUSIC_VOL, SOUND_VOL, EXIT_OPTIONS,
 			IDX_MENU_ABOUT, TUTORIAL, CREDITS, EXIT_ABOUT,
 			IDX_MENU_TUTORIAL, EXIT_TUTORIAL,
 			IDX_MENU_CREDITS, EXIT_CREDITS,
+			// End of list of MENUITEMs.
 			END_MENU_ITEMS
 		}
 
@@ -28,20 +33,29 @@ namespace SpiritPurger
 		// Engine can handle the complicated operations.
 		public enum REACTION
 		{
-			NONE, // No particular action to take.
-			GENERIC, // Let the Engine take care of the reaction.
+			// No particular action to take.
+			NONE,
+			// Let the Engine take care of the reaction.
+			GENERIC,
 			PLAY_GAME,
+			// Options
 			BIGGER_WINDOW, SMALLER_WINDOW, TO_WINDOWED, TO_FULLSCREEN,
 			MORE_MUSIC_VOL, LESS_MUSIC_VOL, MORE_SOUND_VOL, LESS_SOUND_VOL,
 			// Menu Transitions. All of them are hard-coded.
-			MENU_TO_OPTIONS, MENU_TO_ABOUT,
+			MENU_TO_MAIN, MENU_TO_DIFF, MENU_TO_OPTIONS, MENU_TO_ABOUT, MENU_TO_TUTORIAL,
+			MENU_TO_CREDITS,
+			// Close the game.
 			END_GAME,
+			// End of list of REACTIONS.
 			END_REACTIONS
 		}
 
+		// Relates the name of a submenu to all of its menu items.
 		protected Dictionary<SUBMENU, MENUITEM[]> menuLayout;
 		protected SUBMENU currentMenu;
+		// Which index is selected from 0 to "the number of the menu items in submenu".
 		protected int selectedItem;
+		// How the Engine should react to MenuManager when it feels like updating.
 		protected REACTION state;
 
 		public int SelectedIndex
@@ -199,13 +213,59 @@ namespace SpiritPurger
 			// Create a reaction based on the selected menu item.
 			switch (item)
 			{
+				// Top Menu submenu
 				case MENUITEM.START_GAME: ChangeState(REACTION.PLAY_GAME); break;
 				case MENUITEM.OPTIONS:
 					currentMenu = SUBMENU.OPTIONS;
 					selectedItem = 0;
 					ChangeState(REACTION.MENU_TO_OPTIONS);
 					break;
+				case MENUITEM.ABOUT:
+					currentMenu = SUBMENU.ABOUT;
+					selectedItem = 0;
+					ChangeState(REACTION.MENU_TO_ABOUT);
+					break;
 				case MENUITEM.EXIT_MAIN: ChangeState(REACTION.END_GAME); break;
+
+				// Options submenu
+				case MENUITEM.EXIT_OPTIONS:
+					// TODO: Save newly set options.
+					currentMenu = SUBMENU.MAIN;
+					selectedItem = 1;
+					ChangeState(REACTION.MENU_TO_MAIN);
+					break;
+
+				// About submenu
+				case MENUITEM.EXIT_ABOUT:
+					currentMenu = SUBMENU.MAIN;
+					selectedItem = 2;
+					ChangeState(REACTION.MENU_TO_MAIN);
+					break;
+				case MENUITEM.TUTORIAL:
+					currentMenu = SUBMENU.TUTORIAL;
+					selectedItem = 0;
+					ChangeState(REACTION.MENU_TO_TUTORIAL);
+					break;
+				case MENUITEM.CREDITS:
+					currentMenu = SUBMENU.CREDITS;
+					selectedItem = 0;
+					ChangeState(REACTION.MENU_TO_CREDITS);
+					break;
+
+				// Tutorial submenu
+				case MENUITEM.EXIT_TUTORIAL:
+					currentMenu = SUBMENU.ABOUT;
+					selectedItem = 0;
+					ChangeState(REACTION.MENU_TO_ABOUT);
+					break;
+
+				// Credits submenu
+				case MENUITEM.EXIT_CREDITS:
+					currentMenu = SUBMENU.ABOUT;
+					selectedItem = 1;
+					ChangeState(REACTION.MENU_TO_ABOUT);
+					break;
+
 				default: ChangeState(REACTION.NONE); break;
 			}
 		}
@@ -214,7 +274,19 @@ namespace SpiritPurger
 		{
 			switch (selectedItem)
 			{
-				default: ChangeState(REACTION.NONE); break;
+				default:
+					// Go to the "Return" button on the current submenu.
+					switch (currentMenu)
+					{
+						case SUBMENU.ABOUT: selectedItem = 2; break;
+						case SUBMENU.CREDITS: selectedItem = 0; break;
+						case SUBMENU.DIFFICULTY: selectedItem = 3; break;
+						case SUBMENU.MAIN: selectedItem = 3; break;
+						case SUBMENU.OPTIONS: selectedItem = 4; break;
+						case SUBMENU.TUTORIAL: selectedItem = 0; break;
+					}
+					ChangeState(REACTION.NONE);
+					break;
 			}
 		}
 

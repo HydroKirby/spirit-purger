@@ -272,12 +272,15 @@ namespace SpiritPurger
 		public override void Update()
 		{
 			// React to whatever the menu manager wants.
-			switch (menuManager.State)
+			REACTION state = menuManager.State;
+			if (state == REACTION.MENU_TO_ABOUT ||
+				state == REACTION.MENU_TO_CREDITS ||
+				state == REACTION.MENU_TO_DIFF ||
+				state == REACTION.MENU_TO_MAIN ||
+				state == REACTION.MENU_TO_OPTIONS ||
+				state == REACTION.MENU_TO_TUTORIAL)
 			{
-				case REACTION.MENU_TO_OPTIONS:
-					currMenu = (int)menuManager.CurrentMenu;
-					SetSelection(menuManager);
-					break;
+				currMenu = (int)menuManager.CurrentMenu;
 			}
 
 			// Move the menu selection's focus.
