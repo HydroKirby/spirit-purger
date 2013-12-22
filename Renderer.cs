@@ -107,9 +107,21 @@ namespace SpiritPurger
 		protected Color commonTextColor;
 		protected List<List<Text>> submenuLabels;
 		protected int currMenu;
+		protected const int MENU_FONT_SIZE = 24;
+		// The tallest a label could be. Calculated upon construction.
+		protected float maxLabelHeight;
 		protected EllipseShape focusCircle;
 		// From the top of the game screen, how far down the 1st menu item is drawn.
 		protected const int BELOW_TITLE = 250;
+		// How to position menu items.
+		protected enum MENU_ITEM_POSITION
+		{
+			CENTER, LEFT, RIGHT,
+			// Unique positions for the WINDOW_TYPE selections.
+			WTYPE_WINDOWED, WTYPE_FULLSCREEN,
+			// Unique positions for the numerous WINDOW_SIZE selections.
+			WSIZE1, WSIZE1_5, WSIZE2, WSIZE3, WSIZEMAX,
+		}
 
 		/// <summary>
 		/// Makes a MenuRenderer.
@@ -129,7 +141,12 @@ namespace SpiritPurger
 			submenuLabels = new List<List<Text>>();
 			MENUITEM[] tempMenuItems;
 			float maxLabelWidth = 0F;
-			float maxLabelHeight = 0F;
+
+			// Determine the max label height ahead of time.
+			Text tempText = new Text("',.PYFGCRLAOEUIDHTN;QJKXBM1234567890",
+				menuFont, MENU_FONT_SIZE);
+			maxLabelHeight = tempText.GetLocalBounds().Height;
+
 			// Make all labels for all menus.
 			for (int i = 0; i < (int)SUBMENU.END_SUBMENUS; i++)
 			{
@@ -159,8 +176,12 @@ namespace SpiritPurger
 							case MENUITEM.WINDOW_SIZE:
 								label = MakeTextInstance(tempMenuItems[j], j);
 								break;
-							case MENUITEM.WINDOWED:
+							case MENUITEM.WINDOW_TYPE:
 								label = MakeTextInstance(tempMenuItems[j], j);
+								if (label.GetLocalBounds().Width > maxLabelWidth)
+									maxLabelWidth = label.GetLocalBounds().Width;
+								labels.Add(label);
+								label = MakeTextInstance(MENUITEM.WINDOW_TYPE_WINDOWED, j);
 								break;
 							default:
 								label = MakeTextInstance(tempMenuItems[j], j);
@@ -168,24 +189,10 @@ namespace SpiritPurger
 						}
 						if (label.GetLocalBounds().Width > maxLabelWidth)
 							maxLabelWidth = label.GetLocalBounds().Width;
-						if (label.GetLocalBounds().Height > maxLabelHeight)
-							maxLabelHeight = label.GetLocalBounds().Height;
 						labels.Add(label);
 					}
 					// Add the new list of labels to the full list of labels.
 					submenuLabels.Add(labels);
-				}
-			}
-
-			// Assign consistent positions to all of the labels.
-			for (int i = 0; i < submenuLabels.Count; i++)
-			{
-				for (int depth = 0; depth < submenuLabels[i].Count; depth++)
-				{
-					Text label = submenuLabels[i][depth];
-					label.Position = new Vector2f(
-						APP_BASE_WIDTH / 2 - label.GetLocalBounds().Width / 2,
-						BELOW_TITLE + maxLabelHeight * depth);
 				}
 			}
 
@@ -223,14 +230,20 @@ namespace SpiritPurger
 		/// <param name="text">The string to render.</param>
 		/// <param name="depth">How many rows below the title to render. Increment in one's.</param>
 		/// <returns>The new Text object with coloring and positioning set.</returns>
-		protected Text MakeTextInstance(String text, int depth)
+		protected Text MakeTextInstance(String text, int depth,
+			MENU_ITEM_POSITION pos=MENU_ITEM_POSITION.CENTER)
 		{
 			Text ret = new Text(text, menuFont, 24);
+			float x = APP_BASE_WIDTH / 2 - ret.GetLocalBounds().Width / 2;
+			float y = BELOW_TITLE + maxLabelHeight * depth;
+
+			if (pos == MENU_ITEM_POSITION.LEFT)
+				x = APP_BASE_WIDTH / 4;
+			else if (pos == MENU_ITEM_POSITION.RIGHT)
+				x = APP_BASE_WIDTH / 4 * 3 - ret.GetLocalBounds().Width;
 
 			ret.Color = commonTextColor;
-			ret.Position = new Vector2f(
-				APP_BASE_WIDTH / 2 - ret.GetLocalBounds().Width / 2,
-				BELOW_TITLE + ret.GetLocalBounds().Height * depth);
+			ret.Position = new Vector2f(x, y);
 
 			return ret;
 		}
@@ -255,7 +268,16 @@ namespace SpiritPurger
 				case MENUITEM.HARD_DIFF: ret = MakeTextInstance("HARD", depth); break;
 				case MENUITEM.EXIT_DIFF: ret = MakeTextInstance("RETURN", depth); break;
 				case MENUITEM.WINDOW_SIZE: ret = MakeTextInstance("WINDOW SIZE", depth); break;
-				case MENUITEM.WINDOWED: ret = MakeTextInstance("DISPLAY", depth); break;
+				case MENUITEM.WINDOW_SIZE_1: ret = MakeTextInstance("1x", 0); break;
+				case MENUITEM.WINDOW_SIZE_1_5: ret = MakeTextInstance("1.5x", 0); break;
+				case MENUITEM.WINDOW_SIZE_2: ret = MakeTextInstance("2x", 0); break;
+				case MENUITEM.WINDOW_SIZE_3: ret = MakeTextInstance("3x", 0); break;
+				case MENUITEM.WINDOW_SIZE_MAX: ret = MakeTextInstance("MAX", 0); break;
+				case MENUITEM.WINDOW_TYPE:
+					ret = MakeTextInstance("DISPLAY", depth, MENU_ITEM_POSITION.LEFT); break;
+				case MENUITEM.WINDOW_TYPE_WINDOWED:
+					ret = MakeTextInstance("WINDOWED", 1, MENU_ITEM_POSITION.RIGHT); break;
+				case MENUITEM.WINDOW_TYPE_FULLSCREEN: ret = MakeTextInstance("FULLSCREEN", 1); break;
 				case MENUITEM.MUSIC_VOL: ret = MakeTextInstance("MUSIC VOLUME", depth); break;
 				case MENUITEM.SOUND_VOL: ret = MakeTextInstance("SOUND VOLUME", depth); break;
 				case MENUITEM.EXIT_OPTIONS: ret = MakeTextInstance("RETURN", depth); break;
