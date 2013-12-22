@@ -5,7 +5,7 @@ using System.Text;
 
 namespace SpiritPurger
 {
-	class Options
+	public class Options
 	{
 		public const String CONFIG_FILE = "config.cfg";
 		protected Dictionary<string, object> settings;
@@ -32,6 +32,11 @@ namespace SpiritPurger
 			}
 		}
 
+		public Options(Options copy)
+		{
+			settings = new Dictionary<string, object>(copy.settings);
+		}
+
 		protected void SetDefaults(out Dictionary<string, object> options)
 		{
 			options = new Dictionary<string, object>(StringComparer.Ordinal);
@@ -55,6 +60,11 @@ namespace SpiritPurger
 			options["fun bomb"] = 0;
 			options["repulsive"] = 0;
 			// ver 1.03
+			// Valid options are supposed to be 1.0, 1.5, 2.0, 3.0, 0.0 (max).
+			options["window size"] = 1.0;
+			// Valid options are 0 (windowed) and 1 (fullscreen).
+			options["fullscreen"] = 0;
+			// ver 1.04
 		}
 
 		protected bool ReadConfigFile(out Dictionary<string, string> tempOptions)

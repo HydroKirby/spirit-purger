@@ -166,7 +166,7 @@ namespace SpiritPurger
             // Load all resources.
 			this.app = app;
 			imageManager = new ImageManager();
-			menuManager = new MenuManager();
+			menuManager = new MenuManager(options);
             menuRenderer = new MenuRenderer(imageManager, menuManager);
 			gameRenderer = new GameRenderer(imageManager);
 			bulletCreator = new BulletCreator(imageManager);

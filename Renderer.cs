@@ -106,6 +106,8 @@ namespace SpiritPurger
 		protected Sprite bg;
 		protected Color commonTextColor;
 		protected List<List<Text>> submenuLabels;
+		// Separate the volume labels because they are generated separately.
+		protected Text musicVolLabel, soundVolLabel;
 		protected int currMenu;
 		protected const int MENU_FONT_SIZE = 24;
 		// The tallest a label could be. Calculated upon construction.
@@ -175,13 +177,32 @@ namespace SpiritPurger
 								break;
 							case MENUITEM.WINDOW_SIZE:
 								label = MakeTextInstance(tempMenuItems[j], j);
+								labels.Add(label);
+								// Each of the labels for the screen size are small,
+								// so don't check if they exceed the max label width.
+								label = MakeTextInstance(MENUITEM.WINDOW_SIZE_1, j);
+								labels.Add(label);
+								label = MakeTextInstance(MENUITEM.WINDOW_SIZE_1_5, j);
+								labels.Add(label);
+								label = MakeTextInstance(MENUITEM.WINDOW_SIZE_2, j);
+								labels.Add(label);
+								label = MakeTextInstance(MENUITEM.WINDOW_SIZE_3, j);
+								labels.Add(label);
+								label = MakeTextInstance(MENUITEM.WINDOW_SIZE_MAX, j);
+								labels.Add(label);
 								break;
 							case MENUITEM.WINDOW_TYPE:
 								label = MakeTextInstance(tempMenuItems[j], j);
 								if (label.GetLocalBounds().Width > maxLabelWidth)
 									maxLabelWidth = label.GetLocalBounds().Width;
 								labels.Add(label);
+								
 								label = MakeTextInstance(MENUITEM.WINDOW_TYPE_WINDOWED, j);
+								if (label.GetLocalBounds().Width > maxLabelWidth)
+									maxLabelWidth = label.GetLocalBounds().Width;
+								labels.Add(label);
+								
+								label = MakeTextInstance(MENUITEM.WINDOW_TYPE_FULLSCREEN, j);
 								break;
 							default:
 								label = MakeTextInstance(tempMenuItems[j], j);
@@ -195,6 +216,12 @@ namespace SpiritPurger
 					submenuLabels.Add(labels);
 				}
 			}
+			// Make the volume labels separately. They are generated specially, so they
+			// are not part of the full list of labels.
+			musicVolLabel = MakeVolumeTextInstance(
+				(int)menuManager.newOptions.Settings["bgm volume"], 2);
+			soundVolLabel = MakeVolumeTextInstance(
+				(int)menuManager.newOptions.Settings["sfx volume"], 3);
 
 			SetSelection(menuManager);
 		}
@@ -208,20 +235,82 @@ namespace SpiritPurger
 		public void SetSelection(MenuManager menuManager)
 		{
 			// Make a translucent spotlight behind the menu entry.
+			float x, y;
+			uint width, height;
 			Text label = GetLabel(menuManager);
-			float x = label.Position.X;
-			float y = label.Position.Y;
-			uint width = (uint)(label.GetLocalBounds().Width);
-			uint height = (uint)(label.GetLocalBounds().Height);
+			if (menuManager.CurrentMenu == SUBMENU.OPTIONS && menuManager.SelectedIndex == 2)
+			{
+				// Currently selecting the Music Volume menu item in the Options menu.
+				x = musicVolLabel.Position.X;
+				y = musicVolLabel.Position.Y;
+				width = (uint)(musicVolLabel.GetLocalBounds().Width);
+				height = (uint)(musicVolLabel.GetLocalBounds().Height);
+			}
+			else if (menuManager.CurrentMenu == SUBMENU.OPTIONS && menuManager.SelectedIndex == 3)
+			{
+				// Currently selecting the Sound Volume menu item in the Options menu.
+				x = soundVolLabel.Position.X;
+				y = soundVolLabel.Position.Y;
+				width = (uint)(soundVolLabel.GetLocalBounds().Width);
+				height = (uint)(soundVolLabel.GetLocalBounds().Height);
+			}
+			else
+			{
+				x = label.Position.X;
+				y = label.Position.Y;
+				width = (uint)(label.GetLocalBounds().Width);
+				height = (uint)(label.GetLocalBounds().Height);
+			}
 
 			focusCircle.Radius = new Vector2f(width / 2 + 20, height / 2);
-			focusCircle.Position = new Vector2f(x - 20, y +4);
+			focusCircle.Position = new Vector2f(x - 20, y + 4);
 		}
 
 		protected Text GetLabel(MenuManager menuManager)
 		{
 			SUBMENU submenu = menuManager.CurrentMenu;
-			return submenuLabels[(int)submenu][menuManager.SelectedIndex];
+			int select = menuManager.SelectedIndex;
+			if (submenu == SUBMENU.OPTIONS)
+			{
+				// There's some complicated hand-tweaking we must do to the selection.
+				// Match the menuManager's selection to our list of labels while
+				// recalling that some labels are not actually selectable.
+
+				// Refer to MenuManager's constructor for the submenu's items.
+				if (menuManager.SelectedIndex == 0)
+				{
+					// Currently on the Window Size menu item.
+					double wsize = (double)menuManager.newOptions.Settings["window size"];
+					if (wsize == 1.5) select = 2;
+					else if (wsize == 2.0) select = 3;
+					else if (wsize == 3.0) select = 4;
+					else if (wsize == 0.0) select = 5;
+					else select = 1;
+				}
+				else if (menuManager.SelectedIndex == 1)
+				{
+					// Currently on the Window Display Type menu item.
+					bool fullscreen = ((int)menuManager.newOptions.Settings["fullscreen"]) == 1;
+					if (fullscreen) select = 9;
+					else select = 8;
+				}
+				else if (menuManager.SelectedIndex == 2)
+				{
+					// Currently on the Music Volume menu item.
+					select = 10;
+				}
+				else if (menuManager.SelectedIndex == 3)
+				{
+					// Currently on the Sound Volume menu item.
+					select = 11;
+				}
+				else
+				{
+					// Currently on the Return menu item.
+					select = 12;
+				}
+			}
+			return submenuLabels[(int)submenu][select];
 		}
 
 		/// <summary>
@@ -234,7 +323,9 @@ namespace SpiritPurger
 			MENU_ITEM_POSITION pos=MENU_ITEM_POSITION.CENTER)
 		{
 			Text ret = new Text(text, menuFont, 24);
+			// x is centered by default.
 			float x = APP_BASE_WIDTH / 2 - ret.GetLocalBounds().Width / 2;
+			// y is merely dropped down by the value of BELOW TITLE.
 			float y = BELOW_TITLE + maxLabelHeight * depth;
 
 			if (pos == MENU_ITEM_POSITION.LEFT)
@@ -267,20 +358,32 @@ namespace SpiritPurger
 				case MENUITEM.NORM_DIFF: ret = MakeTextInstance("NORMAL", depth); break;
 				case MENUITEM.HARD_DIFF: ret = MakeTextInstance("HARD", depth); break;
 				case MENUITEM.EXIT_DIFF: ret = MakeTextInstance("RETURN", depth); break;
-				case MENUITEM.WINDOW_SIZE: ret = MakeTextInstance("WINDOW SIZE", depth); break;
-				case MENUITEM.WINDOW_SIZE_1: ret = MakeTextInstance("1x", 0); break;
-				case MENUITEM.WINDOW_SIZE_1_5: ret = MakeTextInstance("1.5x", 0); break;
-				case MENUITEM.WINDOW_SIZE_2: ret = MakeTextInstance("2x", 0); break;
-				case MENUITEM.WINDOW_SIZE_3: ret = MakeTextInstance("3x", 0); break;
-				case MENUITEM.WINDOW_SIZE_MAX: ret = MakeTextInstance("MAX", 0); break;
+				case MENUITEM.WINDOW_SIZE:
+					ret = MakeTextInstance("SIZE", depth, MENU_ITEM_POSITION.LEFT); break;
+				case MENUITEM.WINDOW_SIZE_1:
+					ret = MakeTextInstance("1x", 0, MENU_ITEM_POSITION.RIGHT); break;
+				case MENUITEM.WINDOW_SIZE_1_5:
+					ret = MakeTextInstance("1.5x", 0, MENU_ITEM_POSITION.RIGHT); break;
+				case MENUITEM.WINDOW_SIZE_2:
+					ret = MakeTextInstance("2x", 0, MENU_ITEM_POSITION.RIGHT); break;
+				case MENUITEM.WINDOW_SIZE_3:
+					ret = MakeTextInstance("3x", 0, MENU_ITEM_POSITION.RIGHT); break;
+				case MENUITEM.WINDOW_SIZE_MAX:
+					ret = MakeTextInstance("MAX", 0, MENU_ITEM_POSITION.RIGHT); break;
 				case MENUITEM.WINDOW_TYPE:
 					ret = MakeTextInstance("DISPLAY", depth, MENU_ITEM_POSITION.LEFT); break;
 				case MENUITEM.WINDOW_TYPE_WINDOWED:
-					ret = MakeTextInstance("WINDOWED", 1, MENU_ITEM_POSITION.RIGHT); break;
-				case MENUITEM.WINDOW_TYPE_FULLSCREEN: ret = MakeTextInstance("FULLSCREEN", 1); break;
-				case MENUITEM.MUSIC_VOL: ret = MakeTextInstance("MUSIC VOLUME", depth); break;
-				case MENUITEM.SOUND_VOL: ret = MakeTextInstance("SOUND VOLUME", depth); break;
-				case MENUITEM.EXIT_OPTIONS: ret = MakeTextInstance("RETURN", depth); break;
+					ret = MakeTextInstance("WINDOWED", 1, MENU_ITEM_POSITION.RIGHT);
+					break;
+				case MENUITEM.WINDOW_TYPE_FULLSCREEN:
+					ret = MakeTextInstance("FULLSCREEN", 1, MENU_ITEM_POSITION.RIGHT);
+					break;
+				case MENUITEM.MUSIC_VOL:
+					ret = MakeTextInstance("MUSIC VOLUME", depth, MENU_ITEM_POSITION.LEFT); break;
+				case MENUITEM.SOUND_VOL:
+					ret = MakeTextInstance("SOUND VOLUME", depth, MENU_ITEM_POSITION.LEFT); break;
+				case MENUITEM.EXIT_OPTIONS:
+					ret = MakeTextInstance("RETURN", depth, MENU_ITEM_POSITION.LEFT); break;
 				case MENUITEM.TUTORIAL: ret = MakeTextInstance("TUTORIAL", depth); break;
 				case MENUITEM.CREDITS: ret = MakeTextInstance("CREDITS", depth); break;
 				case MENUITEM.EXIT_ABOUT: ret = MakeTextInstance("RETURN", depth); break;
@@ -289,6 +392,17 @@ namespace SpiritPurger
 				default: ret = MakeTextInstance("", depth); break;
 			}
 			return ret;
+		}
+
+		/// <summary>
+		/// Creates a Text object for rendering the volume of music or sound.
+		/// </summary>
+		/// <param name="volume">The volume of the music/sound.</param>
+		/// <param name="depth">How many rows below the title to render. Increment in one's.</param>
+		/// <returns>The new Text object with the same text as the volume.</returns>
+		protected Text MakeVolumeTextInstance(int volume, int depth)
+		{
+			return MakeTextInstance(volume.ToString(), depth, MENU_ITEM_POSITION.RIGHT);
 		}
 
 		public override void Update()
@@ -314,9 +428,46 @@ namespace SpiritPurger
 			RenderWindow app = (RenderWindow)sender;
 			app.Draw(bg);
 			app.Draw(focusCircle);
-			foreach (Text label in submenuLabels[currMenu])
+			if (menuManager.CurrentMenu == SUBMENU.OPTIONS)
 			{
-				app.Draw(label);
+				// Draw the Options menu in a special way.
+				// Temporary index for which submenu to draw.
+				int i = 0;
+
+				// Label of WINDOW_SIZE
+				app.Draw(submenuLabels[currMenu][0]);
+				double wsize = (double)menuManager.newOptions.Settings["window size"];
+				if (wsize == 1.5) i = 2;
+				else if (wsize == 2.0) i = 3;
+				else if (wsize == 3.0) i = 4;
+				else if (wsize == 0.0) i = 5;
+				else i = 1;
+				// Draw the specific label for what the current window size is.
+				app.Draw(submenuLabels[currMenu][i]);
+				
+				// Label of WINDOW_TYPE
+				app.Draw(submenuLabels[currMenu][7]);
+				bool fullscreen = ((int)menuManager.newOptions.Settings["fullscreen"]) == 1;
+				if (fullscreen) i = 9;
+				else i = 8;
+				// Draw the specific label for what the windowing type is.
+				app.Draw(submenuLabels[currMenu][i]);
+
+				// Label of MUSIC_VOL
+				app.Draw(submenuLabels[currMenu][10]);
+				app.Draw(musicVolLabel);
+				// Label of SOUND_VOL
+				app.Draw(submenuLabels[currMenu][11]);
+				app.Draw(soundVolLabel);
+				// Label of RETURN
+				app.Draw(submenuLabels[currMenu][12]);
+			}
+			else
+			{
+				foreach (Text label in submenuLabels[currMenu])
+				{
+					app.Draw(label);
+				}
 			}
 		}
 	}
