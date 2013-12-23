@@ -492,6 +492,60 @@ namespace SpiritPurger
 			}
 		}
 
+		protected void ResizeWindow()
+		{
+			// Note: On Windows, windows that are bigger than the desktop will
+			// appear strangely. Do not let the window get too big.
+			uint maxWidth = VideoMode.DesktopMode.Width;
+			uint maxHeight = VideoMode.DesktopMode.Height;
+			appScale = (double)menuManager.newOptions.Settings["window size"];
+			uint newWidth = (uint)(Renderer.APP_BASE_WIDTH * appScale);
+			uint newHeight = (uint)(Renderer.APP_BASE_HEIGHT * appScale);
+			bool mustMove = false;
+			Vector2i newAppPos = new Vector2i();
+
+			if (appScale == 0.0)
+			{
+				// Maximize the screen.
+				newWidth = maxWidth;
+				newHeight = maxHeight;
+			}
+
+			if ((int)((newWidth * 100.0) / newHeight) !=
+				(int)((Renderer.APP_BASE_WIDTH * 100.0) / Renderer.APP_BASE_HEIGHT))
+			{
+				// The ratio of the newly size window is not the same as the game's.
+				// Shrink the bigger value.
+
+			}
+
+			// Move the app window within the desktop if it's too big now.
+			if (newWidth + app.Position.X > maxWidth)
+			{
+				newAppPos.X = (int)(maxWidth - newWidth);
+				mustMove = true;
+			}
+			if (app.Position.X < 0)
+			{
+				newAppPos.X = 0;
+				mustMove = true;
+			}
+			if (newHeight + app.Position.Y > maxHeight)
+			{
+				newAppPos.Y = (int)(maxHeight - newHeight);
+				mustMove = true;
+			}
+			if (app.Position.Y < 0)
+			{
+				newAppPos.Y = 0;
+				mustMove = true;
+			}
+			if (mustMove)
+				app.Position = newAppPos;
+
+			app.Size = new Vector2u(newWidth, newHeight);
+		}
+
 		/// <summary>
 		/// Reacts to the state of its Subjects.
 		/// </summary>
@@ -508,12 +562,10 @@ namespace SpiritPurger
 						paintHandler = new PaintHandler(PaintGame);
 						break;
 					case REACTION.SMALLER_WINDOW:
-						if (appScale == 1.0)
-							appScale = 2.0;
-						else if (appScale == 2.0)
-							appScale = 1.0;
-						app.Size = new Vector2u( (uint) (Renderer.APP_BASE_WIDTH * appScale),
-							(uint) (Renderer.APP_BASE_HEIGHT * appScale) );
+						ResizeWindow();
+						break;
+					case REACTION.BIGGER_WINDOW:
+						ResizeWindow();
 						break;
 					case REACTION.END_GAME:
 						isPlaying = false;
