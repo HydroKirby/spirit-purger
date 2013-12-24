@@ -221,8 +221,19 @@ namespace SpiritPurger
 
 		public void OnRightKey()
 		{
-			switch (selectedItem)
+			MENUITEM item = SelectedMenuItem;
+			switch (item)
 			{
+				case MENUITEM.WINDOW_SIZE:
+					double wsize = (double)newOptions.Settings["window size"];
+					if (wsize == 1.0) wsize = 1.5;
+					else if (wsize == 1.5) wsize = 2.0;
+					else if (wsize == 2.0) wsize = 3.0;
+					else if (wsize == 3.0) wsize = 0.0;
+					else wsize = 1.0; // wsize == 0.0 here
+					newOptions.Settings["window size"] = wsize;
+					ChangeState(REACTION.BIGGER_WINDOW);
+					break;
 				default: ChangeState(REACTION.NONE); break;
 			}
 		}

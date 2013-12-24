@@ -511,15 +511,27 @@ namespace SpiritPurger
 				newHeight = maxHeight;
 			}
 
+			// If the window is too big, shrink it.
+			if (newWidth > maxWidth)
+				newWidth = maxWidth;
+			if (newHeight > maxHeight)
+				newHeight = maxHeight;
+
+			// Check if the ratio of the window size does not match what the game uses.
 			if ((int)((newWidth * 100.0) / newHeight) !=
 				(int)((Renderer.APP_BASE_WIDTH * 100.0) / Renderer.APP_BASE_HEIGHT))
 			{
-				// The ratio of the newly size window is not the same as the game's.
 				// Shrink the bigger value.
-
+				// http://stackoverflow.com/questions/15417135/resizing-a-rectangle-and-snapping-to-a-fixed-ratio
+				double widthRatio = ((double)Renderer.APP_BASE_WIDTH) / Renderer.APP_BASE_HEIGHT;
+				double heightRatio = ((double)Renderer.APP_BASE_HEIGHT) / Renderer.APP_BASE_WIDTH;
+				if (newHeight * widthRatio <= newWidth)
+					newWidth = (uint)(newHeight * widthRatio);
+				else if (newWidth * heightRatio <= newHeight)
+					newHeight = (uint)(newWidth * heightRatio);
 			}
 
-			// Move the app window within the desktop if it's too big now.
+			// Move the app window within the desktop if it grew outside the bounds.
 			if (newWidth + app.Position.X > maxWidth)
 			{
 				newAppPos.X = (int)(maxWidth - newWidth);
@@ -543,6 +555,7 @@ namespace SpiritPurger
 			if (mustMove)
 				app.Position = newAppPos;
 
+			// Finally, tell SFML to do the resizing.
 			app.Size = new Vector2u(newWidth, newHeight);
 		}
 
