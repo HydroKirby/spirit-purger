@@ -5,7 +5,7 @@ using System.Text;
 
 namespace SpiritPurger
 {
-	public class Options
+	public class Options// : IEquatable<Options>
 	{
 		public const String CONFIG_FILE = "config.cfg";
 		protected Dictionary<string, object> settings;
@@ -23,12 +23,12 @@ namespace SpiritPurger
 			{
 				if (!TranslateOptions(tempOptions))
 				{
-					WriteDefaultConfig();
+					WriteConfig();
 				}
 			}
 			else
 			{
-				WriteDefaultConfig();
+				WriteConfig();
 			}
 		}
 
@@ -37,10 +37,42 @@ namespace SpiritPurger
 			settings = new Dictionary<string, object>(copy.settings);
 		}
 
+		/*
+		// Overriding Equals member method, which will call the IEquatable implementation
+		// if appropriate.
+		public override bool Equals(object obj)
+		{
+			var other = obj as Options;
+			if (other == null)
+				return false;
+			return Equals(other);
+		}
+
+		// IEquatable's Equal method.
+		public bool Equals(Options other)
+		{
+			if (other == null)
+				return false;
+			if (ReferenceEquals(this, other))
+				return true;
+			return false;
+			// Check if each Options instance has the same "settings".
+		}
+		*/
+
+		/// <summary>
+		/// Returns the version number of config files this Options class reads.
+		/// </summary>
+		/// <returns>The version number.</returns>
+		public double GetOptionsVersion()
+		{
+			return 1.03;
+		}
+
 		protected void SetDefaults(out Dictionary<string, object> options)
 		{
 			options = new Dictionary<string, object>(StringComparer.Ordinal);
-			options["version"] = 1.01;
+			options["version"] = GetOptionsVersion();
 			// ver 1.00
 			// sfx volume, bgm volume changed from double to int at ver 1.0.
 			options["sfx volume"] = 100;
@@ -67,6 +99,11 @@ namespace SpiritPurger
 			// ver 1.04
 		}
 
+		/// <summary>
+		/// Reads the config file, if it exists, as string:string pairs of settings.
+		/// </summary>
+		/// <param name="tempOptions">A dictionary of read-in key-value pairs.</param>
+		/// <returns>True if the file existed and was read without errors.</returns>
 		protected bool ReadConfigFile(out Dictionary<string, string> tempOptions)
 		{
 			tempOptions = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -105,8 +142,15 @@ namespace SpiritPurger
 			return good;
 		}
 
-		protected bool WriteDefaultConfig()
+		/// <summary>
+		/// Writes the configuration settings to a file.
+		/// The written config file always has the latest version number on it.
+		/// </summary>
+		/// <returns>True. Always. This should probably be fixed.</returns>
+		public bool WriteConfig()
 		{
+			// Always write the latest version of the config file format.
+			settings["version"] = GetOptionsVersion();
 			// Create the full string to write to the file in one go.
 			String output = "";
 			output += "# This is a comment. It is not parsed by the game.\n";

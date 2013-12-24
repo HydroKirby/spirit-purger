@@ -61,8 +61,6 @@ namespace SpiritPurger
 		protected int selectedItem;
 		// How the Engine should react to MenuManager when it feels like updating.
 		protected REACTION state;
-		// The game's current selected options.
-		protected Options currOptions;
 		// The game's new options as chosen within the Options submenu.
 		public Options newOptions;
 
@@ -110,8 +108,7 @@ namespace SpiritPurger
 			currentMenu = SUBMENU.MAIN;
 			selectedItem = 0;
 			state = REACTION.NONE;
-			currOptions = options;
-			newOptions = new Options(currOptions);
+			newOptions = new Options(options);
 
 			// Allocate memory for the layout of the menu and submenus.
 			// The number of menu items is hard coded for speed of development.
@@ -178,6 +175,14 @@ namespace SpiritPurger
 				// The Subjects can check the Status property of this class.
 				Notify();
 			}
+		}
+
+		/// <summary>
+		/// Tells MenuManager that something has handled this manager's REACTION request.
+		/// </summary>
+		public void StateHandled()
+		{
+			state = REACTION.NONE;
 		}
 
 		public void OnDownKey()
@@ -261,7 +266,7 @@ namespace SpiritPurger
 
 				// Options submenu
 				case MENUITEM.EXIT_OPTIONS:
-					// TODO: Save newly set options.
+					// Save newly set options in the engine.
 					currentMenu = SUBMENU.MAIN;
 					selectedItem = 1;
 					ChangeState(REACTION.MENU_TO_MAIN);
@@ -320,6 +325,11 @@ namespace SpiritPurger
 					ChangeState(REACTION.NONE);
 					break;
 			}
+		}
+
+		public Options GetNewOptions()
+		{
+			return newOptions;
 		}
 
 		/// <summary>

@@ -224,6 +224,8 @@ namespace SpiritPurger
 			gameRenderer.bossHealthbar.Position = new Vector2f(
 				(int)settings["healthbar x"] + GameRenderer.FIELD_LEFT,
 				(int)settings["healthbar y"] + GameRenderer.FIELD_TOP);
+			if ((double)settings["window size"] != 1.0)
+				ResizeWindow();
 		}
 
 		/// <summary>
@@ -580,10 +582,20 @@ namespace SpiritPurger
 					case REACTION.BIGGER_WINDOW:
 						ResizeWindow();
 						break;
+					case REACTION.MENU_TO_MAIN:
+						if (menuManager.SelectedIndex == 1)
+						{
+							// We came from the Options menu. Save the new options.
+							Options opt = menuManager.GetNewOptions();
+							opt.WriteConfig();
+							AssignOptions(opt);
+						}
+						break;
 					case REACTION.END_GAME:
 						isPlaying = false;
 						break;
 				}
+				menuManager.StateHandled();
 			}
 		}
 

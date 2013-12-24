@@ -108,7 +108,6 @@ namespace SpiritPurger
 		protected List<List<Text>> submenuLabels;
 		// Separate the volume labels because they are generated separately.
 		protected Text musicVolLabel, soundVolLabel;
-		protected int currMenu;
 		protected const int MENU_FONT_SIZE = 24;
 		// The tallest a label could be. Calculated upon construction.
 		protected float maxLabelHeight;
@@ -139,7 +138,6 @@ namespace SpiritPurger
 			focusCircle = new EllipseShape(new Vector2f(50, 100));
 			focusCircle.FillColor = new Color(255, 255, 0, 250);
 
-			currMenu = 0;
 			submenuLabels = new List<List<Text>>();
 			MENUITEM[] tempMenuItems;
 			float maxLabelWidth = 0F;
@@ -416,7 +414,7 @@ namespace SpiritPurger
 				state == REACTION.MENU_TO_OPTIONS ||
 				state == REACTION.MENU_TO_TUTORIAL)
 			{
-				currMenu = (int)menuManager.CurrentMenu;
+				//currMenu = (int)menuManager.CurrentMenu;
 			}
 
 			// Move the menu selection's focus.
@@ -433,6 +431,7 @@ namespace SpiritPurger
 				// Draw the Options menu in a special way.
 				// Temporary index for which submenu to draw.
 				int i = 0;
+				int currMenu = (int)menuManager.CurrentMenu;
 
 				// Label of WINDOW_SIZE
 				app.Draw(submenuLabels[currMenu][0]);
@@ -464,7 +463,7 @@ namespace SpiritPurger
 			}
 			else
 			{
-				foreach (Text label in submenuLabels[currMenu])
+				foreach (Text label in submenuLabels[(int)menuManager.CurrentMenu])
 				{
 					app.Draw(label);
 				}
