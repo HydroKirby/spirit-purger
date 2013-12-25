@@ -220,6 +220,16 @@ namespace SpiritPurger
 					newOptions.Settings["window size"] = wsize;
 					ChangeState(REACTION.SMALLER_WINDOW);
 					break;
+				case MENUITEM.WINDOW_TYPE:
+					bool fullscreen = (int)newOptions.Settings["fullscreen"] == 1;
+					// Toggle the fullscreen setting.
+					fullscreen = !fullscreen;
+					newOptions.Settings["fullscreen"] = fullscreen ? 1 : 0;
+					if (fullscreen)
+						ChangeState(REACTION.TO_FULLSCREEN);
+					else
+						ChangeState(REACTION.TO_WINDOWED);
+					break;
 				default: ChangeState(REACTION.NONE); break;
 			}
 		}
@@ -238,6 +248,11 @@ namespace SpiritPurger
 					else wsize = 1.0; // wsize == 0.0 here
 					newOptions.Settings["window size"] = wsize;
 					ChangeState(REACTION.BIGGER_WINDOW);
+					break;
+				case MENUITEM.WINDOW_TYPE:
+					// Toggle fullscreen/windowed display.
+					// The functionality is the same as if you pressed the Left Arrow key.
+					OnLeftKey();
 					break;
 				default: ChangeState(REACTION.NONE); break;
 			}

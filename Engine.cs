@@ -153,18 +153,16 @@ namespace SpiritPurger
         protected short lives = 2;
         protected short bombs = 3;
 
-        public void Run(RenderWindow app)
+        public void Run(RenderWindow window=null)
         {
 			Options options = new Options();
 			Dictionary<string, object> settings = options.Settings;
 
             // Apply extra things to the window.
-            app.SetKeyRepeatEnabled(false);
-            app.KeyPressed += new EventHandler<KeyEventArgs>(app_KeyPressed);
-            app.KeyReleased += new EventHandler<KeyEventArgs>(app_KeyReleased);
+			app = window;
+			MakeWindow((int)options.Settings["fullscreen"] == 1);
 
             // Load all resources.
-			this.app = app;
 			imageManager = new ImageManager();
 			menuManager = new MenuManager(options);
             menuRenderer = new MenuRenderer(imageManager, menuManager);
@@ -205,7 +203,27 @@ namespace SpiritPurger
             paintHandler = new PaintHandler(PaintMenu);
 
 			AssignOptions(options);
-			MainLoop(app);
+			MainLoop();
+		}
+
+		private void MakeWindow(bool fullscreen=false)
+		{
+			if (app != null)
+			{
+				app.Closed -= OnClose;
+				app.KeyPressed -= app_KeyPressed;
+				app.KeyReleased -= app_KeyReleased;
+				app.Close();
+			}
+
+			Styles style = fullscreen ? Styles.Fullscreen : (Styles.Default & ~Styles.Resize);
+			app = new RenderWindow(new VideoMode(640, 480), "Spirit Purger", style);
+			
+			// Add all event handlers.
+			app.Closed += OnClose;
+			app.KeyPressed += app_KeyPressed;
+			app.KeyReleased += app_KeyReleased;
+			app.SetKeyRepeatEnabled(false);
 		}
 
 		/// <summary>
@@ -271,13 +289,20 @@ namespace SpiritPurger
 			gameRenderer.SetBombs(bombs = 3);
         }
 
+		static void OnClose(object sender, EventArgs e)
+		{
+			// Close the window when OnClose event is received.
+			RenderWindow window = (RenderWindow)sender;
+			window.Close();
+		}
+
         /// <summary>
         /// The game's infinite loop. In a timely manner it updates data,
         /// forces a repaint, and gives outside programs a chance to funnel
         /// events. While waiting for the next update cycle, the loop gives
         /// sleeps.
         /// </summary>
-        protected void MainLoop(RenderWindow app)
+        protected void MainLoop()
         {
             Timer timer = new Timer();
             double lastUpdate = timer.GetTicks();
@@ -580,6 +605,13 @@ namespace SpiritPurger
 						ResizeWindow();
 						break;
 					case REACTION.BIGGER_WINDOW:
+						ResizeWindow();
+						break;
+					case REACTION.TO_FULLSCREEN:
+						MakeWindow(true);
+						break;
+					case REACTION.TO_WINDOWED:
+						MakeWindow(false);
 						ResizeWindow();
 						break;
 					case REACTION.MENU_TO_MAIN:

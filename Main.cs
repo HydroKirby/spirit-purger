@@ -6,22 +6,11 @@ namespace SpiritPurger
 {
     class Program
     {
-        static void OnClose(object sender, EventArgs e)
-        {
-            // Close the window when OnClose event is received.
-            RenderWindow window = (RenderWindow) sender;
-            window.Close();
-        }
-
         static void Main(string[] args)
         {
             // Create the game and run it.
             SpiritPurger.Engine engine = new SpiritPurger.Engine();
-            // Create the main window. Disable resizing.
-            RenderWindow app = new RenderWindow(new VideoMode(640, 480), "Spirit Purger",
-				Styles.Default & ~Styles.Resize);
-            app.Closed += new EventHandler(OnClose);
-            engine.Run(app);
+            engine.Run();
         }
     }
 }
