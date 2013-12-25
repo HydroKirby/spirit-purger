@@ -161,12 +161,6 @@ namespace SpiritPurger
 						// For unique cases, interact with them separately.
 						switch (tempMenuItems[j])
 						{
-							case MENUITEM.MUSIC_VOL:
-								label = MakeTextInstance(tempMenuItems[j], j);
-								break;
-							case MENUITEM.SOUND_VOL:
-								label = MakeTextInstance(tempMenuItems[j], j);
-								break;
 							case MENUITEM.CREDITS:
 								label = MakeTextInstance(tempMenuItems[j], j);
 								break;
@@ -216,12 +210,30 @@ namespace SpiritPurger
 			}
 			// Make the volume labels separately. They are generated specially, so they
 			// are not part of the full list of labels.
-			musicVolLabel = MakeVolumeTextInstance(
-				(int)menuManager.newOptions.Settings["bgm volume"], 2);
-			soundVolLabel = MakeVolumeTextInstance(
-				(int)menuManager.newOptions.Settings["sfx volume"], 3);
+			RefreshMusicVolume();
+			RefreshSoundVolume();
 
 			SetSelection(menuManager);
+		}
+
+		/// <summary>
+		/// Creates the label that shows the music volume.
+		/// </summary>
+		/// <param name="volume">The volume of the music.</param>
+		public void RefreshMusicVolume()
+		{
+			musicVolLabel = MakeVolumeTextInstance(
+				(int)menuManager.newOptions.Settings["bgm volume"], 2);
+		}
+
+		/// <summary>
+		/// Creates the label that shows the sound effects volume.
+		/// </summary>
+		/// <param name="volume">The volume of the sound effects.</param>
+		public void RefreshSoundVolume()
+		{
+			soundVolLabel = MakeVolumeTextInstance(
+				(int)menuManager.newOptions.Settings["sfx volume"], 3);
 		}
 
 		/// <summary>

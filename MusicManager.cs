@@ -73,6 +73,7 @@ namespace SpiritPurger
 		protected MUSIC_LIST choiceNowPlaying;
 		// The literal music files that are playing.
 		protected Music music;
+		// Relates a song (by enum) to its loop-points.
 		protected Dictionary<MUSIC_LIST, LoopPointMusic> loopPointMusics;
 		protected LoopPointMusic currentMusic;
 
@@ -134,16 +135,24 @@ namespace SpiritPurger
 			NowPlaying = MUSIC_LIST.SILENT;
 		}
 
+		/// <summary>
+		/// Assigns music tracks to their loop points.
+		/// </summary>
 		private void PopulateMusicList()
 		{
+			// The "silence" tune will be re-used for any music that is not yet able to be played.
 			loopPointMusics = new Dictionary<MUSIC_LIST, LoopPointMusic>();
 			LoopPointMusic silence = new LoopPointMusic(GetMusicFilename(MUSIC_LIST.SILENT));
+
 			loopPointMusics.Add(MUSIC_LIST.UNASSIGNED, silence);
 			loopPointMusics.Add(MUSIC_LIST.SILENT, silence);
-			loopPointMusics.Add(MUSIC_LIST.TITLE, silence);
+			loopPointMusics.Add(MUSIC_LIST.TITLE,
+				new LoopPointMusic(GetMusicFilename(MUSIC_LIST.TITLE),
+				TimeSpan.FromSeconds(3.18), TimeSpan.FromSeconds(33.8)));
 			loopPointMusics.Add(MUSIC_LIST.GAME_WON, silence);
 			loopPointMusics.Add(MUSIC_LIST.GAME_LOST, silence);
-			loopPointMusics.Add(MUSIC_LIST.GAME, new LoopPointMusic(GetMusicFilename(MUSIC_LIST.GAME),
+			loopPointMusics.Add(MUSIC_LIST.GAME,
+				new LoopPointMusic(GetMusicFilename(MUSIC_LIST.GAME),
 				TimeSpan.FromSeconds(3.18), TimeSpan.FromSeconds(33.8)));
 		}
 
@@ -161,8 +170,9 @@ namespace SpiritPurger
 			switch (music)
 			{
 				case MUSIC_LIST.SILENT:
-				case MUSIC_LIST.TITLE:
 					ret = "silence.ogg"; break;
+				case MUSIC_LIST.TITLE:
+					ret = "athletic.ogg"; break;
 				case MUSIC_LIST.GAME:
 					ret = "athletic.ogg"; break;
 				default:

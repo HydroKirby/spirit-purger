@@ -208,6 +208,7 @@ namespace SpiritPurger
 		public void OnLeftKey()
 		{
 			MENUITEM item = SelectedMenuItem;
+			int vol;
 			switch (item)
 			{
 				case MENUITEM.WINDOW_SIZE:
@@ -230,6 +231,22 @@ namespace SpiritPurger
 					else
 						ChangeState(REACTION.TO_WINDOWED);
 					break;
+				case MENUITEM.MUSIC_VOL:
+					vol = (int)newOptions.Settings["bgm volume"];
+					vol -= 10;
+					if (vol < 0)
+						vol = 0;
+					newOptions.Settings["bgm volume"] = vol;
+					ChangeState(REACTION.LESS_MUSIC_VOL);
+					break;
+				case MENUITEM.SOUND_VOL:
+					vol = (int)newOptions.Settings["sfx volume"];
+					vol -= 10;
+					if (vol < 0)
+						vol = 0;
+					newOptions.Settings["sfx volume"] = vol;
+					ChangeState(REACTION.LESS_SOUND_VOL);
+					break;
 				default: ChangeState(REACTION.NONE); break;
 			}
 		}
@@ -237,6 +254,7 @@ namespace SpiritPurger
 		public void OnRightKey()
 		{
 			MENUITEM item = SelectedMenuItem;
+			int vol;
 			switch (item)
 			{
 				case MENUITEM.WINDOW_SIZE:
@@ -253,6 +271,22 @@ namespace SpiritPurger
 					// Toggle fullscreen/windowed display.
 					// The functionality is the same as if you pressed the Left Arrow key.
 					OnLeftKey();
+					break;
+				case MENUITEM.MUSIC_VOL:
+					vol = (int)newOptions.Settings["bgm volume"];
+					vol += 10;
+					if (vol > 100)
+						vol = 100;
+					newOptions.Settings["bgm volume"] = vol;
+					ChangeState(REACTION.MORE_MUSIC_VOL);
+					break;
+				case MENUITEM.SOUND_VOL:
+					vol = (int)newOptions.Settings["sfx volume"];
+					vol += 10;
+					if (vol > 100)
+						vol = 100;
+					newOptions.Settings["sfx volume"] = vol;
+					ChangeState(REACTION.MORE_SOUND_VOL);
 					break;
 				default: ChangeState(REACTION.NONE); break;
 			}

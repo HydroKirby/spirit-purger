@@ -123,7 +123,6 @@ namespace SpiritPurger
 		protected ImageManager imageManager;
 		protected MenuRenderer menuRenderer;
 		protected GameRenderer gameRenderer;
-        protected double appScale = 1.0;
 
 		// Sound variables.
 		protected SoundManager soundManager;
@@ -201,6 +200,7 @@ namespace SpiritPurger
             disallowRapidSelection = false;
             gameState = GameState.MainMenu;
             paintHandler = new PaintHandler(PaintMenu);
+			musicManager.ChangeMusic(MusicManager.MUSIC_LIST.TITLE);
 
 			AssignOptions(options);
 			MainLoop();
@@ -525,12 +525,10 @@ namespace SpiritPurger
 			// appear strangely. Do not let the window get too big.
 			uint maxWidth = VideoMode.DesktopMode.Width;
 			uint maxHeight = VideoMode.DesktopMode.Height;
-			appScale = (double)menuManager.newOptions.Settings["window size"];
+			double appScale = (double)menuManager.newOptions.Settings["window size"];
 			uint newWidth = (uint)(Renderer.APP_BASE_WIDTH * appScale);
 			uint newHeight = (uint)(Renderer.APP_BASE_HEIGHT * appScale);
-			bool mustMove = false;
-			Vector2i newAppPos = new Vector2i();
-
+			
 			if (appScale == 0.0)
 			{
 				// Maximize the screen.
@@ -559,6 +557,8 @@ namespace SpiritPurger
 			}
 
 			// Move the app window within the desktop if it grew outside the bounds.
+			bool mustMove = false;
+			Vector2i newAppPos = new Vector2i();
 			if (newWidth + app.Position.X > maxWidth)
 			{
 				newAppPos.X = (int)(maxWidth - newWidth);
@@ -613,6 +613,26 @@ namespace SpiritPurger
 					case REACTION.TO_WINDOWED:
 						MakeWindow(false);
 						ResizeWindow();
+						break;
+					case REACTION.LESS_MUSIC_VOL:
+						musicManager.Volume =
+							(int)menuManager.GetNewOptions().Settings["bgm volume"];
+						menuRenderer.RefreshMusicVolume();
+						break;
+					case REACTION.MORE_MUSIC_VOL:
+						musicManager.Volume =
+							(int)menuManager.GetNewOptions().Settings["bgm volume"];
+						menuRenderer.RefreshMusicVolume();
+						break;
+					case REACTION.LESS_SOUND_VOL:
+						soundManager.Volume =
+							(int)menuManager.GetNewOptions().Settings["sfx volume"];
+						menuRenderer.RefreshSoundVolume();
+						break;
+					case REACTION.MORE_SOUND_VOL:
+						soundManager.Volume =
+							(int)menuManager.GetNewOptions().Settings["sfx volume"];
+						menuRenderer.RefreshSoundVolume();
 						break;
 					case REACTION.MENU_TO_MAIN:
 						if (menuManager.SelectedIndex == 1)
