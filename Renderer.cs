@@ -106,6 +106,7 @@ namespace SpiritPurger
 		protected Sprite bg;
 		protected Color commonTextColor;
 		protected List<List<Text>> submenuLabels;
+		protected List<Text> creditsLabels;
 		// Separate the volume labels because they are generated separately.
 		protected Text musicVolLabel, soundVolLabel;
 		protected const int MENU_FONT_SIZE = 24;
@@ -122,6 +123,8 @@ namespace SpiritPurger
 			WTYPE_WINDOWED, WTYPE_FULLSCREEN,
 			// Unique positions for the numerous WINDOW_SIZE selections.
 			WSIZE1, WSIZE1_5, WSIZE2, WSIZE3, WSIZEMAX,
+			// Unique positions for the credits screen labels.
+			CREDIT_LEFT, CREDIT_RIGHT,
 		}
 
 		/// <summary>
@@ -148,16 +151,17 @@ namespace SpiritPurger
 			maxLabelHeight = tempText.GetLocalBounds().Height;
 
 			// Make all labels for all menus.
+			List<Text> labels = new List<Text>();
+			Text label;
 			for (int i = 0; i < (int)SUBMENU.END_SUBMENUS; i++)
 			{
 				tempMenuItems = menuManager.GetSubmenuLayout((SUBMENU)i);
 				if (tempMenuItems != null && tempMenuItems.Length > 0)
 				{
-					List<Text> labels = new List<Text>();
+					labels = new List<Text>();
 					// Make labels for each menu item.
 					for (int j = 0; j < tempMenuItems.Length; j++)
 					{
-						Text label;
 						// For unique cases, interact with them separately.
 						switch (tempMenuItems[j])
 						{
@@ -208,6 +212,18 @@ namespace SpiritPurger
 					submenuLabels.Add(labels);
 				}
 			}
+
+			// Add the names of all developers as labels.
+			creditsLabels = new List<Text>();
+			label = MakeTextInstance(MENUITEM.CREDIT_PROGRAMMER, 0);
+			creditsLabels.Add(label);
+			label = MakeTextInstance(MENUITEM.CREDIT_LARRY, 0);
+			creditsLabels.Add(label);
+			label = MakeTextInstance(MENUITEM.CREDIT_ART, 1);
+			creditsLabels.Add(label);
+			label = MakeTextInstance(MENUITEM.CREDIT_LUCY, 1);
+			creditsLabels.Add(label);
+			
 			// Make the volume labels separately. They are generated specially, so they
 			// are not part of the full list of labels.
 			RefreshMusicVolume();
@@ -244,7 +260,7 @@ namespace SpiritPurger
 		/// <param name="menuManager">The logical backend controlling the menu.</param>
 		public void SetSelection(MenuManager menuManager)
 		{
-			// Make a translucent spotlight behind the menu entry.
+			// Determine the size and place of the menu entry where that the halo focuses on.
 			float x, y;
 			uint width, height;
 			Text label = GetLabel(menuManager);
@@ -272,8 +288,17 @@ namespace SpiritPurger
 				height = (uint)(label.GetLocalBounds().Height);
 			}
 
-			focusCircle.Radius = new Vector2f(width / 2 + 20, height / 2);
-			focusCircle.Position = new Vector2f(x - 20, y + 4);
+			if (!(menuManager.CurrentMenu == SUBMENU.CREDITS))
+			{
+				// Put the focus halo over the selected menu entry.
+				focusCircle.Radius = new Vector2f(width / 2 + 20, height / 2);
+				focusCircle.Position = new Vector2f(x - 20, y + 4);
+			}
+			else
+			{
+				// Hide the focus halo.
+				focusCircle.Radius = new Vector2f(0, 0);
+			}
 		}
 
 		protected Text GetLabel(MenuManager menuManager)
@@ -320,6 +345,8 @@ namespace SpiritPurger
 					select = 12;
 				}
 			}
+			else if (submenu == SUBMENU.CREDITS)
+				select = 0;
 			return submenuLabels[(int)submenu][select];
 		}
 
@@ -342,6 +369,10 @@ namespace SpiritPurger
 				x = APP_BASE_WIDTH / 4;
 			else if (pos == MENU_ITEM_POSITION.RIGHT)
 				x = APP_BASE_WIDTH / 4 * 3 - ret.GetLocalBounds().Width;
+			else if (pos == MENU_ITEM_POSITION.CREDIT_LEFT)
+				x = APP_BASE_WIDTH / 10;
+			else if (pos == MENU_ITEM_POSITION.CREDIT_RIGHT)
+				x = APP_BASE_WIDTH / 10 * 9 - ret.GetLocalBounds().Width;
 
 			ret.Color = commonTextColor;
 			ret.Position = new Vector2f(x, y);
@@ -396,6 +427,18 @@ namespace SpiritPurger
 					ret = MakeTextInstance("RETURN", depth, MENU_ITEM_POSITION.LEFT); break;
 				case MENUITEM.TUTORIAL: ret = MakeTextInstance("TUTORIAL", depth); break;
 				case MENUITEM.CREDITS: ret = MakeTextInstance("CREDITS", depth); break;
+				case MENUITEM.CREDIT_PROGRAMMER:
+					ret = MakeTextInstance("PROGRAMMER", 0, MENU_ITEM_POSITION.CREDIT_LEFT);
+					break;
+				case MENUITEM.CREDIT_LARRY:
+					ret = MakeTextInstance("LARRY RESNIK", 0, MENU_ITEM_POSITION.CREDIT_RIGHT);
+					break;
+				case MENUITEM.CREDIT_ART:
+					ret = MakeTextInstance("ARTIST", 1, MENU_ITEM_POSITION.CREDIT_LEFT);
+					break;
+				case MENUITEM.CREDIT_LUCY:
+					ret = MakeTextInstance("LUCY HALLIWELL-SMITH", 1, MENU_ITEM_POSITION.CREDIT_RIGHT);
+					break;
 				case MENUITEM.EXIT_ABOUT: ret = MakeTextInstance("RETURN", depth); break;
 				case MENUITEM.EXIT_TUTORIAL: ret = MakeTextInstance("RETURN", depth); break;
 				case MENUITEM.EXIT_CREDITS: ret = MakeTextInstance("RETURN", depth); break;
@@ -472,6 +515,13 @@ namespace SpiritPurger
 				app.Draw(soundVolLabel);
 				// Label of RETURN
 				app.Draw(submenuLabels[currMenu][12]);
+			}
+			else if (menuManager.CurrentMenu == SUBMENU.CREDITS)
+			{
+				foreach (Text label in creditsLabels)
+				{
+					app.Draw(label);
+				}
 			}
 			else
 			{
