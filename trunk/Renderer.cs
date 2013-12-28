@@ -223,6 +223,12 @@ namespace SpiritPurger
 			creditsLabels.Add(label);
 			label = MakeTextInstance(MENUITEM.CREDIT_LUCY, 1);
 			creditsLabels.Add(label);
+			label = MakeTextInstance(MENUITEM.CREDIT_SFX, 2);
+			creditsLabels.Add(label);
+			label = MakeTextInstance(MENUITEM.CREDIT_SOUND_JAY, 2);
+			creditsLabels.Add(label);
+			label = MakeTextInstance(MENUITEM.CREDIT_BITSTREAM_VERA, 3);
+			creditsLabels.Add(label);
 			
 			// Make the volume labels separately. They are generated specially, so they
 			// are not part of the full list of labels.
@@ -428,16 +434,26 @@ namespace SpiritPurger
 				case MENUITEM.TUTORIAL: ret = MakeTextInstance("TUTORIAL", depth); break;
 				case MENUITEM.CREDITS: ret = MakeTextInstance("CREDITS", depth); break;
 				case MENUITEM.CREDIT_PROGRAMMER:
-					ret = MakeTextInstance("PROGRAMMER", 0, MENU_ITEM_POSITION.CREDIT_LEFT);
+					ret = MakeTextInstance("PROGRAMMER", depth, MENU_ITEM_POSITION.CREDIT_LEFT);
 					break;
 				case MENUITEM.CREDIT_LARRY:
-					ret = MakeTextInstance("LARRY RESNIK", 0, MENU_ITEM_POSITION.CREDIT_RIGHT);
+					ret = MakeTextInstance("LARRY RESNIK", depth, MENU_ITEM_POSITION.CREDIT_RIGHT);
 					break;
 				case MENUITEM.CREDIT_ART:
-					ret = MakeTextInstance("ARTIST", 1, MENU_ITEM_POSITION.CREDIT_LEFT);
+					ret = MakeTextInstance("ARTIST", depth, MENU_ITEM_POSITION.CREDIT_LEFT);
 					break;
 				case MENUITEM.CREDIT_LUCY:
-					ret = MakeTextInstance("LUCY HALLIWELL-SMITH", 1, MENU_ITEM_POSITION.CREDIT_RIGHT);
+					ret = MakeTextInstance("LUCY HALLIWELL-SMITH", depth,
+						MENU_ITEM_POSITION.CREDIT_RIGHT);
+					break;
+				case MENUITEM.CREDIT_SFX:
+					ret = MakeTextInstance("SOUNDS", depth, MENU_ITEM_POSITION.CREDIT_LEFT);
+					break;
+				case MENUITEM.CREDIT_SOUND_JAY:
+					ret = MakeTextInstance("SOUND JAY", depth, MENU_ITEM_POSITION.CREDIT_RIGHT);
+					break;
+				case MENUITEM.CREDIT_BITSTREAM_VERA:
+					ret = MakeTextInstance("BITSTREAM VERA FONTS", depth, MENU_ITEM_POSITION.CENTER);
 					break;
 				case MENUITEM.EXIT_ABOUT: ret = MakeTextInstance("RETURN", depth); break;
 				case MENUITEM.EXIT_TUTORIAL: ret = MakeTextInstance("RETURN", depth); break;
