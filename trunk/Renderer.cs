@@ -65,6 +65,8 @@ namespace SpiritPurger
 		public const uint FIELD_LEFT = 50;
 		public const uint FIELD_WIDTH = 300;
 		public const uint FIELD_HEIGHT = 380;
+		public const uint FIELD_CENTER_X = FIELD_LEFT + FIELD_WIDTH / 2;
+		public const uint FIELD_CENTER_Y = FIELD_TOP + FIELD_HEIGHT / 2;
 		// Easy access members for other areas of the program.
 		private static Vector2u appBaseSize;
 		private static Vector2f fieldUpperLeft;
@@ -476,18 +478,6 @@ namespace SpiritPurger
 
 		public override void Update()
 		{
-			// React to whatever the menu manager wants.
-			REACTION state = menuManager.State;
-			if (state == REACTION.MENU_TO_ABOUT ||
-				state == REACTION.MENU_TO_CREDITS ||
-				state == REACTION.MENU_TO_DIFF ||
-				state == REACTION.MENU_TO_MAIN ||
-				state == REACTION.MENU_TO_OPTIONS ||
-				state == REACTION.MENU_TO_TUTORIAL)
-			{
-				//currMenu = (int)menuManager.CurrentMenu;
-			}
-
 			// Move the menu selection's focus.
 			SetSelection(menuManager);
 		}
@@ -551,41 +541,13 @@ namespace SpiritPurger
 
 	public class GameRenderer : Renderer
 	{
-		// Refers to when a boss pattern has completed. It's the time to wait
-		// until initiating the next pattern.
-		public const int PATTERN_TRANSITION_PAUSE = 80;
-
-		// Text/font variables.
-		protected Color commonTextColor;
-		protected Text labelBombs;
-		protected Vector2f labelBombsPos;
-		protected Text labelLives;
-		protected Vector2f labelLivesPos;
-		protected Text labelScore;
-		protected Vector2f labelScorePos;
-		protected Text labelPaused;
-		protected Text labelPausedToEnd;
-		protected Text labelPausedToPlay;
-		protected Text labelBullets;
-		protected Vector2f labelBulletsPos;
-		protected Text labelBombCombo;
-		protected Vector2f labelBombComboPos;
-		protected Text labelBossHealth;
-		protected Vector2f labelBossHealthPos;
-		// How long a boss has before terminating a pattern on its own.
-		protected Text labelPatternTime;
-		protected Vector2f labelPatternTimePos;
-		// The result of a finishing a boss pattern.
-		protected Text labelPatternResult;
-		protected Vector2f labelPatternResultPos;
-		protected Text labelGameOver;
+		protected HUD hud;
 
 		protected bool isPaused;
 		protected bool isInBossPattern;
 		protected bool isBombComboShown;
 		protected bool isGameOver;
 		protected int _bombComboTimeCountdown;
-		protected int timeLeftToShowPatternResult;
 
 		// Game Textures.
 		protected Dictionary<string, Texture> textures;
@@ -606,10 +568,13 @@ namespace SpiritPurger
 		public int playerAnimSpeed = 5;
 		public int bossAnimSpeed = 5;
 
+		public bool IsInBossPattern { get { return isInBossPattern; } }
+		public bool IsBombComboShown { get { return isBombComboShown; } }
+
 		public GameRenderer(ImageManager imageManager)
 		{
-			commonTextColor = Color.Black;
-
+			hud = new HUD(imageManager, this);
+			
 			// Create images.
 			textures = new Dictionary<string, Texture>(StringComparer.Ordinal);
 			foreach (string filename in PNG_FILENAMES)
@@ -625,42 +590,6 @@ namespace SpiritPurger
 			bgSprite.Position = FieldUpperLeft + FieldSize / 2;
 			borderSprite = imageManager.GetSprite("border");
 			bossHealthbar = new Healthbar(imageManager);
-
-			// Set the positions for constantly regenerating labels.
-			float rightmost = FIELD_LEFT + FIELD_WIDTH;
-			labelScorePos = new Vector2f(rightmost + 50, FIELD_TOP + 10);
-			labelLivesPos = new Vector2f(rightmost + 50, FIELD_TOP + 20);
-			labelBombsPos = new Vector2f(rightmost + 50, FIELD_TOP + 30);
-			labelBulletsPos = new Vector2f(rightmost + 50, FIELD_TOP + 40);
-			labelBombComboPos = new Vector2f(FIELD_LEFT + 15F, FIELD_TOP + 35F);
-			labelBossHealthPos = new Vector2f(FIELD_LEFT + 30F, FIELD_TOP + 5F);
-			labelPatternTimePos = new Vector2f(FIELD_LEFT + 200, FIELD_TOP + 5F);
-			labelPatternResultPos = new Vector2f(FIELD_LEFT + FIELD_WIDTH / 6, FIELD_TOP + FIELD_HEIGHT / 3);
-
-			// Create the labels that are constantly regenerated.
-			SetScore(0);
-			SetBullets(0);
-			SetBombs(0);
-			SetBombCombo(0, 0);
-			SetBossHealth(0);
-			SetPatternTime(0);
-			SetPatternResult(false, 0);
-			timeLeftToShowPatternResult = 0;
-
-			// Create the labels that are only created once.
-			labelPaused = new Text("Paused", menuFont, 12);
-			labelPausedToPlay = new Text("Press Escape to Play", menuFont, 12);
-			labelPausedToEnd = new Text("Hold Bomb to Return to Title Screen", menuFont, 12);
-			labelGameOver = new Text("Game Over... Press Shoot", menuFont, 16);
-
-			// Set the positions for labels that are made only one time.
-			labelPaused.Position = new Vector2f(92, 98);
-			labelPausedToPlay.Position = new Vector2f(79, 121);
-			labelPausedToEnd.Position = new Vector2f(92, 144);
-			labelGameOver.Position = new Vector2f(70, 70);
-
-			labelPaused.Color = labelGameOver.Color =
-				labelPausedToEnd.Color = labelPausedToPlay.Color = commonTextColor;
 		}
 
 		public Sprite GetSprite(string key)
@@ -698,9 +627,7 @@ namespace SpiritPurger
 
 		public void SetScore(long val)
 		{
-			labelScore = new Text("Score: " + val.ToString(), menuFont, 12);
-			labelScore.Position = labelScorePos;
-			labelScore.Color = commonTextColor;
+			hud.SetScore(val);
 		}
 
 		public void SetLives(int val)
@@ -710,6 +637,150 @@ namespace SpiritPurger
 				val = 0;
 			else
 				isGameOver = false;
+			hud.SetLives(val);
+		}
+
+		public void SetBombs(int val)
+		{
+			hud.SetBombs(val);
+		}
+
+		public void SetBombCombo(int combo, int score)
+		{
+			isBombComboShown = combo > 0;
+			hud.SetBombCombo(combo, score);
+		}
+
+		public void SetBullets(int val)
+		{
+			hud.SetBullets(val);
+		}
+
+		public void SetBossHealth(int val)
+		{
+			hud.SetBossHealth(val);
+			bossHealthbar.CurrentHealth = val;
+		}
+
+		public void SetPatternTime(int val)
+		{
+			isInBossPattern = val > 0;
+			hud.SetPatternTime(val);
+		}
+
+		public void SetPatternResult(bool success, long score)
+		{
+			hud.SetPatternResult(success, score);
+		}
+
+		public void Update(double dt)
+		{
+			hud.Update(dt);
+			bgSprite.Rotation += (float)bgRotSpeed;
+			if (bgSprite.Rotation >= 360)
+				bgSprite.Rotation -= 360;
+		}
+
+		public void UpdatePlayer(ref Player p)
+		{
+		}
+
+		public override void Update()
+		{
+			throw new NotImplementedException();
+		}
+
+		public void Paint(object sender)
+		{
+			RenderWindow app = (RenderWindow)sender;
+			app.Draw(borderSprite);
+			hud.Paint(sender);
+			if (isInBossPattern)
+				bossHealthbar.Draw(app);
+		}
+	}
+
+	public class HUD : Renderer
+	{
+		// The owner of this HUD.
+		protected GameRenderer gameRenderer;
+
+		// Refers to when a boss pattern has completed. It's the time to wait
+		// until initiating the next pattern.
+		public const int PATTERN_TRANSITION_PAUSE = 80;
+
+		// Text/font variables.
+		protected Color commonTextColor;
+		protected Text labelBombs;
+		protected Vector2f labelBombsPos;
+		protected Text labelLives;
+		protected Vector2f labelLivesPos;
+		protected Text labelScore;
+		protected Vector2f labelScorePos;
+		protected Text labelPaused;
+		protected Text labelBullets;
+		protected Vector2f labelBulletsPos;
+		protected Text labelBombCombo;
+		protected Vector2f labelBombComboPos;
+		protected Text labelBossHealth;
+		protected Vector2f labelBossHealthPos;
+		// How long a boss has before terminating a pattern on its own.
+		protected Text labelPatternTime;
+		protected Vector2f labelPatternTimePos;
+		// The result of a finishing a boss pattern.
+		protected Text labelPatternResult;
+		protected Vector2f labelPatternResultPos;
+		protected Text labelGameOver;
+
+		protected int timeLeftToShowPatternResult;
+
+		public HUD(ImageManager imageManager, GameRenderer gameRenderer)
+		{
+			this.gameRenderer = gameRenderer;
+			commonTextColor = Color.White;
+
+			// Set the positions for constantly regenerating labels.
+			float rightmost = FIELD_LEFT + FIELD_WIDTH;
+			labelScorePos = new Vector2f(rightmost + 50, FIELD_TOP + 10);
+			labelLivesPos = new Vector2f(rightmost + 50, FIELD_TOP + 20);
+			labelBombsPos = new Vector2f(rightmost + 50, FIELD_TOP + 30);
+			labelBulletsPos = new Vector2f(rightmost + 50, FIELD_TOP + 40);
+			labelBombComboPos = new Vector2f(FIELD_LEFT + 15F, FIELD_TOP + 35F);
+			labelBossHealthPos = new Vector2f(FIELD_LEFT + 30F, FIELD_TOP + 5F);
+			labelPatternTimePos = new Vector2f(FIELD_LEFT + 200, FIELD_TOP + 5F);
+			labelPatternResultPos = new Vector2f(FIELD_LEFT + FIELD_WIDTH / 6, FIELD_TOP + FIELD_HEIGHT / 3);
+
+			// Create the labels that are constantly regenerated.
+			SetScore(0);
+			SetBullets(0);
+			SetBombs(0);
+			SetBombCombo(0, 0);
+			SetBossHealth(0);
+			SetPatternTime(0);
+			SetPatternResult(false, 0);
+			timeLeftToShowPatternResult = 0;
+
+			// Create the labels that are only created once.
+			labelPaused = new Text("Paused\nPress Escape to Resume\nHold Bomb to Return to Title Screen", menuFont, 16);
+			labelGameOver = new Text("Game Over... Press Shoot", menuFont, 16);
+
+			// Set the positions for labels that are made only one time.
+			labelPaused.Position = new Vector2f(
+				FIELD_CENTER_X - labelPaused.GetLocalBounds().Width / 2, FIELD_TOP + 100);
+			labelGameOver.Position = new Vector2f(70, 70);
+
+			labelPaused.Color = labelGameOver.Color = commonTextColor;
+		}
+
+		public void SetScore(long val)
+		{
+			labelScore = new Text("Score: " + val.ToString(), menuFont, 12);
+			labelScore.Position = labelScorePos;
+			labelScore.Color = commonTextColor;
+		}
+
+		public void SetLives(int val)
+		{
 			String livesString = "Lives: " + val;
 			labelLives = new Text(livesString, menuFont, 12);
 			labelLives.Position = labelLivesPos;
@@ -726,8 +797,7 @@ namespace SpiritPurger
 
 		public void SetBombCombo(int combo, int score)
 		{
-			isBombComboShown = combo > 0;
-			if (isBombComboShown)
+			if (gameRenderer.IsBombComboShown)
 			{
 				labelBombCombo = new Text(
 					combo.ToString() + " Bomb Combo! Score + " + score.ToString(),
@@ -749,13 +819,11 @@ namespace SpiritPurger
 			labelBossHealth = new Text("Health: " + val.ToString(), menuFont, 16);
 			labelBossHealth.Color = commonTextColor;
 			labelBossHealth.Position = labelBossHealthPos;
-			bossHealthbar.CurrentHealth = val;
 		}
 
 		public void SetPatternTime(int val)
 		{
-			isInBossPattern = val > 0;
-			if (isInBossPattern)
+			if (gameRenderer.IsInBossPattern)
 			{
 				labelPatternTime = new Text("Time: " + val.ToString(), menuFont, 12);
 				labelPatternTime.Position = labelPatternTimePos;
@@ -778,13 +846,6 @@ namespace SpiritPurger
 			timeLeftToShowPatternResult--;
 			if (timeLeftToShowPatternResult < 0)
 				timeLeftToShowPatternResult = 0;
-			bgSprite.Rotation += (float)bgRotSpeed;
-			if (bgSprite.Rotation >= 360)
-				bgSprite.Rotation -= 360;
-		}
-
-		public void UpdatePlayer(ref Player p)
-		{
 		}
 
 		public override void Update()
@@ -795,21 +856,17 @@ namespace SpiritPurger
 		public void Paint(object sender)
 		{
 			RenderWindow app = (RenderWindow)sender;
-			if (isGameOver)
-				app.Draw(labelGameOver);
-			app.Draw(borderSprite);
 			app.Draw(labelScore);
 			app.Draw(labelBombs);
 			app.Draw(labelLives);
 
-			if (isBombComboShown)
+			if (gameRenderer.IsBombComboShown)
 				app.Draw(labelBombCombo);
 
-			if (isInBossPattern)
+			if (gameRenderer.IsInBossPattern)
 			{
 				app.Draw(labelPatternTime);
 				//app.Draw(labelBossHealth);
-				bossHealthbar.Draw(app);
 			}
 
 			if (timeLeftToShowPatternResult > 0)
@@ -817,12 +874,10 @@ namespace SpiritPurger
 
 			app.Draw(labelBullets);
 
-			if (isPaused)
-			{
+			if (gameRenderer.IsPaused)
 				app.Draw(labelPaused);
-				app.Draw(labelPausedToPlay);
-				app.Draw(labelPausedToEnd);
-			}
+			if (gameRenderer.IsGameOver)
+				app.Draw(labelGameOver);
 		}
 	}
 
