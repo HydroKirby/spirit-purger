@@ -65,20 +65,6 @@ namespace SpiritPurger
         // Division by 1,000 turns the seconds value into the milliseconds
         //   which are used by the Timer class.
         public const double UPDATE_TICKS = 30.0 / 1000.0;
-        // After dying, this is how long the player automatically moves back
-        // up to the playfield.
-        public const int REENTRY_FRAMES = 50;
-        public const int POST_DEATH_INVINC_FRAMES =
-            REENTRY_FRAMES + Player.DEATH_SEQUENCE_FRAMES + 40;
-        // Refers to when a boss pattern has completed. It's the time to wait
-        // until initiating the next pattern.
-        public const int PATTERN_TRANSITION_PAUSE = 80;
-        // The time to wait before the boss begins the intro sequence.
-        public const int BOSS_PRE_INTRO_FRAMES = 20;
-        // The time to wait during the boss' fade-in sequence.
-        public const int BOSS_INTRO_FRAMES = 50;
-        // The time to show the bomb combo score after a bomb wears off.
-        public const int BOMB_COMBO_DISPLAY_FRAMES = 270;
 
         // High-level stuff.
         protected delegate void PaintHandler(object sender, double ticks);
@@ -131,6 +117,7 @@ namespace SpiritPurger
         // Current-game variables.
 		protected bool isPlaying;
 		protected MenuManager menuManager;
+		protected GameplayManager gameManager;
 		protected BulletCreator bulletCreator;
         // This is the number of seconds left to complete a pattern.
         protected int patternTime = 0;
@@ -165,12 +152,15 @@ namespace SpiritPurger
 			imageManager = new ImageManager();
 			menuManager = new MenuManager(options);
             menuRenderer = new MenuRenderer(imageManager, menuManager);
+			gameManager = new GameplayManager();
 			gameRenderer = new GameRenderer(imageManager);
 			bulletCreator = new BulletCreator(imageManager);
 			soundManager = new SoundManager();
 			musicManager = new MusicManager();
 			menuManager.Attach(this);
 			menuManager.Attach(menuRenderer);
+			gameManager.Attach(this);
+			gameManager.Attach(gameRenderer);
 
 			// Assign sprites.
 			player = new Player(
@@ -463,7 +453,7 @@ namespace SpiritPurger
                     if (lives < 0)
                         gameOver = gameRenderer.IsGameOver = true;
 					gameRenderer.SetLives(lives);
-					player.reentryCountdown = REENTRY_FRAMES;
+					player.reentryCountdown = GameplayManager.REENTRY_FRAMES;
 					player.Location = new Vector2f(145.0F, 320.0F);
 					player.UpdateDisplayPos();
 				}
@@ -546,8 +536,8 @@ namespace SpiritPurger
 			if ((int)((newWidth * 100.0) / newHeight) !=
 				(int)((Renderer.APP_BASE_WIDTH * 100.0) / Renderer.APP_BASE_HEIGHT))
 			{
-				// Shrink the bigger value.
-				// http://stackoverflow.com/questions/15417135/resizing-a-rectangle-and-snapping-to-a-fixed-ratio
+				// Shrink the bigger value. The code the from the following link.
+				// http://stackoverflow.com/questions/15417135/
 				double widthRatio = ((double)Renderer.APP_BASE_WIDTH) / Renderer.APP_BASE_HEIGHT;
 				double heightRatio = ((double)Renderer.APP_BASE_HEIGHT) / Renderer.APP_BASE_WIDTH;
 				if (newHeight * widthRatio <= newWidth)
@@ -648,6 +638,10 @@ namespace SpiritPurger
 						break;
 				}
 				menuManager.StateHandled();
+			}
+			else if (gameState == GameState.GamePlay)
+			{
+				gameManager.StateHandled();
 			}
 		}
 
@@ -756,7 +750,7 @@ namespace SpiritPurger
                     player.invincibleCountdown = Bomb.LIFETIME_ACTIVE;
 					bombBlast.Renew(player.Location);
                     bombCombo = 0;
-                    bombComboTimeCountdown = BOMB_COMBO_DISPLAY_FRAMES;
+                    bombComboTimeCountdown = GameplayManager.BOMB_COMBO_DISPLAY_FRAMES;
                     bombs--;
                     beatThisPattern = false;
 					gameRenderer.SetBombs(bombs);
@@ -801,7 +795,7 @@ namespace SpiritPurger
 					lives >= 0 && Physics.Touches(player, enemy))
                 {
 					// The player took damage.
-                    player.invincibleCountdown = POST_DEATH_INVINC_FRAMES;
+					player.invincibleCountdown = GameplayManager.POST_DEATH_INVINC_FRAMES;
                     player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
                     beatThisPattern = false;
 					soundManager.QueueToPlay(SoundManager.SFX.PLAYER_TOOK_DAMAGE);
@@ -814,7 +808,7 @@ namespace SpiritPurger
                     lives >= 0 && Physics.Touches(player, boss))
                 {
 					// The player took damage.
-                    player.invincibleCountdown = POST_DEATH_INVINC_FRAMES;
+					player.invincibleCountdown = GameplayManager.POST_DEATH_INVINC_FRAMES;
                     player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
                     beatThisPattern = false;
 					soundManager.QueueToPlay(SoundManager.SFX.PLAYER_TOOK_DAMAGE);
@@ -838,7 +832,7 @@ namespace SpiritPurger
 					boss.Update(1);
                     // Increment the boss' time transitioning between patterns.
                     transitionFrames++;
-                    if (transitionFrames >= PATTERN_TRANSITION_PAUSE)
+					if (transitionFrames >= GameplayManager.PATTERN_TRANSITION_PAUSE)
                     {
 						// Reset the transition frames for the next time.
                         transitionFrames = 0;
@@ -864,7 +858,8 @@ namespace SpiritPurger
             else if (bossState == BossState.Intro)
             {
                 bossIntroTime++;
-				if (bossIntroTime > BOSS_INTRO_FRAMES + BOSS_PRE_INTRO_FRAMES)
+				if (bossIntroTime > GameplayManager.BOSS_INTRO_FRAMES +
+					GameplayManager.BOSS_PRE_INTRO_FRAMES)
 				{
 					// The boss is no longer in the intro sequence.
 					bossState = BossState.Active;
@@ -1039,7 +1034,7 @@ namespace SpiritPurger
 						{
 							// The player was hit by a bullet.
 							player.invincibleCountdown =
-								POST_DEATH_INVINC_FRAMES;
+								GameplayManager.POST_DEATH_INVINC_FRAMES;
 							player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
 							beatThisPattern = false;
 							soundManager.QueueToPlay(SoundManager.SFX.PLAYER_TOOK_DAMAGE);
@@ -1183,7 +1178,7 @@ namespace SpiritPurger
             if (bossState == BossState.Active)
                 boss.Draw(app);
             else if (bossState == BossState.Intro &&
-                     bossIntroTime > BOSS_PRE_INTRO_FRAMES)
+					 bossIntroTime > GameplayManager.BOSS_PRE_INTRO_FRAMES)
             {
                 // The boss is invisible unless it has waited more than
                 // BOSS_PRE_INTRO_FRAMES at which it then fades-in gradually.

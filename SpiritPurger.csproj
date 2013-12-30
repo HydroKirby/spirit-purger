@@ -134,6 +134,7 @@
   <ItemGroup>
     <Compile Include="trunk\Bullet.cs" />
     <Compile Include="trunk\Engine.cs" />
+    <Compile Include="trunk\GameplayManager.cs" />
     <Compile Include="trunk\ImageManager.cs" />
     <Compile Include="trunk\KeyHandler.cs" />
     <Compile Include="trunk\Main.cs" />

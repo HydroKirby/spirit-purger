@@ -912,8 +912,10 @@ namespace SpiritPurger
 			{
 				rectShape.Position = new Vector2f(value.X, value.Y);
 				healthbarBorder.Position = new Vector2f(
-					(float)((rectShape.Position.X + MaxWidth * 0.5) - healthbarBorder.Texture.Size.X * 0.5),
-					(float)((rectShape.Position.Y + rectShape.Size.Y * 0.5) - healthbarBorder.Texture.Size.Y * 0.5));
+					(float)((rectShape.Position.X + MaxWidth * 0.5) -
+						healthbarBorder.Texture.Size.X * 0.5),
+					(float)((rectShape.Position.Y + rectShape.Size.Y * 0.5) -
+						healthbarBorder.Texture.Size.Y * 0.5));
 			}
 			get { return rectShape.Position; }
 		}
