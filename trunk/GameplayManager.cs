@@ -29,6 +29,10 @@ namespace SpiritPurger
 		{
 			// No particular action to take.
 			NONE,
+			REFRESH_SCORE, REFRESH_BULLET_COUNT,
+			BOMB_FIRED, BOMB_MADE_COMBO,
+			BOSS_TOOK_DAMAGE, BOSS_REFRESH_MAX_HEALTH, BOSS_PATTERN_BEATEN,
+			RESET_GAME,
 			// End of list of REACTIONS.
 			END_REACTIONS
 		}
@@ -36,8 +40,11 @@ namespace SpiritPurger
 		private REACTION _state;
 		public REACTION State { get { return _state; } }
 
-		public GameplayManager()
+		protected SoundManager soundManager;
+
+		public GameplayManager(SoundManager sndManager)
 		{
+			soundManager = sndManager;
 		}
 
 		/// <summary>

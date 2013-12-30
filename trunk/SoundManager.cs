@@ -12,7 +12,7 @@ namespace SpiritPurger
 	/// For example: managerInstance.QueueToPlay(SoundManager.SFX.UNASSIGNED);
 	/// When it is time to update the game, call Update() to play sound effects.
 	/// </summary>
-	class SoundManager
+	public class SoundManager
 	{
 		public enum SFX
 		{
