@@ -8,6 +8,33 @@ using SFML.Window;
 
 namespace SpiritPurger
 {
+	/// <summary>
+	/// Makes the meaning of a timer be related to the Player's inputs.
+	/// </summary>
+	public class PlayerTimerPurpose : TimerPurpose
+	{
+		public new enum PURPOSE
+		{
+			NONE,
+			// Upon completing the game, how long the player can do
+			// nothing except move around. (No shooting). Meant to
+			// pause so that the final score can be shown.
+			WAIT_AFTER_BEAT_GAME,
+		}
+
+		public PlayerTimerPurpose() { }
+
+		public override int GetTime()
+		{
+			// Interpret Purpose as the local variant of PURPOSE in this class.
+			switch ((PURPOSE)SpecificPurpose)
+			{
+				case PURPOSE.WAIT_AFTER_BEAT_GAME: return 0;
+				default: return 0;
+			}
+		}
+	}
+
 	public class GameplayManager : Subject
 	{
 		// After dying, this is how long the player automatically moves back
@@ -24,19 +51,26 @@ namespace SpiritPurger
 		public const int BOSS_INTRO_FRAMES = 50;
 		// The time to show the bomb combo score after a bomb wears off.
 		public const int BOMB_COMBO_DISPLAY_FRAMES = 270;
+		// Upon completing the game, how long until replacing the functionality
+		// of the shoot button. Pressing the shoot button causes the game to reset.
+		public const int COMPLETED_GAME_TIL_CAN_EXIT_FRAMES = 400;
 
-		// How to react to updates in the gamepaly.
+		// How to react to updates in the gameplay.
 		// These REACTIONs are informed back to the Engine so that the
 		// Engine can handle the complicated operations.
 		public enum REACTION
 		{
 			// No particular action to take.
 			NONE,
+			// Tell the renderer to refresh something.
 			REFRESH_SCORE, REFRESH_BULLET_COUNT, REFRESH_LIVES, REFRESH_BOMBS,
+			// Bomb-related reactions.
 			BOMB_MADE_COMBO, BOMB_LIFETIME_DECREMENT,
+			// Boss-related reactions.
 			BOSS_TOOK_DAMAGE, BOSS_REFRESH_MAX_HEALTH, BOSS_PATTERN_SUCCESS, BOSS_PATTERN_FAIL,
 				BOSS_REFRESH_PATTERN_TIME, BOSS_PATTERN_TIMEOUT,
-			LOST_ALL_LIVES, RESET_GAME,
+			// Game-clearing-related reactions.
+			LOST_ALL_LIVES, COMPLETED_GAME, RESET_GAME,
 			// End of list of REACTIONS.
 			END_REACTIONS
 		}
@@ -52,6 +86,9 @@ namespace SpiritPurger
 		public bool godMode = false;
 		public bool funBomb = false;
 		public bool repulsive = false;
+		// A general timer that effects any inputs given from the player.
+		// For example, the time when the player cannot act while respawning.
+		protected DownTimer timerPlayer;
 
 		// Game state variables.
 		public bool gameOver = false;
@@ -71,29 +108,29 @@ namespace SpiritPurger
 		public Boss boss;
 		protected BossState bossState = BossState.Intro;
 		// How long the boss has been doing the intro sequence.
-		public int bossIntroTime = 0;
+		public int bossIntroTime;
 
 		// Current-game variables.
 		protected BulletCreator bulletCreator;
 		// This is the number of seconds left to complete a pattern.
-		public int patternTime = 0;
+		public int patternTime;
 		// During a timed boss pattern, this is the milliseconds accumulated
 		//   between each passing second.
-		public double prevSecondUpdateFraction = 0.0;
+		public double prevSecondUpdateFraction;
 		// The amount of frames waited between boss pattern transitions.
-		public int transitionFrames = 0;
+		public int transitionFrames;
 		// The number of times a bullet touched the player's hitbox.
-		public int grazeCount = 0;
+		public int grazeCount;
 		// The number of bullets removed by the current bomb.
-		public int bombCombo = 0;
+		public int bombCombo;
 		// The timer for how long the combo has been displayed.
-		public int bombComboTimeCountdown = 0;
+		public int bombComboTimeCountdown;
 		// The accumulated score of the current bomb combo.
-		public int bombComboScore = 0;
+		public int bombComboScore;
 		public Bomb bombBlast;
-		public long score = 0;
-		public short lives = 2;
-		public short bombs = 3;
+		public long score;
+		public short lives;
+		public short bombs;
 
 		public GameplayManager(ImageManager imageManager, SoundManager sndManager,
 			KeyHandler keyHandler, Dictionary<string, object> settings)
@@ -101,6 +138,7 @@ namespace SpiritPurger
 			soundManager = sndManager;
 			keys = keyHandler;
 			bulletCreator = new BulletCreator(imageManager);
+			timerPlayer = new DownTimer(new PlayerTimerPurpose());
 
 			// Assign sprites.
 			player = new Player(
@@ -155,6 +193,7 @@ namespace SpiritPurger
 			beatThisPattern = true;
 			gameOver = false;
 			paused = false;
+			prevSecondUpdateFraction = 0.0;
 			transitionFrames = 0;
 			bossIntroTime = 0;
 			bombBlast.Kill();
@@ -165,6 +204,8 @@ namespace SpiritPurger
 			score = 0;
 			lives = 2;
 			bombs = 3;
+			timerPlayer.Purpose.SpecificPurpose = (int)PlayerTimerPurpose.PURPOSE.NONE;
+			timerPlayer.Reset();
 		}
 
 		public void MovePlayer()
@@ -239,6 +280,8 @@ namespace SpiritPurger
 		public void UpdateEnemies()
 		{
 			List<BulletProp> newBullets;
+
+			// Update all enemies.
 			foreach (Boss enemy in enemies)
 			{
 				if (enemy.health <= 0)
@@ -248,7 +291,7 @@ namespace SpiritPurger
 				}
 
 				enemy.Update(out newBullets, player.Location, rand);
-				// TODO: Maybe this should be moved outside of the loop.
+				// newBullets was filled in, so make bullets instances.
 				if (newBullets.Count > 0)
 				{
 					soundManager.QueueToPlay(SoundManager.SFX.FOE_SHOT_BULLET);
@@ -267,6 +310,11 @@ namespace SpiritPurger
 					soundManager.QueueToPlay(SoundManager.SFX.PLAYER_TOOK_DAMAGE);
 				}
 			}
+		}
+
+		protected void UpdateBoss()
+		{
+			List<BulletProp> newBullets;
 
 			if (bossState == BossState.Active)
 			{
@@ -308,6 +356,9 @@ namespace SpiritPurger
 							bossState = BossState.Killed;
 							gameOver = true;
 							soundManager.QueueToPlay(SoundManager.SFX.BOSS_DESTROYED);
+							ChangeState(REACTION.COMPLETED_GAME);
+							timerPlayer.Purpose.SpecificPurpose = (int)PlayerTimerPurpose.
+								PURPOSE.WAIT_AFTER_BEAT_GAME;
 						}
 						else
 						{
@@ -351,6 +402,98 @@ namespace SpiritPurger
 			ChangeState(REACTION.BOSS_REFRESH_MAX_HEALTH);
 		}
 
+		protected void UpdateBomb(ArrayList toRemove)
+		{
+			if (bombBlast.IsGone())
+				return;
+
+			bool bombMadeCombo = true;
+			bombBlast.Update();
+			bool finalFrame = bombBlast.IsGone();
+			for (int i = 0; i < enemyBullets.Count; i++)
+			{
+				if (Physics.Touches(bombBlast, (Bullet)enemyBullets[i]))
+				{
+					// Make the bullet gravitate towards the bomb's center.
+					bombMadeCombo = true;
+					if (!funBomb && finalFrame)
+					{
+						// Just remove everything in the blast radius.
+						toRemove.Add(i);
+						bombCombo++;
+						score += 5;
+						bombComboScore += 5;
+						continue;
+					}
+
+					Bullet enemyBullet = (Bullet)enemyBullets[i];
+					if (!funBomb && Math.Abs(VectorLogic.GetDistance(
+						enemyBullet.location, bombBlast.location)) <=
+						enemyBullet.Speed + 0.1)
+					{
+						// It's within the center of the bomb.
+						toRemove.Add(i);
+						bombCombo++;
+						score += 5;
+						bombComboScore += 5;
+						soundManager.QueueToPlay(SoundManager.SFX.BOMB_ATE_BULLET);
+						continue;
+					}
+
+					// Get the angles to compare.
+					double towardBombAngle = VectorLogic.GetDirection(
+						bombBlast.location, enemyBullet.location);
+					double currentAngle = VectorLogic.GetAngle(enemyBullet.Direction);
+
+					// If the angle is far (more than 90 degrees), then
+					//   decrease the speed.
+					if (Math.Abs(towardBombAngle - currentAngle) >=
+						Math.PI / 2.0)
+					{
+						enemyBullet.Speed -= 0.5;
+						if (enemyBullet.Speed <= 0.0)
+						{
+							// This speed change would give a negative
+							// speed. Instead, change the angle.
+							enemyBullet.Speed =
+								Math.Max(Math.Abs(enemyBullet.Speed), 0.1);
+							currentAngle = towardBombAngle;
+						}
+					}
+					else
+					{
+						// The angle is small, so increase speed.
+						enemyBullet.Speed = Math.Min(4.0,
+							enemyBullet.Speed + 0.5);
+					}
+
+					// Alter the bullet's current trrajectory by a
+					//   maximum of 0.1 radians.
+					enemyBullet.Direction = VectorLogic.AngleToVector(
+						currentAngle + Math.Max(-0.1, Math.Min(0.1,
+						towardBombAngle - currentAngle)));
+				}
+			}
+
+			if (bombMadeCombo)
+				ChangeState(REACTION.BOMB_MADE_COMBO);
+
+			if (finalFrame)
+			{
+				// Disable the bomb.
+				bombBlast.Kill();
+				// Give the player a little leeway after the blast.
+				player.invincibleCountdown = 20;
+			}
+
+			ChangeState(REACTION.REFRESH_SCORE);
+			if (toRemove.Count > 1)
+				toRemove.Sort(new ReversedSortInt());
+			foreach (int i in toRemove)
+				enemyBullets.RemoveAt(i);
+			toRemove.Clear();
+		}
+
 		public void UpdateBullets()
 		{
 			ArrayList toRemove = new ArrayList();
@@ -377,94 +520,7 @@ namespace SpiritPurger
 			toRemove.Clear();
 
 			// Do bomb logic. Affects other bullets in the bomb blast radius.
-			if (!bombBlast.IsGone())
-			{
-				bool bombMadeCombo = true;
-				bombBlast.Update();
-				bool finalFrame = bombBlast.IsGone();
-				for (int i = 0; i < enemyBullets.Count; i++)
-				{
-					if (Physics.Touches(bombBlast, (Bullet)enemyBullets[i]))
-					{
-						// Make the bullet gravitate towards the bomb's center.
-						bombMadeCombo = true;
-						if (!funBomb && finalFrame)
-						{
-							// Just remove everything in the blast radius.
-							toRemove.Add(i);
-							bombCombo++;
-							score += 5;
-							bombComboScore += 5;
-							continue;
-						}
-
-						Bullet enemyBullet = (Bullet)enemyBullets[i];
-						if (!funBomb && Math.Abs(VectorLogic.GetDistance(
-							enemyBullet.location, bombBlast.location)) <=
-							enemyBullet.Speed + 0.1)
-						{
-							// It's within the center of the bomb.
-							toRemove.Add(i);
-							bombCombo++;
-							score += 5;
-							bombComboScore += 5;
-							soundManager.QueueToPlay(SoundManager.SFX.BOMB_ATE_BULLET);
-							continue;
-						}
-
-						// Get the angles to compare.
-						double towardBombAngle = VectorLogic.GetDirection(
-							bombBlast.location, enemyBullet.location);
-						double currentAngle = VectorLogic.GetAngle(enemyBullet.Direction);
-
-						// If the angle is far (more than 90 degrees), then
-						//   decrease the speed.
-						if (Math.Abs(towardBombAngle - currentAngle) >=
-							Math.PI / 2.0)
-						{
-							enemyBullet.Speed -= 0.5;
-							if (enemyBullet.Speed <= 0.0)
-							{
-								// This speed change would give a negative
-								// speed. Instead, change the angle.
-								enemyBullet.Speed =
-									Math.Max(Math.Abs(enemyBullet.Speed), 0.1);
-								currentAngle = towardBombAngle;
-							}
-						}
-						else
-						{
-							// The angle is small, so increase speed.
-							enemyBullet.Speed = Math.Min(4.0,
-								enemyBullet.Speed + 0.5);
-						}
-
-						// Alter the bullet's current trrajectory by a
-						//   maximum of 0.1 radians.
-						enemyBullet.Direction = VectorLogic.AngleToVector(
-							currentAngle + Math.Max(-0.1, Math.Min(0.1,
-							towardBombAngle - currentAngle)));
-					}
-				}
-
-				if (bombMadeCombo)
-					ChangeState(REACTION.BOMB_MADE_COMBO);
-
-				if (finalFrame)
-				{
-					// Disable the bomb.
-					bombBlast.Kill();
-					// Give the player a little leeway after the blast.
-					player.invincibleCountdown = 20;
-				}
-
-				ChangeState(REACTION.REFRESH_SCORE);
-				if (toRemove.Count > 1)
-					toRemove.Sort(new ReversedSortInt());
-				foreach (int i in toRemove)
-					enemyBullets.RemoveAt(i);
-				toRemove.Clear();
-			}
+			UpdateBomb(toRemove);
 
 			// Do enemy bullet logic. They can cause the player to graze or die.
 			for (int i = 0; i < enemyBullets.Count; i++)
@@ -610,15 +666,51 @@ namespace SpiritPurger
 			ChangeState(REACTION.REFRESH_BULLET_COUNT);
 		}
 
-		public void UpdateGame(object sender, double ticks)
+		protected void ShootPlayerBullet()
 		{
-			if (paused)
+			if (keys.shoot > 0 && player.deathCountdown <= 0 &&
+					player.reentryCountdown <= 0)
 			{
-				if (keys.bomb > 60)
-					ChangeState(REACTION.RESET_GAME);
-				return;
+				if (player.TryShoot())
+				{
+					// Fire bullets from the player.
+					BulletProp prop = new BulletProp(19, new Vector2f(
+						player.Location.X - 4,
+						player.Location.Y),
+						VectorLogic.AngleToVector(VectorLogic.Radians(270)),
+						9.0);
+					Bullet bullet = bulletCreator.MakeBullet(prop);
+					playerBullets.Add(bullet);
+					prop.Renew();
+					prop.Location = new Vector2f(player.Location.X +
+						4, prop.Location.Y);
+					bullet = bulletCreator.MakeBullet(prop);
+					playerBullets.Add(bullet);
+					soundManager.QueueToPlay(SoundManager.SFX.PLAYER_SHOT_BULLET);
+				}
 			}
+		}
 
+		protected void ShootPlayerBomb()
+		{
+			if (keys.bomb == 2 && bombBlast.IsGone() && (godMode ||
+					bombs > 0 && player.reentryCountdown <= 0 &&
+					player.deathCountdown <= 0))
+			{
+				// Fire a bomb.
+				player.invincibleCountdown = Bomb.LIFETIME_ACTIVE;
+				bombBlast.Renew(player.Location);
+				bombCombo = 0;
+				bombComboTimeCountdown = GameplayManager.BOMB_COMBO_DISPLAY_FRAMES;
+				bombs--;
+				beatThisPattern = false;
+				ChangeState(REACTION.REFRESH_BOMBS);
+				soundManager.QueueToPlay(SoundManager.SFX.PLAYER_SHOT_BOMB);
+			}
+		}
+
+		protected void UpdateBossPatternTime(double ticks)
+		{
 			if (patternTime > 0 && transitionFrames <= 0)
 			{
 				prevSecondUpdateFraction += ticks;
@@ -650,7 +742,19 @@ namespace SpiritPurger
 					}
 				}
 			}
+		}
 
+		public void UpdateGame(object sender, double ticks)
+		{
+			if (paused)
+			{
+				if (keys.bomb > 60)
+					ChangeState(REACTION.RESET_GAME);
+				return;
+			}
+
+			timerPlayer.Tick();
+			UpdateBossPatternTime(ticks);
 			MovePlayer();
 
 			if (gameOver)
@@ -665,43 +769,9 @@ namespace SpiritPurger
 			else
 			{
 				// Press the Shot button to fire bullets.
-				if (keys.shoot > 0 && player.deathCountdown <= 0 &&
-					player.reentryCountdown <= 0)
-				{
-					if (player.TryShoot())
-					{
-						// Fire bullets from the player.
-						BulletProp prop = new BulletProp(19, new Vector2f(
-							player.Location.X - 4,
-							player.Location.Y),
-							VectorLogic.AngleToVector(VectorLogic.Radians(270)),
-							9.0);
-						Bullet bullet = bulletCreator.MakeBullet(prop);
-						playerBullets.Add(bullet);
-						prop.Renew();
-						prop.Location = new Vector2f(player.Location.X +
-							4, prop.Location.Y);
-						bullet = bulletCreator.MakeBullet(prop);
-						playerBullets.Add(bullet);
-						soundManager.QueueToPlay(SoundManager.SFX.PLAYER_SHOT_BULLET);
-					}
-				}
-
+				ShootPlayerBullet();
 				// Press the Bomb button to fire a bomb.
-				if (keys.bomb == 2 && bombBlast.IsGone() && (godMode ||
-					bombs > 0 && player.reentryCountdown <= 0 &&
-					player.deathCountdown <= 0))
-				{
-					// Fire a bomb.
-					player.invincibleCountdown = Bomb.LIFETIME_ACTIVE;
-					bombBlast.Renew(player.Location);
-					bombCombo = 0;
-					bombComboTimeCountdown = GameplayManager.BOMB_COMBO_DISPLAY_FRAMES;
-					bombs--;
-					beatThisPattern = false;
-					ChangeState(REACTION.REFRESH_BOMBS);
-					soundManager.QueueToPlay(SoundManager.SFX.PLAYER_SHOT_BOMB);
-				}
+				ShootPlayerBomb();
 			}
 
 			if (bombComboTimeCountdown >= 0)
@@ -712,6 +782,7 @@ namespace SpiritPurger
 
 			UpdateBullets();
 			UpdateEnemies();
+			UpdateBoss();
 			player.Update();
 		}
 

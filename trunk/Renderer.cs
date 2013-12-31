@@ -562,6 +562,8 @@ namespace SpiritPurger
 		public Sprite bgSprite;
 		public Sprite borderSprite;
 		public Healthbar bossHealthbar;
+		// This image is generated on the fly. It is shown to fade in and out the screen.
+		public RectangleShape fullscreenFade;
 
 		// Animation variables.
 		public double bgRotSpeed = 1.0;
@@ -590,6 +592,8 @@ namespace SpiritPurger
 			bgSprite.Position = FieldUpperLeft + FieldSize / 2;
 			borderSprite = imageManager.GetSprite("border");
 			bossHealthbar = new Healthbar(imageManager);
+			fullscreenFade = new RectangleShape();
+			fullscreenFade.FillColor = Color.White;
 		}
 
 		public Sprite GetSprite(string key)

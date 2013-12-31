@@ -11,6 +11,60 @@ using GAMEREACTION = SpiritPurger.GameplayManager.REACTION;
 
 namespace SpiritPurger
 {
+	/// <summary>
+	/// Provides the meaning of a timer and the values of its timings.
+	/// Based on the meaning, an appropriate frame count will be retrievable from GetTime.
+	/// </summary>
+	public abstract class TimerPurpose
+	{
+		// Override this using the "new" keyword.
+		public enum PURPOSE { }
+
+		public int SpecificPurpose { get; set; }
+
+		/// <summary>
+		/// Gets the amount of time needed to serve a particular purpose.
+		/// </summary>
+		/// <returns>The time in frames for the purpose to be done.</returns>
+		public abstract int GetTime();
+	}
+
+	/// <summary>
+	/// A simple time-tracker that goes from a high number to zero.
+	/// It is multipurpose, so it can store its purpose as well.
+	/// </summary>
+	public class DownTimer
+	{
+		public int Frame { get; set; }
+		public TimerPurpose Purpose { get; set; }
+
+		public DownTimer(TimerPurpose purpose)
+		{
+			Frame = 0;
+			Purpose = purpose;
+		}
+
+		public bool TimeIsUp()
+		{
+			return Frame == 0;
+		}
+
+		public void Tick()
+		{
+			Frame -= 1;
+			if (Frame < 0)
+				Frame = 0;
+		}
+
+		/// <summary>
+		/// Reset the timer's time based on the timer's purpose.
+		/// </summary>
+		public void Reset()
+		{
+			Frame = Purpose.GetTime();
+		}
+	}
+
     /// <summary>
     /// IComparer class for sorting integers backwards.
     /// </summary>
