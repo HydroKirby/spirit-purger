@@ -658,8 +658,12 @@ namespace SpiritPurger
 
 		public void SetBossHealth(int val)
 		{
-			hud.SetBossHealth(val);
 			bossHealthbar.CurrentHealth = val;
+		}
+
+		public void SetBossMaxHealth(int val)
+		{
+			bossHealthbar.MaxHealth = val;
 		}
 
 		public void SetPatternTime(int val)
@@ -687,7 +691,6 @@ namespace SpiritPurger
 
 		public override void Update()
 		{
-			throw new NotImplementedException();
 		}
 
 		public void Paint(object sender)
@@ -748,20 +751,22 @@ namespace SpiritPurger
 			labelBombComboPos = new Vector2f(FIELD_LEFT + 15F, FIELD_TOP + 35F);
 			labelBossHealthPos = new Vector2f(FIELD_LEFT + 30F, FIELD_TOP + 5F);
 			labelPatternTimePos = new Vector2f(FIELD_LEFT + 200, FIELD_TOP + 5F);
-			labelPatternResultPos = new Vector2f(FIELD_LEFT + FIELD_WIDTH / 6, FIELD_TOP + FIELD_HEIGHT / 3);
+			labelPatternResultPos = new Vector2f(FIELD_LEFT + FIELD_WIDTH / 6,
+				FIELD_TOP + FIELD_HEIGHT / 3);
 
 			// Create the labels that are constantly regenerated.
 			SetScore(0);
 			SetBullets(0);
 			SetBombs(0);
 			SetBombCombo(0, 0);
-			SetBossHealth(0);
 			SetPatternTime(0);
 			SetPatternResult(false, 0);
 			timeLeftToShowPatternResult = 0;
 
 			// Create the labels that are only created once.
-			labelPaused = new Text("Paused\nPress Escape to Resume\nHold Bomb to Return to Title Screen", menuFont, 16);
+			labelPaused = new Text(
+				"Paused\nPress Escape to Resume\nHold Bomb to Return to Title Screen",
+				menuFont, 16);
 			labelGameOver = new Text("Game Over... Press Shoot", menuFont, 16);
 
 			// Set the positions for labels that are made only one time.
@@ -814,13 +819,6 @@ namespace SpiritPurger
 			labelBullets.Color = commonTextColor;
 		}
 
-		public void SetBossHealth(int val)
-		{
-			labelBossHealth = new Text("Health: " + val.ToString(), menuFont, 16);
-			labelBossHealth.Color = commonTextColor;
-			labelBossHealth.Position = labelBossHealthPos;
-		}
-
 		public void SetPatternTime(int val)
 		{
 			if (gameRenderer.IsInBossPattern)
@@ -866,7 +864,6 @@ namespace SpiritPurger
 			if (gameRenderer.IsInBossPattern)
 			{
 				app.Draw(labelPatternTime);
-				//app.Draw(labelBossHealth);
 			}
 
 			if (timeLeftToShowPatternResult > 0)
@@ -884,8 +881,8 @@ namespace SpiritPurger
 	public class Healthbar
 	{
 		protected float _maxWidth;
-		protected int _maxHealth;
-		protected int _currHealth;
+		protected int _maxHealth = 0;
+		protected int _currHealth = 0;
 		protected RectangleShape rectShape;
 		protected Sprite healthbarBorder;
 
@@ -936,6 +933,8 @@ namespace SpiritPurger
 			{
 				if (_currHealth != value)
 				{
+					if (value < 0)
+						value = 0;
 					_currHealth = value;
 					double percent = (double)CurrentHealth / MaxHealth;
 					Size = new Vector2f((float)(MaxWidth * percent), Size.Y);
@@ -946,8 +945,6 @@ namespace SpiritPurger
 
 		public Healthbar(ImageManager imageManager)
 		{
-			_maxHealth = 0;
-			_currHealth = 0;
 			rectShape = new RectangleShape();
 			rectShape.FillColor = Color.Red;
 			imageManager.LoadPNG(ImageManager.HEALTHBAR_BORDER);
@@ -957,7 +954,8 @@ namespace SpiritPurger
 		public void Draw(RenderWindow app)
 		{
 			app.Draw(rectShape);
-			app.Draw(healthbarBorder);
+			if (CurrentHealth > 0)
+				app.Draw(healthbarBorder);
 		}
 	}
 }
