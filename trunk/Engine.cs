@@ -63,6 +63,16 @@ namespace SpiritPurger
 		{
 			Frame = Purpose.GetTime();
 		}
+
+		/// <summary>
+		/// Gives the timer a new meaning and resets the timer.
+		/// </summary>
+		/// <param name="purpose">The new specific purpose as an int.</param>
+		public void Repurporse(int purpose)
+		{
+			Purpose.SpecificPurpose = (int)purpose;
+			Reset();
+		}
 	}
 
     /// <summary>
@@ -155,7 +165,7 @@ namespace SpiritPurger
 			menuManager = new MenuManager(options);
             menuRenderer = new MenuRenderer(imageManager, menuManager);
 			gameManager = new GameplayManager(imageManager, soundManager, keys, settings);
-			gameRenderer = new GameRenderer(imageManager);
+			gameRenderer = new GameRenderer(imageManager, gameManager);
 			menuManager.Attach(this);
 			menuManager.Attach(menuRenderer);
 			gameManager.Attach(this);
@@ -233,6 +243,7 @@ namespace SpiritPurger
             gameRenderer.SetScore(gameManager.score);
 			gameRenderer.SetLives(gameManager.lives);
 			gameRenderer.SetBombs(gameManager.bombs);
+			gameRenderer.Reset();
         }
 
 		static void OnClose(object sender, EventArgs e)
@@ -480,39 +491,48 @@ namespace SpiritPurger
 						musicManager.ChangeMusic(MusicManager.MUSIC_LIST.GAME);
 						// Switch the delegate to painting the game.
 						paintHandler = new PaintHandler(PaintGame);
+						menuManager.StateHandled();
 						break;
 					case MENUREACTION.SMALLER_WINDOW:
 						ResizeWindow();
+						menuManager.StateHandled();
 						break;
 					case MENUREACTION.BIGGER_WINDOW:
 						ResizeWindow();
+						menuManager.StateHandled();
 						break;
 					case MENUREACTION.TO_FULLSCREEN:
 						MakeWindow(true);
+						menuManager.StateHandled();
 						break;
 					case MENUREACTION.TO_WINDOWED:
 						MakeWindow(false);
 						ResizeWindow();
+						menuManager.StateHandled();
 						break;
 					case MENUREACTION.LESS_MUSIC_VOL:
 						musicManager.Volume =
 							(int)menuManager.GetNewOptions().Settings["bgm volume"];
 						menuRenderer.RefreshMusicVolume();
+						menuManager.StateHandled();
 						break;
 					case MENUREACTION.MORE_MUSIC_VOL:
 						musicManager.Volume =
 							(int)menuManager.GetNewOptions().Settings["bgm volume"];
 						menuRenderer.RefreshMusicVolume();
+						menuManager.StateHandled();
 						break;
 					case MENUREACTION.LESS_SOUND_VOL:
 						soundManager.Volume =
 							(int)menuManager.GetNewOptions().Settings["sfx volume"];
 						menuRenderer.RefreshSoundVolume();
+						menuManager.StateHandled();
 						break;
 					case MENUREACTION.MORE_SOUND_VOL:
 						soundManager.Volume =
 							(int)menuManager.GetNewOptions().Settings["sfx volume"];
 						menuRenderer.RefreshSoundVolume();
+						menuManager.StateHandled();
 						break;
 					case MENUREACTION.MENU_TO_MAIN:
 						if (menuManager.SelectedIndex == 1)
@@ -522,12 +542,13 @@ namespace SpiritPurger
 							opt.WriteConfig();
 							AssignOptions(opt);
 						}
+						menuManager.StateHandled();
 						break;
 					case MENUREACTION.END_GAME:
 						isPlaying = false;
+						menuManager.StateHandled();
 						break;
 				}
-				menuManager.StateHandled();
 			}
 			else if (gameState == GameState.GamePlay)
 			{
@@ -535,66 +556,79 @@ namespace SpiritPurger
 				{
 					case GAMEREACTION.REFRESH_BOMBS:
 						gameRenderer.SetBombs(gameManager.bombs);
+						gameManager.StateHandled();
 						break;
 					case GAMEREACTION.BOMB_MADE_COMBO:
 						gameRenderer.SetBombCombo(gameManager.bombCombo,
 							gameManager.bombComboScore);
+						gameManager.StateHandled();
 						break;
 					case GAMEREACTION.BOMB_LIFETIME_DECREMENT:
 						gameRenderer.BombComboTimeCountdown =
 							gameManager.bombComboTimeCountdown;
+						gameManager.StateHandled();
 						break;
 					case GAMEREACTION.BOSS_REFRESH_MAX_HEALTH:
 						// Tell the renderer the new health value.
 						gameRenderer.bossHealthbar.MaxHealth =
 							gameManager.boss.health;
 						gameRenderer.SetBossMaxHealth(gameManager.boss.health);
+						gameManager.StateHandled();
 						break;
 					case GAMEREACTION.BOSS_TOOK_DAMAGE:
 						// Tell the renderer that the boss' health changed.
 						gameRenderer.SetBossHealth(gameManager.boss.health);
 						gameRenderer.bossHealthbar.CurrentHealth =
 							gameManager.boss.health;
+						gameManager.StateHandled();
 						break;
 					case GAMEREACTION.BOSS_PATTERN_SUCCESS:
 						// Remove the pattern time label from the HUD.
 						gameRenderer.SetPatternTime(0);
 						// Show the pattern result.
 						gameRenderer.SetPatternResult(true, 30000);
+						gameManager.StateHandled();
 						break;
 					case GAMEREACTION.BOSS_PATTERN_FAIL:
 						// Opposite of BOSS_PATTERN_SUCCESS.
 						gameRenderer.SetPatternTime(0);
 						gameRenderer.SetPatternResult(false, 5000);
+						gameManager.StateHandled();
 						break;
 					case GAMEREACTION.BOSS_PATTERN_TIMEOUT:
 						gameRenderer.bossHealthbar.MaxHealth =
 							gameManager.boss.health;
+						gameManager.StateHandled();
 						break;
 					case GAMEREACTION.BOSS_REFRESH_PATTERN_TIME:
 						gameRenderer.SetPatternTime(gameManager.patternTime);
+						gameManager.StateHandled();
 						break;
 					case GAMEREACTION.REFRESH_SCORE:
 						gameRenderer.SetScore(gameManager.score);
+						gameManager.StateHandled();
 						break;
 					case GAMEREACTION.REFRESH_BULLET_COUNT:
 						gameRenderer.SetBullets(gameManager.playerBullets.Count +
 							gameManager.enemyBullets.Count);
+						gameManager.StateHandled();
 						break;
 					case GAMEREACTION.LOST_ALL_LIVES:
 						gameRenderer.IsGameOver = gameManager.gameOver;
+						gameManager.StateHandled();
 						break;
 					case GAMEREACTION.REFRESH_LIVES:
 						gameRenderer.SetLives(gameManager.lives);
+						gameManager.StateHandled();
 						break;
 					case GAMEREACTION.RESET_GAME:
 						Reset();
 						gameState = GameState.MainMenu;
 						musicManager.ChangeMusic(MusicManager.MUSIC_LIST.TITLE);
 						paintHandler = new PaintHandler(PaintMenu);
+						gameManager.StateHandled();
 						break;
 				}
-				gameManager.StateHandled();
 			}
 		}
 

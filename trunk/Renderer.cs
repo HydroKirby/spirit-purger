@@ -7,6 +7,7 @@ using SFML.Graphics;
 using MENUITEM = SpiritPurger.MenuManager.MENUITEM;
 using SUBMENU = SpiritPurger.MenuManager.SUBMENU;
 using REACTION = SpiritPurger.MenuManager.REACTION;
+using GAMEREACTION = SpiritPurger.GameplayManager.REACTION;
 
 namespace SpiritPurger
 {
@@ -541,6 +542,9 @@ namespace SpiritPurger
 
 	public class GameRenderer : Renderer
 	{
+		// A reference to the engine's manager.
+		// Used for responding to events and querying for data.
+		protected GameplayManager gameManager;
 		protected HUD hud;
 
 		protected bool isPaused;
@@ -572,9 +576,15 @@ namespace SpiritPurger
 
 		public bool IsInBossPattern { get { return isInBossPattern; } }
 		public bool IsBombComboShown { get { return isBombComboShown; } }
-
-		public GameRenderer(ImageManager imageManager)
+		public bool IsGameComplete
 		{
+			protected set;
+			get;
+		}
+
+		public GameRenderer(ImageManager imageManager, GameplayManager gameManager)
+		{
+			this.gameManager = gameManager;
 			hud = new HUD(imageManager, this);
 			
 			// Create images.
@@ -594,6 +604,13 @@ namespace SpiritPurger
 			bossHealthbar = new Healthbar(imageManager);
 			fullscreenFade = new RectangleShape();
 			fullscreenFade.FillColor = Color.White;
+
+			Reset();
+		}
+
+		public void Reset()
+		{
+			IsGameComplete = false;
 		}
 
 		public Sprite GetSprite(string key)
@@ -695,6 +712,14 @@ namespace SpiritPurger
 
 		public override void Update()
 		{
+			switch (gameManager.State)
+			{
+				case GAMEREACTION.COMPLETED_GAME:
+					// Went through the boss' last pattern.
+					IsGameComplete = true;
+					gameManager.StateHandled();
+					break;
+			}
 		}
 
 		public void Paint(object sender)
@@ -702,7 +727,7 @@ namespace SpiritPurger
 			RenderWindow app = (RenderWindow)sender;
 			app.Draw(borderSprite);
 			hud.Paint(sender);
-			if (isInBossPattern)
+			if (isInBossPattern && !IsGameComplete)
 				bossHealthbar.Draw(app);
 		}
 	}
@@ -865,7 +890,7 @@ namespace SpiritPurger
 			if (gameRenderer.IsBombComboShown)
 				app.Draw(labelBombCombo);
 
-			if (gameRenderer.IsInBossPattern)
+			if (gameRenderer.IsInBossPattern && !gameRenderer.IsGameComplete)
 			{
 				app.Draw(labelPatternTime);
 			}

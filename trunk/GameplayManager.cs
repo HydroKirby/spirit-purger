@@ -365,7 +365,6 @@ namespace SpiritPurger
 							// Activate the next pattern.
 							patternTime =
 								Boss.patternDuration[boss.currentPattern];
-							ChangeState(REACTION.BOSS_PATTERN_SUCCESS);
 							ChangeState(REACTION.BOSS_REFRESH_MAX_HEALTH);
 						}
 					}
@@ -732,6 +731,8 @@ namespace SpiritPurger
 						{
 							bossState = BossState.Killed;
 							gameOver = true;
+							timerPlayer.Repurporse(
+								(int)PlayerTimerPurpose.PURPOSE.WAIT_AFTER_BEAT_GAME);
 						}
 						else
 						{
