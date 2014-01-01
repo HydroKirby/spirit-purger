@@ -26,7 +26,7 @@ namespace SpiritPurger
 		/// Gets the amount of time needed to serve a particular purpose.
 		/// </summary>
 		/// <returns>The time in frames for the purpose to be done.</returns>
-		public abstract int GetTime();
+		public abstract double GetTime();
 	}
 
 	/// <summary>
@@ -35,7 +35,8 @@ namespace SpiritPurger
 	/// </summary>
 	public class DownTimer
 	{
-		public int Frame { get; set; }
+		// The frame the timer is on in MILLISECONDS. Multiply by 1000 for SECONDS.
+		public double Frame { get; set; }
 		public TimerPurpose Purpose { get; set; }
 
 		public DownTimer(TimerPurpose purpose)
@@ -49,9 +50,9 @@ namespace SpiritPurger
 			return Frame == 0;
 		}
 
-		public void Tick()
+		public void Tick(double dt=1.0)
 		{
-			Frame -= 1;
+			Frame -= dt;
 			if (Frame < 0)
 				Frame = 0;
 		}
@@ -280,10 +281,13 @@ namespace SpiritPurger
                 {
                     // DispatchEvents made all key states up-to-date.
                     // Now, increment the time they were held down.
-                    if (gameState == GameState.GamePlay)
-                        UpdateGame(app, lastUpdate);
-                    else if (gameState == GameState.MainMenu)
-                        UpdateMenu(app, lastUpdate);
+					if (gameState == GameState.GamePlay)
+					{
+						gameManager.NextFrame(app, lastUpdate);
+						gameRenderer.NextFrame(lastUpdate);
+					}
+					else if (gameState == GameState.MainMenu)
+						menuManager.NextFrame(app, lastUpdate, keys);
 					soundManager.Update();
                     // TODO: Reset is bad logic.
                     // We should subtract the old time so no ticks are lost.
@@ -348,67 +352,82 @@ namespace SpiritPurger
             keys.KeyUp(e.Code);
         }
 
-        
-        /* --- Menu Logic --- */
-
-
-        /// <summary>
-        /// Updates the top menu.
-        /// </summary>
-        /// <param name="sender">The caller of this method.</param>
-        /// <param name="ticks">The ticks since the last call to this.</param>
-        protected void UpdateMenu(object sender, double ticks)
-        {
-			bool moved = false;
-			bool acted = false;
-
-			// Only accept one directional key.
-			if (keys.up == 1)
+		protected void ReactToMenu()
+		{
+			switch (menuManager.State)
 			{
-				menuManager.OnUpKey();
-				moved = true;
+				case MENUREACTION.MENU_SELECTION_MOVED:
+					soundManager.QueueToPlay(SoundManager.SFX.MENU_MOVE);
+					// Hand down the reaction to the renderer.
+					break;
+				case MENUREACTION.MENU_ITEM_SELECTED:
+					soundManager.QueueToPlay(SoundManager.SFX.MENU_SELECT);
+					// Hand down the reaction to the renderer.
+					break;
+				case MENUREACTION.PLAY_GAME:
+					gameState = GameState.GamePlay;
+					musicManager.ChangeMusic(MusicManager.MUSIC_LIST.GAME);
+					// Switch the delegate to painting the game.
+					paintHandler = new PaintHandler(PaintGame);
+					menuManager.StateHandled();
+					break;
+				case MENUREACTION.SMALLER_WINDOW:
+					ResizeWindow();
+					menuManager.StateHandled();
+					break;
+				case MENUREACTION.BIGGER_WINDOW:
+					ResizeWindow();
+					menuManager.StateHandled();
+					break;
+				case MENUREACTION.TO_FULLSCREEN:
+					MakeWindow(true);
+					menuManager.StateHandled();
+					break;
+				case MENUREACTION.TO_WINDOWED:
+					MakeWindow(false);
+					ResizeWindow();
+					menuManager.StateHandled();
+					break;
+				case MENUREACTION.LESS_MUSIC_VOL:
+					musicManager.Volume =
+						(int)menuManager.GetNewOptions().Settings["bgm volume"];
+					menuRenderer.RefreshMusicVolume();
+					menuManager.StateHandled();
+					break;
+				case MENUREACTION.MORE_MUSIC_VOL:
+					musicManager.Volume =
+						(int)menuManager.GetNewOptions().Settings["bgm volume"];
+					menuRenderer.RefreshMusicVolume();
+					menuManager.StateHandled();
+					break;
+				case MENUREACTION.LESS_SOUND_VOL:
+					soundManager.Volume =
+						(int)menuManager.GetNewOptions().Settings["sfx volume"];
+					menuRenderer.RefreshSoundVolume();
+					menuManager.StateHandled();
+					break;
+				case MENUREACTION.MORE_SOUND_VOL:
+					soundManager.Volume =
+						(int)menuManager.GetNewOptions().Settings["sfx volume"];
+					menuRenderer.RefreshSoundVolume();
+					menuManager.StateHandled();
+					break;
+				case MENUREACTION.MENU_TO_MAIN:
+					if (menuManager.SelectedIndex == 1)
+					{
+						// We came from the Options menu. Save the new options.
+						Options opt = menuManager.GetNewOptions();
+						opt.WriteConfig();
+						AssignOptions(opt);
+					}
+					menuManager.StateHandled();
+					break;
+				case MENUREACTION.END_GAME:
+					isPlaying = false;
+					menuManager.StateHandled();
+					break;
 			}
-			else if (keys.down == 1)
-			{
-				menuManager.OnDownKey();
-				moved = true;
-			}
-			else if (keys.left == 1)
-			{
-				menuManager.OnLeftKey();
-				moved = true;
-			}
-			else if (keys.right == 1)
-			{
-				menuManager.OnRightKey();
-				moved = true;
-			}
-
-			// Only accept one of either accept or cancel keys.
-			if (keys.shoot == 1)
-			{
-				menuManager.OnSelectKey();
-				acted = true;
-			}
-			else if (keys.bomb == 1)
-			{
-				menuManager.OnCancelKey();
-				acted = true;
-			}
-
-			if (moved)
-				soundManager.QueueToPlay(SoundManager.SFX.MENU_MOVE);
-
-			if (acted)
-				soundManager.QueueToPlay(SoundManager.SFX.MENU_SELECT);
-
-			if (acted || moved)
-				menuManager.Notify();
 		}
-
-
-        /* --- Game Logic Code --- */
-
 
 		protected void ResizeWindow()
 		{
@@ -477,174 +496,97 @@ namespace SpiritPurger
 			app.Size = new Vector2u(newWidth, newHeight);
 		}
 
+		protected void ReactToGameplay()
+		{
+			switch (gameManager.State)
+			{
+				case GAMEREACTION.REFRESH_BOMBS:
+					gameRenderer.SetBombs(gameManager.bombs);
+					gameManager.StateHandled();
+					break;
+				case GAMEREACTION.BOMB_MADE_COMBO:
+					gameRenderer.SetBombCombo(gameManager.bombCombo,
+						gameManager.bombComboScore);
+					gameManager.StateHandled();
+					break;
+				case GAMEREACTION.BOMB_LIFETIME_DECREMENT:
+					gameRenderer.BombComboTimeCountdown =
+						gameManager.bombComboTimeCountdown;
+					gameManager.StateHandled();
+					break;
+				case GAMEREACTION.BOSS_REFRESH_MAX_HEALTH:
+					// Tell the renderer the new health value.
+					gameRenderer.bossHealthbar.MaxHealth =
+						gameManager.boss.health;
+					gameRenderer.SetBossMaxHealth(gameManager.boss.health);
+					gameManager.StateHandled();
+					break;
+				case GAMEREACTION.BOSS_TOOK_DAMAGE:
+					// Tell the renderer that the boss' health changed.
+					gameRenderer.SetBossHealth(gameManager.boss.health);
+					gameRenderer.bossHealthbar.CurrentHealth =
+						gameManager.boss.health;
+					gameManager.StateHandled();
+					break;
+				case GAMEREACTION.BOSS_PATTERN_SUCCESS:
+					// Remove the pattern time label from the HUD.
+					gameRenderer.SetPatternTime(0);
+					// Show the pattern result.
+					gameRenderer.SetPatternResult(true, 30000);
+					gameManager.StateHandled();
+					break;
+				case GAMEREACTION.BOSS_PATTERN_FAIL:
+					// Opposite of BOSS_PATTERN_SUCCESS.
+					gameRenderer.SetPatternTime(0);
+					gameRenderer.SetPatternResult(false, 5000);
+					gameManager.StateHandled();
+					break;
+				case GAMEREACTION.BOSS_PATTERN_TIMEOUT:
+					gameRenderer.bossHealthbar.MaxHealth =
+						gameManager.boss.health;
+					gameManager.StateHandled();
+					break;
+				case GAMEREACTION.BOSS_REFRESH_PATTERN_TIME:
+					gameRenderer.SetPatternTime(gameManager.patternTime);
+					gameManager.StateHandled();
+					break;
+				case GAMEREACTION.REFRESH_SCORE:
+					gameRenderer.SetScore(gameManager.score);
+					gameManager.StateHandled();
+					break;
+				case GAMEREACTION.REFRESH_BULLET_COUNT:
+					gameRenderer.SetBullets(gameManager.playerBullets.Count +
+						gameManager.enemyBullets.Count);
+					gameManager.StateHandled();
+					break;
+				case GAMEREACTION.LOST_ALL_LIVES:
+					gameRenderer.IsGameOver = gameManager.gameOver;
+					gameManager.StateHandled();
+					break;
+				case GAMEREACTION.REFRESH_LIVES:
+					gameRenderer.SetLives(gameManager.lives);
+					gameManager.StateHandled();
+					break;
+				case GAMEREACTION.RESET_GAME:
+					Reset();
+					gameState = GameState.MainMenu;
+					musicManager.ChangeMusic(MusicManager.MUSIC_LIST.TITLE);
+					paintHandler = new PaintHandler(PaintMenu);
+					gameManager.StateHandled();
+					break;
+			}
+		}
+
 		/// <summary>
 		/// Reacts to the state of its Subjects.
 		/// </summary>
 		public override void Update()
 		{
 			if (gameState == GameState.MainMenu)
-			{
-				switch (menuManager.State)
-				{
-					case MENUREACTION.PLAY_GAME:
-						gameState = GameState.GamePlay;
-						musicManager.ChangeMusic(MusicManager.MUSIC_LIST.GAME);
-						// Switch the delegate to painting the game.
-						paintHandler = new PaintHandler(PaintGame);
-						menuManager.StateHandled();
-						break;
-					case MENUREACTION.SMALLER_WINDOW:
-						ResizeWindow();
-						menuManager.StateHandled();
-						break;
-					case MENUREACTION.BIGGER_WINDOW:
-						ResizeWindow();
-						menuManager.StateHandled();
-						break;
-					case MENUREACTION.TO_FULLSCREEN:
-						MakeWindow(true);
-						menuManager.StateHandled();
-						break;
-					case MENUREACTION.TO_WINDOWED:
-						MakeWindow(false);
-						ResizeWindow();
-						menuManager.StateHandled();
-						break;
-					case MENUREACTION.LESS_MUSIC_VOL:
-						musicManager.Volume =
-							(int)menuManager.GetNewOptions().Settings["bgm volume"];
-						menuRenderer.RefreshMusicVolume();
-						menuManager.StateHandled();
-						break;
-					case MENUREACTION.MORE_MUSIC_VOL:
-						musicManager.Volume =
-							(int)menuManager.GetNewOptions().Settings["bgm volume"];
-						menuRenderer.RefreshMusicVolume();
-						menuManager.StateHandled();
-						break;
-					case MENUREACTION.LESS_SOUND_VOL:
-						soundManager.Volume =
-							(int)menuManager.GetNewOptions().Settings["sfx volume"];
-						menuRenderer.RefreshSoundVolume();
-						menuManager.StateHandled();
-						break;
-					case MENUREACTION.MORE_SOUND_VOL:
-						soundManager.Volume =
-							(int)menuManager.GetNewOptions().Settings["sfx volume"];
-						menuRenderer.RefreshSoundVolume();
-						menuManager.StateHandled();
-						break;
-					case MENUREACTION.MENU_TO_MAIN:
-						if (menuManager.SelectedIndex == 1)
-						{
-							// We came from the Options menu. Save the new options.
-							Options opt = menuManager.GetNewOptions();
-							opt.WriteConfig();
-							AssignOptions(opt);
-						}
-						menuManager.StateHandled();
-						break;
-					case MENUREACTION.END_GAME:
-						isPlaying = false;
-						menuManager.StateHandled();
-						break;
-				}
-			}
+				ReactToMenu();
 			else if (gameState == GameState.GamePlay)
-			{
-				switch (gameManager.State)
-				{
-					case GAMEREACTION.REFRESH_BOMBS:
-						gameRenderer.SetBombs(gameManager.bombs);
-						gameManager.StateHandled();
-						break;
-					case GAMEREACTION.BOMB_MADE_COMBO:
-						gameRenderer.SetBombCombo(gameManager.bombCombo,
-							gameManager.bombComboScore);
-						gameManager.StateHandled();
-						break;
-					case GAMEREACTION.BOMB_LIFETIME_DECREMENT:
-						gameRenderer.BombComboTimeCountdown =
-							gameManager.bombComboTimeCountdown;
-						gameManager.StateHandled();
-						break;
-					case GAMEREACTION.BOSS_REFRESH_MAX_HEALTH:
-						// Tell the renderer the new health value.
-						gameRenderer.bossHealthbar.MaxHealth =
-							gameManager.boss.health;
-						gameRenderer.SetBossMaxHealth(gameManager.boss.health);
-						gameManager.StateHandled();
-						break;
-					case GAMEREACTION.BOSS_TOOK_DAMAGE:
-						// Tell the renderer that the boss' health changed.
-						gameRenderer.SetBossHealth(gameManager.boss.health);
-						gameRenderer.bossHealthbar.CurrentHealth =
-							gameManager.boss.health;
-						gameManager.StateHandled();
-						break;
-					case GAMEREACTION.BOSS_PATTERN_SUCCESS:
-						// Remove the pattern time label from the HUD.
-						gameRenderer.SetPatternTime(0);
-						// Show the pattern result.
-						gameRenderer.SetPatternResult(true, 30000);
-						gameManager.StateHandled();
-						break;
-					case GAMEREACTION.BOSS_PATTERN_FAIL:
-						// Opposite of BOSS_PATTERN_SUCCESS.
-						gameRenderer.SetPatternTime(0);
-						gameRenderer.SetPatternResult(false, 5000);
-						gameManager.StateHandled();
-						break;
-					case GAMEREACTION.BOSS_PATTERN_TIMEOUT:
-						gameRenderer.bossHealthbar.MaxHealth =
-							gameManager.boss.health;
-						gameManager.StateHandled();
-						break;
-					case GAMEREACTION.BOSS_REFRESH_PATTERN_TIME:
-						gameRenderer.SetPatternTime(gameManager.patternTime);
-						gameManager.StateHandled();
-						break;
-					case GAMEREACTION.REFRESH_SCORE:
-						gameRenderer.SetScore(gameManager.score);
-						gameManager.StateHandled();
-						break;
-					case GAMEREACTION.REFRESH_BULLET_COUNT:
-						gameRenderer.SetBullets(gameManager.playerBullets.Count +
-							gameManager.enemyBullets.Count);
-						gameManager.StateHandled();
-						break;
-					case GAMEREACTION.LOST_ALL_LIVES:
-						gameRenderer.IsGameOver = gameManager.gameOver;
-						gameManager.StateHandled();
-						break;
-					case GAMEREACTION.REFRESH_LIVES:
-						gameRenderer.SetLives(gameManager.lives);
-						gameManager.StateHandled();
-						break;
-					case GAMEREACTION.RESET_GAME:
-						Reset();
-						gameState = GameState.MainMenu;
-						musicManager.ChangeMusic(MusicManager.MUSIC_LIST.TITLE);
-						paintHandler = new PaintHandler(PaintMenu);
-						gameManager.StateHandled();
-						break;
-				}
-			}
+				ReactToGameplay();
 		}
-
-        /// <summary>
-        /// Updates the game.
-        /// </summary>
-        /// <param name="sender">The caller of this method.</param>
-        /// <param name="ticks">The ticks since the last call to this.</param>
-        public void UpdateGame(object sender, double ticks)
-        {
-			gameManager.UpdateGame(sender, ticks);
-            gameRenderer.Update(ticks);
-        }
-
-
-        /* --- Rendering Code --- */
 
 
         /// <summary>

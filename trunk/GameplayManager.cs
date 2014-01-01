@@ -24,12 +24,12 @@ namespace SpiritPurger
 
 		public PlayerTimerPurpose() { }
 
-		public override int GetTime()
+		public override double GetTime()
 		{
 			// Interpret Purpose as the local variant of PURPOSE in this class.
 			switch ((PURPOSE)SpecificPurpose)
 			{
-				case PURPOSE.WAIT_AFTER_BEAT_GAME: return 0;
+				case PURPOSE.WAIT_AFTER_BEAT_GAME: return 4.0;
 				default: return 0;
 			}
 		}
@@ -51,9 +51,6 @@ namespace SpiritPurger
 		public const int BOSS_INTRO_FRAMES = 50;
 		// The time to show the bomb combo score after a bomb wears off.
 		public const int BOMB_COMBO_DISPLAY_FRAMES = 270;
-		// Upon completing the game, how long until replacing the functionality
-		// of the shoot button. Pressing the shoot button causes the game to reset.
-		public const int COMPLETED_GAME_TIL_CAN_EXIT_FRAMES = 400;
 
 		// How to react to updates in the gameplay.
 		// These REACTIONs are informed back to the Engine so that the
@@ -745,7 +742,7 @@ namespace SpiritPurger
 			}
 		}
 
-		public void UpdateGame(object sender, double ticks)
+		public void NextFrame(object sender, double ticks)
 		{
 			if (paused)
 			{

@@ -6,7 +6,7 @@ using SFML.Window;
 using SFML.Graphics;
 using MENUITEM = SpiritPurger.MenuManager.MENUITEM;
 using SUBMENU = SpiritPurger.MenuManager.SUBMENU;
-using REACTION = SpiritPurger.MenuManager.REACTION;
+using MENUREACTION = SpiritPurger.MenuManager.REACTION;
 using GAMEREACTION = SpiritPurger.GameplayManager.REACTION;
 
 namespace SpiritPurger
@@ -128,6 +128,12 @@ namespace SpiritPurger
 			WSIZE1, WSIZE1_5, WSIZE2, WSIZE3, WSIZEMAX,
 			// Unique positions for the credits screen labels.
 			CREDIT_LEFT, CREDIT_RIGHT,
+		}
+		// Can the menu react to player input? Set to false during fade transitions.
+		public bool CanAct
+		{
+			get;
+			protected set;
 		}
 
 		/// <summary>
@@ -479,8 +485,28 @@ namespace SpiritPurger
 
 		public override void Update()
 		{
-			// Move the menu selection's focus.
-			SetSelection(menuManager);
+			switch (menuManager.State)
+			{
+				case MENUREACTION.MENU_SELECTION_MOVED:
+					// Move the menu selection's focus.
+					SetSelection(menuManager);
+					// Hand down the reaction to the engine.
+					break;
+				case MENUREACTION.MENU_TRANSITION_MADE:
+					// Move the focus halo for the new menu.
+					SetSelection(menuManager);
+					menuManager.StateHandled();
+					break;
+				case MENUREACTION.FADE_IN:
+					CanAct = false;
+					break;
+				case MENUREACTION.FADE_OUT:
+					CanAct = false;
+					break;
+				case MENUREACTION.FADE_COMPLETED:
+					CanAct = true;
+					break;
+			}
 		}
 
 		public void Paint(object sender)
@@ -698,9 +724,9 @@ namespace SpiritPurger
 			hud.SetPatternResult(success, score);
 		}
 
-		public void Update(double dt)
+		public void NextFrame(double dt)
 		{
-			hud.Update(dt);
+			hud.NextFrame(dt);
 			bgSprite.Rotation += (float)bgRotSpeed;
 			if (bgSprite.Rotation >= 360)
 				bgSprite.Rotation -= 360;
@@ -868,7 +894,7 @@ namespace SpiritPurger
 			labelPatternResult.Position = labelPatternResultPos;
 		}
 
-		public void Update(double dt)
+		public void NextFrame(double dt)
 		{
 			timeLeftToShowPatternResult--;
 			if (timeLeftToShowPatternResult < 0)

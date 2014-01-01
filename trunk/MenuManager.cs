@@ -5,6 +5,30 @@ using System.Text;
 
 namespace SpiritPurger
 {
+	/// <summary>
+	/// Makes the meaning of a timer be related to the Player's inputs.
+	/// </summary>
+	public class MenuTimerPurpose : TimerPurpose
+	{
+		public new enum PURPOSE
+		{
+			NONE,
+			FADE_IN,
+		}
+
+		public MenuTimerPurpose() { }
+
+		public override double GetTime()
+		{
+			// Interpret Purpose as the local variant of PURPOSE in this class.
+			switch ((PURPOSE)SpecificPurpose)
+			{
+				case PURPOSE.FADE_IN: return 0.6;
+				default: return 0;
+			}
+		}
+	}
+
 	public class MenuManager : Subject
 	{
 		// A list of the menus that can be traversed in the menu screen.
@@ -40,8 +64,14 @@ namespace SpiritPurger
 		{
 			// No particular action to take.
 			NONE,
-			// Let the Engine take care of the reaction.
-			GENERIC,
+			// Fade into the menu and don't allow player input. Fade in from black.
+			FADE_IN,
+			// Fade out from the menu to the game. Fade out to black.
+			FADE_OUT,
+			FADE_COMPLETED,
+			// Moved in the menu or selected a menu item.
+			MENU_SELECTION_MOVED, MENU_ITEM_SELECTED,
+			// Start the game.
 			PLAY_GAME,
 			// Options
 			BIGGER_WINDOW, SMALLER_WINDOW, TO_WINDOWED, TO_FULLSCREEN,
@@ -49,6 +79,8 @@ namespace SpiritPurger
 			// Menu Transitions. All of them are hard-coded.
 			MENU_TO_MAIN, MENU_TO_DIFF, MENU_TO_OPTIONS, MENU_TO_ABOUT, MENU_TO_TUTORIAL,
 			MENU_TO_CREDITS,
+			// Generic menu transition. It just tells the renderer to move the focus halo.
+			MENU_TRANSITION_MADE,
 			// Close the game.
 			END_GAME,
 			// End of list of REACTIONS.
@@ -64,6 +96,8 @@ namespace SpiritPurger
 		protected REACTION state;
 		// The game's new options as chosen within the Options submenu.
 		public Options newOptions;
+		// A general timer for any animations and such.
+		protected DownTimer menuTimer;
 
 		public int SelectedIndex
 		{
@@ -110,6 +144,7 @@ namespace SpiritPurger
 			selectedItem = 0;
 			state = REACTION.NONE;
 			newOptions = new Options(options);
+			menuTimer = new DownTimer(new MenuTimerPurpose());
 
 			// Allocate memory for the layout of the menu and submenus.
 			// The number of menu items is hard coded for speed of development.
@@ -140,6 +175,9 @@ namespace SpiritPurger
 			menuLayout[SUBMENU.ABOUT][2] = MENUITEM.EXIT_ABOUT;
 			menuLayout[SUBMENU.TUTORIAL][0] = MENUITEM.EXIT_TUTORIAL;
 			menuLayout[SUBMENU.CREDITS][0] = MENUITEM.EXIT_CREDITS;
+
+			ChangeState(REACTION.FADE_IN);
+			menuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.FADE_IN);
 		}
 
 		public MENUITEM[] GetSubmenuLayout(SUBMENU submenu)
@@ -306,11 +344,13 @@ namespace SpiritPurger
 					currentMenu = SUBMENU.OPTIONS;
 					selectedItem = 0;
 					ChangeState(REACTION.MENU_TO_OPTIONS);
+					ChangeState(REACTION.MENU_TRANSITION_MADE);
 					break;
 				case MENUITEM.ABOUT:
 					currentMenu = SUBMENU.ABOUT;
 					selectedItem = 0;
 					ChangeState(REACTION.MENU_TO_ABOUT);
+					ChangeState(REACTION.MENU_TRANSITION_MADE);
 					break;
 				case MENUITEM.EXIT_MAIN: ChangeState(REACTION.END_GAME); break;
 
@@ -320,6 +360,7 @@ namespace SpiritPurger
 					currentMenu = SUBMENU.MAIN;
 					selectedItem = 1;
 					ChangeState(REACTION.MENU_TO_MAIN);
+					ChangeState(REACTION.MENU_TRANSITION_MADE);
 					break;
 
 				// About submenu
@@ -327,16 +368,19 @@ namespace SpiritPurger
 					currentMenu = SUBMENU.MAIN;
 					selectedItem = 2;
 					ChangeState(REACTION.MENU_TO_MAIN);
+					ChangeState(REACTION.MENU_TRANSITION_MADE);
 					break;
 				case MENUITEM.TUTORIAL:
 					currentMenu = SUBMENU.TUTORIAL;
 					selectedItem = 0;
 					ChangeState(REACTION.MENU_TO_TUTORIAL);
+					ChangeState(REACTION.MENU_TRANSITION_MADE);
 					break;
 				case MENUITEM.CREDITS:
 					currentMenu = SUBMENU.CREDITS;
 					selectedItem = 0;
 					ChangeState(REACTION.MENU_TO_CREDITS);
+					ChangeState(REACTION.MENU_TRANSITION_MADE);
 					break;
 
 				// Tutorial submenu
@@ -344,6 +388,7 @@ namespace SpiritPurger
 					currentMenu = SUBMENU.ABOUT;
 					selectedItem = 0;
 					ChangeState(REACTION.MENU_TO_ABOUT);
+					ChangeState(REACTION.MENU_TRANSITION_MADE);
 					break;
 
 				// Credits submenu
@@ -351,6 +396,7 @@ namespace SpiritPurger
 					currentMenu = SUBMENU.ABOUT;
 					selectedItem = 1;
 					ChangeState(REACTION.MENU_TO_ABOUT);
+					ChangeState(REACTION.MENU_TRANSITION_MADE);
 					break;
 
 				default: ChangeState(REACTION.NONE); break;
@@ -372,7 +418,6 @@ namespace SpiritPurger
 						case SUBMENU.OPTIONS: selectedItem = 4; break;
 						case SUBMENU.TUTORIAL: selectedItem = 0; break;
 					}
-					ChangeState(REACTION.NONE);
 					break;
 			}
 		}
@@ -383,12 +428,69 @@ namespace SpiritPurger
 		}
 
 		/// <summary>
-		/// Updates the menu.
+		/// Updates the menu by one rendering frame.
 		/// </summary>
 		/// <param name="sender">The caller of this method.</param>
 		/// <param name="ticks">The ticks since the last call to this.</param>
-		protected void Update(object sender, double ticks)
+		public void NextFrame(object sender, double ticks, KeyHandler keys)
 		{
+			menuTimer.Tick(ticks);
+			if (menuTimer.Purpose.SpecificPurpose ==
+				(int)MenuTimerPurpose.PURPOSE.FADE_IN)
+			{
+				if (menuTimer.TimeIsUp())
+				{
+					// We have faded into the menu.
+					ChangeState(REACTION.FADE_COMPLETED);
+					menuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.NONE);
+				}
+				else
+					return;
+			}
+
+			bool moved = false;
+			bool acted = false;
+
+			// Only accept one directional key.
+			if (keys.up == 1)
+			{
+				OnUpKey();
+				moved = true;
+			}
+			else if (keys.down == 1)
+			{
+				OnDownKey();
+				moved = true;
+			}
+			else if (keys.left == 1)
+			{
+				OnLeftKey();
+				moved = true;
+			}
+			else if (keys.right == 1)
+			{
+				OnRightKey();
+				moved = true;
+			}
+
+			// Only accept one of either accept or cancel keys.
+			if (keys.shoot == 1)
+			{
+				OnSelectKey();
+				acted = true;
+			}
+			else if (keys.bomb == 1)
+			{
+				OnCancelKey();
+				moved = true;
+				acted = true;
+			}
+
+			if (moved)
+				ChangeState(REACTION.MENU_SELECTION_MOVED);
+
+			if (acted)
+				ChangeState(REACTION.MENU_ITEM_SELECTED);
 		}
 	}
 }
