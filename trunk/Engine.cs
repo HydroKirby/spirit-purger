@@ -381,6 +381,8 @@ namespace SpiritPurger
 					musicManager.ChangeMusic(MusicManager.MUSIC_LIST.GAME);
 					// Switch the delegate to painting the game.
 					paintHandler = new PaintHandler(PaintGame);
+					// Unset the keys so that they do not affect the game.
+					keys.Reset();
 					menuManager.StateHandled();
 					gameManager.StartGame();
 					break;
@@ -585,6 +587,8 @@ namespace SpiritPurger
 					gameState = GameState.MainMenu;
 					musicManager.ChangeMusic(MusicManager.MUSIC_LIST.TITLE);
 					paintHandler = new PaintHandler(PaintMenu);
+					// Unset the keys so that they do not affect the menu.
+					keys.Reset();
 					gameManager.StateHandled();
 					menuManager.StartMenu();
 					break;

@@ -90,6 +90,13 @@ namespace SpiritPurger {
 		}
 		
 		public KeyHandler() {}
+
+		public void Reset()
+		{
+			up = down = left = right = shoot = bomb = slow =
+				prevUp = prevDown = prevLeft = prevRight =
+				prevShoot = prevBomb = prevSlow = 0;
+		}
 		
 		public void KeyDown(Keyboard.Key key) {
 			if (key == K_DOWN || key == K_PERIOD)

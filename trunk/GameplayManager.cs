@@ -43,6 +43,9 @@ namespace SpiritPurger
 			NONE,
 			FADE_IN_FROM_MENU,
 			FADE_OUT_TO_MENU,
+			// During pausing, hold down the Bomb button to go
+			// back to the menu.
+			PAUSE_BOMB_HELD,
 			// Upon completing the game, how long the player can do
 			// nothing except move around. (No shooting). Meant to
 			// pause so that the final score can be shown.
@@ -58,6 +61,7 @@ namespace SpiritPurger
 			{
 				case PURPOSE.FADE_IN_FROM_MENU: return 0.4;
 				case PURPOSE.FADE_OUT_TO_MENU: return 0.4;
+				case PURPOSE.PAUSE_BOMB_HELD: return 1.0;
 				case PURPOSE.WAIT_AFTER_BEAT_GAME: return 4.0;
 				default: return 0;
 			}
@@ -151,6 +155,12 @@ namespace SpiritPurger
 					return;
 				}
 				_paused = value;
+				if (_paused)
+					GameTimer.Repurporse(
+						(int)GameTimerPurpose.PURPOSE.PAUSE_BOMB_HELD);
+				else
+					GameTimer.Repurporse(
+						(int)GameTimerPurpose.PURPOSE.NONE);
 			}
 		}
 		public Player player;
@@ -834,17 +844,30 @@ namespace SpiritPurger
 				ChangeState(REACTION.FADE_COMPLETE);
 				ChangeState(REACTION.RESET_GAME);
 			}
+			else if (GameTimer.SamePurpose(
+				GameTimerPurpose.PURPOSE.PAUSE_BOMB_HELD))
+			{
+				if (!GameTimer.TimeIsUp())
+				{
+					if (keys.bomb == 0)
+					{
+						GameTimer.Reset();
+					}
+					return;
+				}
+				// The Bomb button was held down in the
+				// Pause screen for a long time, so the player
+				// has requested to go to the main menu.
+				ChangeState(REACTION.FADE_TO_MENU);
+				GameTimer.Repurporse(
+					(int)GameTimerPurpose.PURPOSE.FADE_OUT_TO_MENU);
+			}
 
 			if (Paused)
 			{
-				if (keys.bomb > 60)
+				if (keys.bomb == 0)
 				{
-					// The Bomb button was held down in the
-					// Pause screen for a long time, so the player
-					// has requested to go to the main menu.
-					ChangeState(REACTION.FADE_FROM_MENU);
-					GameTimer.Repurporse(
-						(int)GameTimerPurpose.PURPOSE.FADE_OUT_TO_MENU);
+					GameTimer.Reset();
 				}
 				return;
 			}
