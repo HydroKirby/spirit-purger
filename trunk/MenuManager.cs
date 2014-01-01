@@ -14,6 +14,7 @@ namespace SpiritPurger
 		{
 			NONE,
 			FADE_IN,
+			FADE_OUT,
 		}
 
 		public MenuTimerPurpose() { }
@@ -23,7 +24,8 @@ namespace SpiritPurger
 			// Interpret Purpose as the local variant of PURPOSE in this class.
 			switch ((PURPOSE)SpecificPurpose)
 			{
-				case PURPOSE.FADE_IN: return 0.6;
+				case PURPOSE.FADE_IN: return 0.4;
+				case PURPOSE.FADE_OUT: return 0.4;
 				default: return 0;
 			}
 		}
@@ -97,7 +99,11 @@ namespace SpiritPurger
 		// The game's new options as chosen within the Options submenu.
 		public Options newOptions;
 		// A general timer for any animations and such.
-		protected DownTimer menuTimer;
+		public DownTimer MenuTimer
+		{
+			get;
+			protected set;
+		}
 
 		public int SelectedIndex
 		{
@@ -144,7 +150,7 @@ namespace SpiritPurger
 			selectedItem = 0;
 			state = REACTION.NONE;
 			newOptions = new Options(options);
-			menuTimer = new DownTimer(new MenuTimerPurpose());
+			MenuTimer = new DownTimer(new MenuTimerPurpose());
 
 			// Allocate memory for the layout of the menu and submenus.
 			// The number of menu items is hard coded for speed of development.
@@ -177,7 +183,7 @@ namespace SpiritPurger
 			menuLayout[SUBMENU.CREDITS][0] = MENUITEM.EXIT_CREDITS;
 
 			ChangeState(REACTION.FADE_IN);
-			menuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.FADE_IN);
+			MenuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.FADE_IN);
 		}
 
 		public MENUITEM[] GetSubmenuLayout(SUBMENU submenu)
@@ -434,15 +440,15 @@ namespace SpiritPurger
 		/// <param name="ticks">The ticks since the last call to this.</param>
 		public void NextFrame(object sender, double ticks, KeyHandler keys)
 		{
-			menuTimer.Tick(ticks);
-			if (menuTimer.Purpose.SpecificPurpose ==
+			MenuTimer.Tick(ticks);
+			if (MenuTimer.Purpose.SpecificPurpose ==
 				(int)MenuTimerPurpose.PURPOSE.FADE_IN)
 			{
-				if (menuTimer.TimeIsUp())
+				if (MenuTimer.TimeIsUp())
 				{
 					// We have faded into the menu.
 					ChangeState(REACTION.FADE_COMPLETED);
-					menuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.NONE);
+					MenuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.NONE);
 				}
 				else
 					return;

@@ -116,6 +116,7 @@ namespace SpiritPurger
 		// The tallest a label could be. Calculated upon construction.
 		protected float maxLabelHeight;
 		protected EllipseShape focusCircle;
+		protected RectangleShape fullscreenFade;
 		// From the top of the game screen, how far down the 1st menu item is drawn.
 		protected const int BELOW_TITLE = 250;
 		// How to position menu items.
@@ -149,6 +150,10 @@ namespace SpiritPurger
 			// Create the selection focus halo.
 			focusCircle = new EllipseShape(new Vector2f(50, 100));
 			focusCircle.FillColor = new Color(255, 255, 0, 250);
+			// Create the full screen fader.
+			fullscreenFade = new RectangleShape(
+				new Vector2f(APP_BASE_WIDTH, APP_BASE_HEIGHT));
+			fullscreenFade.FillColor = new Color(0, 0, 0, 0);
 
 			submenuLabels = new List<List<Text>>();
 			MENUITEM[] tempMenuItems;
@@ -562,6 +567,16 @@ namespace SpiritPurger
 				{
 					app.Draw(label);
 				}
+			}
+
+			// If we are doing a fade, render the fader.
+			if (menuManager.MenuTimer.Purpose.SpecificPurpose ==
+				(int)MenuTimerPurpose.PURPOSE.FADE_IN)
+			{
+				double maxTime = menuManager.MenuTimer.Purpose.GetTime();
+				double fraction = menuManager.MenuTimer.Frame / maxTime;
+				fullscreenFade.FillColor = new Color(0, 0, 0, (byte)(255 * fraction));
+				app.Draw(fullscreenFade);
 			}
 		}
 	}
