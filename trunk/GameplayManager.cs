@@ -135,7 +135,24 @@ namespace SpiritPurger
 		public bool gameOver = false;
 		// Gives points when true. Becomes false if the players dies or bombs.
 		public bool beatThisPattern = true;
-		public bool paused = false;
+		private bool _paused;
+		public bool Paused
+		{
+			get { return _paused; }
+			set
+			{
+				if (!GameTimer.TimeIsUp() && (GameTimer.SamePurpose(
+					GameTimerPurpose.PURPOSE.FADE_OUT_TO_MENU) ||
+					GameTimer.SamePurpose(
+					GameTimerPurpose.PURPOSE.FADE_IN_FROM_MENU)))
+				{
+					// Input is not accepted right now,
+					// so changing Paused in not possible.
+					return;
+				}
+				_paused = value;
+			}
+		}
 		public Player player;
 		// Stores all base types of bullets. Keep in memory.
 		protected ArrayList bulletTypes = new ArrayList();
@@ -234,7 +251,7 @@ namespace SpiritPurger
 			enemies.Clear();
 			beatThisPattern = true;
 			gameOver = false;
-			paused = false;
+			Paused = false;
 			prevSecondUpdateFraction = 0.0;
 			transitionFrames = 0;
 			bossIntroTime = 0;
@@ -818,7 +835,7 @@ namespace SpiritPurger
 				ChangeState(REACTION.RESET_GAME);
 			}
 
-			if (paused)
+			if (Paused)
 			{
 				if (keys.bomb > 60)
 				{

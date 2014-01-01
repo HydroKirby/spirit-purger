@@ -249,7 +249,7 @@ namespace SpiritPurger
 			gameManager.Reset();
 			gameRenderer.bossHealthbar.MaxHealth =
 				Boss.fullHealth[gameManager.boss.currentPattern];
-			gameRenderer.IsPaused = gameManager.paused;
+			gameRenderer.IsPaused = gameManager.Paused;
 			gameRenderer.IsGameOver = false;
 			gameRenderer.SetPatternTime(0);
             gameRenderer.SetScore(gameManager.score);
@@ -344,7 +344,8 @@ namespace SpiritPurger
 				if (gameState == GameState.GamePlay)
 				{
 					// Toggle pausing the game.
-					gameRenderer.IsPaused = gameManager.paused = !gameManager.paused;
+					gameManager.Paused = !gameManager.Paused;
+					gameRenderer.IsPaused = gameManager.Paused;
 				}
 				else if (gameState == GameState.MainMenu)
 				{
