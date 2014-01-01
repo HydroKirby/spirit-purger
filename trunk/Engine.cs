@@ -74,6 +74,16 @@ namespace SpiritPurger
 			Purpose.SpecificPurpose = (int)purpose;
 			Reset();
 		}
+
+		/// <summary>
+		/// Verifies that the passed purpose is the same one the Timer is set to.
+		/// </summary>
+		/// <param name="purpose">The queried purpose.</param>
+		/// <returns>True if the purposes are the same</returns>
+		public bool SamePurpose(object purpose)
+		{
+			return Purpose.SpecificPurpose == (int)purpose;
+		}
 	}
 
     /// <summary>
@@ -186,6 +196,7 @@ namespace SpiritPurger
 			musicManager.ChangeMusic(MusicManager.MUSIC_LIST.TITLE);
 
 			AssignOptions(options);
+			menuManager.StartMenu();
 			MainLoop();
 		}
 
@@ -370,6 +381,7 @@ namespace SpiritPurger
 					// Switch the delegate to painting the game.
 					paintHandler = new PaintHandler(PaintGame);
 					menuManager.StateHandled();
+					gameManager.StartGame();
 					break;
 				case MENUREACTION.SMALLER_WINDOW:
 					ResizeWindow();
@@ -573,6 +585,7 @@ namespace SpiritPurger
 					musicManager.ChangeMusic(MusicManager.MUSIC_LIST.TITLE);
 					paintHandler = new PaintHandler(PaintMenu);
 					gameManager.StateHandled();
+					menuManager.StartMenu();
 					break;
 			}
 		}

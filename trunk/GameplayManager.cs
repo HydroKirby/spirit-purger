@@ -16,10 +16,8 @@ namespace SpiritPurger
 		public new enum PURPOSE
 		{
 			NONE,
-			// Upon completing the game, how long the player can do
-			// nothing except move around. (No shooting). Meant to
-			// pause so that the final score can be shown.
-			WAIT_AFTER_BEAT_GAME,
+			// The time the player must wait before reviving and being able to act.
+			REVIVING_TIMEOUT,
 		}
 
 		public PlayerTimerPurpose() { }
@@ -29,6 +27,37 @@ namespace SpiritPurger
 			// Interpret Purpose as the local variant of PURPOSE in this class.
 			switch ((PURPOSE)SpecificPurpose)
 			{
+				case PURPOSE.REVIVING_TIMEOUT: return 4.0;
+				default: return 0;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Makes the meaning of a timer be related to the gameplay.
+	/// </summary>
+	public class GameTimerPurpose : TimerPurpose
+	{
+		public new enum PURPOSE
+		{
+			NONE,
+			FADE_IN_FROM_MENU,
+			FADE_OUT_TO_MENU,
+			// Upon completing the game, how long the player can do
+			// nothing except move around. (No shooting). Meant to
+			// pause so that the final score can be shown.
+			WAIT_AFTER_BEAT_GAME,
+		}
+
+		public GameTimerPurpose() { }
+
+		public override double GetTime()
+		{
+			// Interpret Purpose as the local variant of PURPOSE in this class.
+			switch ((PURPOSE)SpecificPurpose)
+			{
+				case PURPOSE.FADE_IN_FROM_MENU: return 0.4;
+				case PURPOSE.FADE_OUT_TO_MENU: return 0.4;
 				case PURPOSE.WAIT_AFTER_BEAT_GAME: return 4.0;
 				default: return 0;
 			}
@@ -59,6 +88,11 @@ namespace SpiritPurger
 		{
 			// No particular action to take.
 			NONE,
+			// Fade into the gameplay from the menu screen. Disallow inputs.
+			FADE_FROM_MENU,
+			// Fade out of the gameplay to the menu screen. Disallow inputs.
+			FADE_TO_MENU,
+			FADE_COMPLETE,
 			// Tell the renderer to refresh something.
 			REFRESH_SCORE, REFRESH_BULLET_COUNT, REFRESH_LIVES, REFRESH_BOMBS,
 			// Bomb-related reactions.
@@ -85,7 +119,17 @@ namespace SpiritPurger
 		public bool repulsive = false;
 		// A general timer that effects any inputs given from the player.
 		// For example, the time when the player cannot act while respawning.
-		protected DownTimer timerPlayer;
+		public DownTimer PlayerTimer
+		{
+			get;
+			protected set;
+		}
+		// A general timer that controls the entire game.
+		public DownTimer GameTimer
+		{
+			get;
+			protected set;
+		}
 
 		// Game state variables.
 		public bool gameOver = false;
@@ -135,7 +179,8 @@ namespace SpiritPurger
 			soundManager = sndManager;
 			keys = keyHandler;
 			bulletCreator = new BulletCreator(imageManager);
-			timerPlayer = new DownTimer(new PlayerTimerPurpose());
+			PlayerTimer = new DownTimer(new PlayerTimerPurpose());
+			GameTimer = new DownTimer(new GameTimerPurpose());
 
 			// Assign sprites.
 			player = new Player(
@@ -201,8 +246,17 @@ namespace SpiritPurger
 			score = 0;
 			lives = 2;
 			bombs = 3;
-			timerPlayer.Purpose.SpecificPurpose = (int)PlayerTimerPurpose.PURPOSE.NONE;
-			timerPlayer.Reset();
+			PlayerTimer.Repurporse((int)PlayerTimerPurpose.PURPOSE.NONE);
+			GameTimer.Repurporse((int)GameTimerPurpose.PURPOSE.NONE);
+		}
+
+		/// <summary>
+		/// Makes the game fade into existence.
+		/// </summary>
+		public void StartGame()
+		{
+			ChangeState(REACTION.FADE_FROM_MENU);
+			GameTimer.Repurporse((int)GameTimerPurpose.PURPOSE.FADE_IN_FROM_MENU);
 		}
 
 		public void MovePlayer()
@@ -354,7 +408,7 @@ namespace SpiritPurger
 							gameOver = true;
 							soundManager.QueueToPlay(SoundManager.SFX.BOSS_DESTROYED);
 							ChangeState(REACTION.COMPLETED_GAME);
-							timerPlayer.Purpose.SpecificPurpose = (int)PlayerTimerPurpose.
+							GameTimer.Purpose.SpecificPurpose = (int)GameTimerPurpose.
 								PURPOSE.WAIT_AFTER_BEAT_GAME;
 						}
 						else
@@ -728,8 +782,8 @@ namespace SpiritPurger
 						{
 							bossState = BossState.Killed;
 							gameOver = true;
-							timerPlayer.Repurporse(
-								(int)PlayerTimerPurpose.PURPOSE.WAIT_AFTER_BEAT_GAME);
+							GameTimer.Repurporse(
+								(int)GameTimerPurpose.PURPOSE.WAIT_AFTER_BEAT_GAME);
 						}
 						else
 						{
@@ -744,14 +798,42 @@ namespace SpiritPurger
 
 		public void NextFrame(object sender, double ticks)
 		{
+			GameTimer.Tick(ticks);
+			PlayerTimer.Tick(ticks);
+			if (GameTimer.SamePurpose(
+				GameTimerPurpose.PURPOSE.FADE_IN_FROM_MENU))
+			{
+				if (!GameTimer.TimeIsUp())
+					return;
+				GameTimer.Repurporse((int)GameTimerPurpose.PURPOSE.NONE);
+				ChangeState(REACTION.FADE_COMPLETE);
+			}
+			else if (GameTimer.SamePurpose(
+				GameTimerPurpose.PURPOSE.FADE_OUT_TO_MENU))
+			{
+				if (!GameTimer.TimeIsUp())
+					return;
+				GameTimer.Repurporse((int)GameTimerPurpose.PURPOSE.NONE);
+				ChangeState(REACTION.FADE_COMPLETE);
+				ChangeState(REACTION.RESET_GAME);
+			}
+
 			if (paused)
 			{
 				if (keys.bomb > 60)
-					ChangeState(REACTION.RESET_GAME);
+				{
+					// The Bomb button was held down in the
+					// Pause screen for a long time, so the player
+					// has requested to go to the main menu.
+					ChangeState(REACTION.FADE_FROM_MENU);
+					GameTimer.Repurporse(
+						(int)GameTimerPurpose.PURPOSE.FADE_OUT_TO_MENU);
+				}
 				return;
 			}
 
-			timerPlayer.Tick();
+			// All potential interruptions were processed,
+			// so continue on to update the gameplay elements.
 			UpdateBossPatternTime(ticks);
 			MovePlayer();
 
@@ -760,7 +842,8 @@ namespace SpiritPurger
 				// Press the Shot button to return to the main menu.
 				if (keys.shoot == 2)
 				{
-					ChangeState(REACTION.RESET_GAME);
+					ChangeState(REACTION.FADE_FROM_MENU);
+					GameTimer.Repurporse((int)GameTimerPurpose.PURPOSE.FADE_OUT_TO_MENU);
 					return;
 				}
 			}

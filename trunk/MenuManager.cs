@@ -14,7 +14,8 @@ namespace SpiritPurger
 		{
 			NONE,
 			FADE_IN,
-			FADE_OUT,
+			FADE_OUT_TO_GAMEPLAY,
+			FADE_OUT_TO_EXIT,
 		}
 
 		public MenuTimerPurpose() { }
@@ -25,7 +26,8 @@ namespace SpiritPurger
 			switch ((PURPOSE)SpecificPurpose)
 			{
 				case PURPOSE.FADE_IN: return 0.4;
-				case PURPOSE.FADE_OUT: return 0.4;
+				case PURPOSE.FADE_OUT_TO_GAMEPLAY: return 0.4;
+				case PURPOSE.FADE_OUT_TO_EXIT: return 0.4;
 				default: return 0;
 			}
 		}
@@ -69,7 +71,7 @@ namespace SpiritPurger
 			// Fade into the menu and don't allow player input. Fade in from black.
 			FADE_IN,
 			// Fade out from the menu to the game. Fade out to black.
-			FADE_OUT,
+			FADE_OUT_TO_GAMEPLAY, FADE_OUT_TO_EXIT,
 			FADE_COMPLETED,
 			// Moved in the menu or selected a menu item.
 			MENU_SELECTION_MOVED, MENU_ITEM_SELECTED,
@@ -181,7 +183,13 @@ namespace SpiritPurger
 			menuLayout[SUBMENU.ABOUT][2] = MENUITEM.EXIT_ABOUT;
 			menuLayout[SUBMENU.TUTORIAL][0] = MENUITEM.EXIT_TUTORIAL;
 			menuLayout[SUBMENU.CREDITS][0] = MENUITEM.EXIT_CREDITS;
+		}
 
+		/// <summary>
+		/// Makes the game fade into existence.
+		/// </summary>
+		public void StartMenu()
+		{
 			ChangeState(REACTION.FADE_IN);
 			MenuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.FADE_IN);
 		}
@@ -345,7 +353,10 @@ namespace SpiritPurger
 			switch (item)
 			{
 				// Top Menu submenu
-				case MENUITEM.START_GAME: ChangeState(REACTION.PLAY_GAME); break;
+				case MENUITEM.START_GAME:
+					ChangeState(REACTION.FADE_OUT_TO_GAMEPLAY);
+					MenuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.FADE_OUT_TO_GAMEPLAY);
+					break;
 				case MENUITEM.OPTIONS:
 					currentMenu = SUBMENU.OPTIONS;
 					selectedItem = 0;
@@ -449,6 +460,19 @@ namespace SpiritPurger
 					// We have faded into the menu.
 					ChangeState(REACTION.FADE_COMPLETED);
 					MenuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.NONE);
+				}
+				else
+					return;
+			}
+			else if (MenuTimer.Purpose.SpecificPurpose ==
+				(int)MenuTimerPurpose.PURPOSE.FADE_OUT_TO_GAMEPLAY)
+			{
+				if (MenuTimer.TimeIsUp())
+				{
+					// We have faded into the menu.
+					ChangeState(REACTION.FADE_COMPLETED);
+					MenuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.NONE);
+					ChangeState(REACTION.PLAY_GAME);
 				}
 				else
 					return;

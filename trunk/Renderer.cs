@@ -130,12 +130,6 @@ namespace SpiritPurger
 			// Unique positions for the credits screen labels.
 			CREDIT_LEFT, CREDIT_RIGHT,
 		}
-		// Can the menu react to player input? Set to false during fade transitions.
-		public bool CanAct
-		{
-			get;
-			protected set;
-		}
 
 		/// <summary>
 		/// Makes a MenuRenderer.
@@ -503,13 +497,12 @@ namespace SpiritPurger
 					menuManager.StateHandled();
 					break;
 				case MENUREACTION.FADE_IN:
-					CanAct = false;
-					break;
-				case MENUREACTION.FADE_OUT:
-					CanAct = false;
+				case MENUREACTION.FADE_OUT_TO_GAMEPLAY:
+				case MENUREACTION.FADE_OUT_TO_EXIT:
+					menuManager.StateHandled();
 					break;
 				case MENUREACTION.FADE_COMPLETED:
-					CanAct = true;
+					menuManager.StateHandled();
 					break;
 			}
 		}
@@ -578,6 +571,14 @@ namespace SpiritPurger
 				fullscreenFade.FillColor = new Color(0, 0, 0, (byte)(255 * fraction));
 				app.Draw(fullscreenFade);
 			}
+			else if (menuManager.MenuTimer.Purpose.SpecificPurpose ==
+				(int)MenuTimerPurpose.PURPOSE.FADE_OUT_TO_GAMEPLAY)
+			{
+				double maxTime = menuManager.MenuTimer.Purpose.GetTime();
+				double fraction = menuManager.MenuTimer.Frame / maxTime;
+				fullscreenFade.FillColor = new Color(0, 0, 0, (byte)(255 * (1.0 - fraction)));
+				app.Draw(fullscreenFade);
+			}
 		}
 	}
 
@@ -643,8 +644,9 @@ namespace SpiritPurger
 			bgSprite.Position = FieldUpperLeft + FieldSize / 2;
 			borderSprite = imageManager.GetSprite("border");
 			bossHealthbar = new Healthbar(imageManager);
-			fullscreenFade = new RectangleShape();
-			fullscreenFade.FillColor = Color.White;
+			fullscreenFade = new RectangleShape(
+				new Vector2f(APP_BASE_WIDTH, APP_BASE_HEIGHT));
+			fullscreenFade.FillColor = Color.Black;
 
 			Reset();
 		}
@@ -770,6 +772,28 @@ namespace SpiritPurger
 			hud.Paint(sender);
 			if (isInBossPattern && !IsGameComplete)
 				bossHealthbar.Draw(app);
+
+			// If the game is in the middle of a fade, render the fader.
+			if (gameManager.GameTimer.SamePurpose(
+				GameTimerPurpose.PURPOSE.FADE_IN_FROM_MENU) &&
+				!gameManager.GameTimer.TimeIsUp())
+			{
+				double maxTime = gameManager.GameTimer.Purpose.GetTime();
+				double fraction = gameManager.GameTimer.Frame / maxTime;
+				fullscreenFade.FillColor = new Color(0, 0, 0,
+					(byte)(255 * fraction));
+				app.Draw(fullscreenFade);
+			}
+			else if (gameManager.GameTimer.SamePurpose(
+				GameTimerPurpose.PURPOSE.FADE_OUT_TO_MENU) &&
+				!gameManager.GameTimer.TimeIsUp())
+			{
+				double maxTime = gameManager.GameTimer.Purpose.GetTime();
+				double fraction = gameManager.GameTimer.Frame / maxTime;
+				fullscreenFade.FillColor = new Color(0, 0, 0,
+					(byte)(255 * (1.0 - fraction)));
+				app.Draw(fullscreenFade);
+			}
 		}
 	}
 
