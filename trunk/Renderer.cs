@@ -105,7 +105,35 @@ namespace SpiritPurger
 
 	public class MenuRenderer : Renderer
 	{
+        class MenuRendererTimerPurpose : TimerPurpose
+        {
+            public new enum PURPOSE
+            {
+                NONE,
+                FOCUS_HALO_FADE_TO_OPAQUE,
+                FOCUS_HALO_FADE_TO_TRANSPARENT,
+            }
+
+            public MenuRendererTimerPurpose() { }
+
+            public override double GetTime()
+            {
+                return GetTime((int)SpecificPurpose);
+            }
+
+            public static new double GetTime(int purpose)
+            {
+                switch ((PURPOSE)purpose)
+                {
+                    case PURPOSE.FOCUS_HALO_FADE_TO_OPAQUE: return 1.2;
+                    case PURPOSE.FOCUS_HALO_FADE_TO_TRANSPARENT: return 1.2;
+                    default: return 0.0;
+                }
+            }
+        }
+
 		protected MenuManager menuManager;
+        protected DownTimer focusHaloTimer;
 		protected Sprite bg;
 		protected Color commonTextColor;
 		protected List<List<Text>> submenuLabels;
@@ -148,6 +176,9 @@ namespace SpiritPurger
 			fullscreenFade = new RectangleShape(
 				new Vector2f(APP_BASE_WIDTH, APP_BASE_HEIGHT));
 			fullscreenFade.FillColor = new Color(0, 0, 0, 0);
+            focusHaloTimer = new DownTimer(new MenuRendererTimerPurpose());
+            focusHaloTimer.Repurporse((int)MenuRendererTimerPurpose.
+                PURPOSE.FOCUS_HALO_FADE_TO_TRANSPARENT);
 
 			submenuLabels = new List<List<Text>>();
 			MENUITEM[] tempMenuItems;
@@ -304,9 +335,13 @@ namespace SpiritPurger
 
 			if (!(menuManager.CurrentMenu == SUBMENU.CREDITS))
 			{
-				// Put the focus halo over the selected menu entry.
-				focusCircle.Radius = new Vector2f(width / 2 + 20, height / 2);
-				focusCircle.Position = new Vector2f(x - 20, y + 4);
+                // Put the focus halo over the selected menu entry.
+                const float FATTEN_WIDTH = 25F;
+                const float FATTEN_HEIGHT = 2F;
+                focusCircle.Radius = new Vector2f(
+                    width / 2 + FATTEN_WIDTH, height / 2 + FATTEN_HEIGHT);
+                focusCircle.Position = new Vector2f(
+                    x - FATTEN_WIDTH, y + 4 - FATTEN_HEIGHT / 2);
 			}
 			else
 			{
@@ -481,6 +516,44 @@ namespace SpiritPurger
 		{
 			return MakeTextInstance(volume.ToString(), depth, MENU_ITEM_POSITION.RIGHT);
 		}
+
+        public void NextFrame(object sender, double ticks)
+        {
+            focusHaloTimer.Tick(ticks);
+            if (focusHaloTimer.TimeIsUp())
+            {
+                if (focusHaloTimer.SamePurpose(MenuRendererTimerPurpose.
+                    PURPOSE.FOCUS_HALO_FADE_TO_OPAQUE))
+                {
+                    focusHaloTimer.Repurporse((int)MenuRendererTimerPurpose.
+                        PURPOSE.FOCUS_HALO_FADE_TO_TRANSPARENT);
+                }
+                else
+                {
+                    focusHaloTimer.Repurporse((int)MenuRendererTimerPurpose.
+                        PURPOSE.FOCUS_HALO_FADE_TO_OPAQUE);
+                }
+            }
+
+            // Recreate the focus halo.
+            Color c = new Color(focusCircle.FillColor);
+            if (focusHaloTimer.SamePurpose(MenuRendererTimerPurpose.
+                PURPOSE.FOCUS_HALO_FADE_TO_TRANSPARENT))
+            {
+                c.A = (byte)(180 + 75 * focusHaloTimer.Frame /
+                    MenuRendererTimerPurpose.GetTime((int)
+                    MenuRendererTimerPurpose.PURPOSE.
+                    FOCUS_HALO_FADE_TO_TRANSPARENT));
+            }
+            else
+            {
+                c.A = (byte)(180 + 75 * (1.0 - focusHaloTimer.Frame /
+                    MenuRendererTimerPurpose.GetTime((int)
+                    MenuRendererTimerPurpose.PURPOSE.
+                    FOCUS_HALO_FADE_TO_TRANSPARENT)));
+            }
+            focusCircle.FillColor = c;
+        }
 
 		public override void Update()
 		{

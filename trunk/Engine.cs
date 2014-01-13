@@ -27,6 +27,8 @@ namespace SpiritPurger
 		/// </summary>
 		/// <returns>The time in frames for the purpose to be done.</returns>
 		public abstract double GetTime();
+
+        public static double GetTime(int purpose) { return 0.0; }
 	}
 
 	/// <summary>
@@ -37,7 +39,7 @@ namespace SpiritPurger
 	/// </summary>
 	public class MusicTimerPurpose : TimerPurpose
 	{
-		public enum PURPOSE
+		public new enum PURPOSE
 		{
 			NONE,
 			// When the timer goes off, see if we must loop the music.
@@ -50,12 +52,17 @@ namespace SpiritPurger
 		{
 			// Interpret SpecificPurpose as the local variant
 			// of PURPOSE in this class.
-			switch ((PURPOSE)SpecificPurpose)
-			{
-				case PURPOSE.LOOP_TRACKER: return 1.0;
-				default: return 0.0;
-			}
+            return GetTime((int)SpecificPurpose);
 		}
+
+        public static new double GetTime(int purpose)
+        {
+            switch ((PURPOSE)purpose)
+            {
+                case PURPOSE.LOOP_TRACKER: return 1.0;
+                default: return 0.0;
+            }
+        }
 	}
 
 	/// <summary>
@@ -339,8 +346,11 @@ namespace SpiritPurger
 						gameManager.NextFrame(app, lastUpdate);
 						gameRenderer.NextFrame(lastUpdate);
 					}
-					else if (gameState == GameState.MainMenu)
-						menuManager.NextFrame(app, lastUpdate, keys);
+                    else if (gameState == GameState.MainMenu)
+                    {
+                        menuManager.NextFrame(app, lastUpdate, keys);
+                        menuRenderer.NextFrame(app, lastUpdate);
+                    }
 					soundManager.Update();
                     // TODO: Reset is bad logic.
                     // We should subtract the old time so no ticks are lost.

@@ -25,12 +25,17 @@ namespace SpiritPurger
 		public override double GetTime()
 		{
 			// Interpret Purpose as the local variant of PURPOSE in this class.
-			switch ((PURPOSE)SpecificPurpose)
-			{
-				case PURPOSE.REVIVING_TIMEOUT: return 4.0;
-				default: return 0;
-			}
+            return GetTime((int)SpecificPurpose);
 		}
+
+        public static new double GetTime(int purpose)
+        {
+            switch ((PURPOSE)purpose)
+            {
+                case PURPOSE.REVIVING_TIMEOUT: return 4.0;
+                default: return 0;
+            }
+        }
 	}
 
 	/// <summary>
@@ -57,15 +62,20 @@ namespace SpiritPurger
 		public override double GetTime()
 		{
 			// Interpret Purpose as the local variant of PURPOSE in this class.
-			switch ((PURPOSE)SpecificPurpose)
-			{
-				case PURPOSE.FADE_IN_FROM_MENU: return 0.4;
-				case PURPOSE.FADE_OUT_TO_MENU: return 0.4;
-				case PURPOSE.PAUSE_BOMB_HELD: return 1.0;
-				case PURPOSE.WAIT_AFTER_BEAT_GAME: return 4.0;
-				default: return 0;
-			}
+            return GetTime((int)SpecificPurpose);
 		}
+
+        public static new double GetTime(int purpose)
+        {
+            switch ((PURPOSE)purpose)
+            {
+                case PURPOSE.FADE_IN_FROM_MENU: return 0.4;
+                case PURPOSE.FADE_OUT_TO_MENU: return 0.4;
+                case PURPOSE.PAUSE_BOMB_HELD: return 1.0;
+                case PURPOSE.WAIT_AFTER_BEAT_GAME: return 4.0;
+                default: return 0;
+            }
+        }
 	}
 
 	public class GameplayManager : Subject
