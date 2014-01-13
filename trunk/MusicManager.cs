@@ -74,8 +74,12 @@ namespace SpiritPurger
 		// The literal music files that are playing.
 		protected Music music;
 		// Relates a song (by enum) to its loop-points.
-		protected Dictionary<MUSIC_LIST, LoopPointMusic> loopPointMusics;
-		protected LoopPointMusic currentMusic;
+		public Dictionary<MUSIC_LIST, LoopPointMusic> loopPointMusics;
+		public LoopPointMusic CurrentMusic
+		{
+			get;
+			protected set;
+		}
 
 		public float Volume
 		{
@@ -115,7 +119,7 @@ namespace SpiritPurger
 					if (music != null)
 						vol = music.Volume;
 					choiceNowPlaying = value;
-					currentMusic = loopPointMusics[value];
+					CurrentMusic = loopPointMusics[value];
 					if (music != null)
 					{
 						music.Stop();
@@ -163,7 +167,7 @@ namespace SpiritPurger
 		/// </summary>
 		/// <param name="music">The music to play.</param>
 		/// <returns>A filename for music, or a blank filename for unassigned music.</returns>
-		protected String GetMusicFilename(MUSIC_LIST music)
+		public String GetMusicFilename(MUSIC_LIST music)
 		{
 			String ret;
 
@@ -172,9 +176,9 @@ namespace SpiritPurger
 				case MUSIC_LIST.SILENT:
 					ret = "silence.ogg"; break;
 				case MUSIC_LIST.TITLE:
-					ret = "athletic.ogg"; break;
+					ret = "title.ogg"; break;
 				case MUSIC_LIST.GAME:
-					ret = "athletic.ogg"; break;
+					ret = "game.ogg"; break;
 				default:
 					ret = ""; break;
 			}
@@ -224,10 +228,10 @@ namespace SpiritPurger
 		public void Update()
 		{
 			// Loop the music if needed.
-			if (music.PlayingOffset > currentMusic.LoopEnd)
+			if (music.PlayingOffset > CurrentMusic.LoopEnd)
 			{
-				music.PlayingOffset = currentMusic.LoopBegin +
-					(music.PlayingOffset - currentMusic.LoopEnd);
+				music.PlayingOffset = CurrentMusic.LoopBegin +
+					(music.PlayingOffset - CurrentMusic.LoopEnd);
 			}
 		}
 	}

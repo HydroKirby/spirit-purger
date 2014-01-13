@@ -66,7 +66,7 @@ namespace SpiritPurger
 		/// <returns>The version number.</returns>
 		public double GetOptionsVersion()
 		{
-			return 1.03;
+			return 1.04;
 		}
 
 		protected void SetDefaults(out Dictionary<string, object> options)
@@ -97,6 +97,11 @@ namespace SpiritPurger
 			// Valid options are 0 (windowed) and 1 (fullscreen).
 			options["fullscreen"] = 0;
 			// ver 1.04
+			options["title bgm loop start"] = 3.18;
+			options["title bgm loop end"] = 33.8;
+			options["game bgm loop start"] = 3.18;
+			options["game bgm loop end"] = 33.8;
+			// ver 1.05
 		}
 
 		/// <summary>

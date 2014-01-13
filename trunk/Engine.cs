@@ -30,6 +30,35 @@ namespace SpiritPurger
 	}
 
 	/// <summary>
+	/// The timer with this purpose will be used for properly looping music.
+	/// The engine should check for when the music has passed the
+	/// looping point. The set interval to check for that is done with
+	/// this timer purpose.
+	/// </summary>
+	public class MusicTimerPurpose : TimerPurpose
+	{
+		public enum PURPOSE
+		{
+			NONE,
+			// When the timer goes off, see if we must loop the music.
+			LOOP_TRACKER,
+		}
+
+		public MusicTimerPurpose() { }
+
+		public override double GetTime()
+		{
+			// Interpret SpecificPurpose as the local variant
+			// of PURPOSE in this class.
+			switch ((PURPOSE)SpecificPurpose)
+			{
+				case PURPOSE.LOOP_TRACKER: return 1.0;
+				default: return 0.0;
+			}
+		}
+	}
+
+	/// <summary>
 	/// A simple time-tracker that goes from a high number to zero.
 	/// It is multipurpose, so it can store its purpose as well.
 	/// </summary>
@@ -154,6 +183,7 @@ namespace SpiritPurger
 		// Sound variables.
 		protected SoundManager soundManager;
 		protected MusicManager musicManager;
+		protected DownTimer musicTimer;
 
         // Current-game variables.
 		protected bool isPlaying;
@@ -189,6 +219,7 @@ namespace SpiritPurger
 				icon.CopyToImage().Pixels);
 
             // Prepare the game to be run.
+			musicTimer = new DownTimer(new MusicTimerPurpose());
 			isPlaying = true;
             Reset();
             gameState = GameState.MainMenu;
@@ -196,6 +227,7 @@ namespace SpiritPurger
 			musicManager.ChangeMusic(MusicManager.MUSIC_LIST.TITLE);
 
 			AssignOptions(options);
+			musicTimer.Repurporse((int)MusicTimerPurpose.PURPOSE.LOOP_TRACKER);
 			menuManager.StartMenu();
 			MainLoop();
 		}
@@ -238,6 +270,16 @@ namespace SpiritPurger
 				(int)settings["healthbar y"] + GameRenderer.FIELD_TOP);
 			if ((double)settings["window size"] != 1.0)
 				ResizeWindow();
+			musicManager.loopPointMusics[MusicManager.MUSIC_LIST.TITLE] =
+				new LoopPointMusic(
+				musicManager.GetMusicFilename(MusicManager.MUSIC_LIST.TITLE),
+				TimeSpan.FromSeconds((double)settings["title bgm loop start"]),
+				TimeSpan.FromSeconds((double)settings["title bgm loop end"]));
+			musicManager.loopPointMusics[MusicManager.MUSIC_LIST.GAME] =
+				new LoopPointMusic(
+				musicManager.GetMusicFilename(MusicManager.MUSIC_LIST.GAME),
+				TimeSpan.FromSeconds((double)settings["game bgm loop start"]),
+				TimeSpan.FromSeconds((double)settings["game bgm loop end"]));
 		}
 
 		/// <summary>
@@ -309,7 +351,12 @@ namespace SpiritPurger
                 // Process events.
                 // If we are done, exit the loop immediately.
                 app.DispatchEvents();
-				musicManager.Update();
+                if (musicTimer.TimeIsUp())
+                {
+                    // Check if the music manager needs to loop the song.
+                    musicManager.Update();
+                    musicTimer.Reset();
+                }
             }
 
 			if (!app.IsOpen())
