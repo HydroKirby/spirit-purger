@@ -460,6 +460,8 @@ namespace SpiritPurger
 					// We have faded into the menu.
 					ChangeState(REACTION.FADE_COMPLETED);
 					MenuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.NONE);
+                    // Do not allow a button press during this transition.
+                    return;
 				}
 				else
 					return;
@@ -469,10 +471,12 @@ namespace SpiritPurger
 			{
 				if (MenuTimer.TimeIsUp())
 				{
-					// We have faded into the menu.
+					// We have faded into the gameplay from the menu.
 					ChangeState(REACTION.FADE_COMPLETED);
 					MenuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.NONE);
 					ChangeState(REACTION.PLAY_GAME);
+                    // Do not allow a button press during this transition.
+                    return;
 				}
 				else
 					return;
