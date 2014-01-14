@@ -98,10 +98,6 @@ namespace SpiritPurger {
 		// transitions immediately into the reentry sequence.
 		public int deathCountdown = 0;
 		public int invincibleCountdown = 0;
-		// How many frames to wait while the player comes back up from the
-		// bottom of the screen after dying. The player can't move during
-		// the reentry sequence.
-		public int reentryCountdown = 0;
 		protected AniPlayer animation;
 		public CenterSprite hitBoxSprite;
 		protected STATE _state;
@@ -178,8 +174,6 @@ namespace SpiritPurger {
 				invincibleCountdown--;
 			if (deathCountdown > 0)
 				deathCountdown--;
-			if (reentryCountdown > 0)
-				reentryCountdown--;
 		}
 
 		public void Draw(RenderWindow app)

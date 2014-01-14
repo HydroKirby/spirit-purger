@@ -93,8 +93,18 @@ namespace SpiritPurger {
 
 		public void Reset()
 		{
-			up = down = left = right = shoot = bomb = slow =
-				prevUp = prevDown = prevLeft = prevRight =
+            // Set all keys to 1 if they are still held down.
+            // This allows them to stay "on" even after a reset.
+            up = up > 0 ? 1 : 0;
+            down = down > 0 ? 1 : 0;
+            left = left > 0 ? 1 : 0;
+            right = right > 0 ? 1 : 0;
+            shoot = shoot > 0 ? 1 : 0;
+            bomb = bomb > 0 ? 1 : 0;
+            slow = slow > 0 ? 1 : 0;
+            // Set all "previously-held times" to 0 in order to
+            // not allow a buffered double-press on any buttons.
+			prevUp = prevDown = prevLeft = prevRight =
 				prevShoot = prevBomb = prevSlow = 0;
 		}
 		

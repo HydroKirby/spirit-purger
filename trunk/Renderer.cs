@@ -928,6 +928,7 @@ namespace SpiritPurger
 
 		// Text/font variables.
 		protected Color commonTextColor;
+        protected uint commonFontSize;
 		protected Text labelBombs;
 		protected Vector2f labelBombsPos;
 		protected Text labelLives;
@@ -955,6 +956,7 @@ namespace SpiritPurger
 		{
 			this.gameRenderer = gameRenderer;
 			commonTextColor = Color.White;
+            commonFontSize = 24;
 
 			// Set the positions for constantly regenerating labels.
 			float rightmost = FIELD_LEFT + FIELD_WIDTH;
@@ -962,7 +964,7 @@ namespace SpiritPurger
 			labelLivesPos = new Vector2f(rightmost + 50, FIELD_TOP + 20);
 			labelBombsPos = new Vector2f(rightmost + 50, FIELD_TOP + 30);
 			labelBulletsPos = new Vector2f(rightmost + 50, FIELD_TOP + 40);
-			labelBombComboPos = new Vector2f(FIELD_LEFT + 15F, FIELD_TOP + 35F);
+			labelBombComboPos = new Vector2f(FIELD_LEFT + 15F, FIELD_TOP + 40F);
 			labelBossHealthPos = new Vector2f(FIELD_LEFT + 30F, FIELD_TOP + 5F);
 			labelPatternTimePos = new Vector2f(FIELD_RIGHT - 80,
                 FIELD_TOP + 23F);
@@ -971,8 +973,17 @@ namespace SpiritPurger
 
 			// Create the labels that are constantly regenerated.
 			SetScore(0);
-			SetBullets(0);
-			SetBombs(0);
+            // Set the y-positions of the labels based on their size.
+            const float hudItemOffset = 5F;
+            labelLivesPos.Y = hudItemOffset + labelScore.GetLocalBounds().Height +
+                labelScorePos.Y;
+            SetLives(0);
+            labelBombsPos.Y = hudItemOffset + labelLives.GetLocalBounds().Height +
+                labelLivesPos.Y;
+            SetBombs(0);
+            labelBulletsPos.Y = hudItemOffset + labelBombs.GetLocalBounds().Height +
+                labelBombsPos.Y;
+            SetBullets(0);
 			SetBombCombo(0, 0);
 			SetPatternTime(0);
 			SetPatternResult(false, 0);
@@ -986,7 +997,8 @@ namespace SpiritPurger
 
 			// Set the positions for labels that are made only one time.
 			labelPaused.Position = new Vector2f(
-				FIELD_CENTER_X - labelPaused.GetLocalBounds().Width / 2, FIELD_TOP + 100);
+				FIELD_CENTER_X - labelPaused.GetLocalBounds().Width / 2,
+                FIELD_TOP + 100);
 			labelGameOver.Position = new Vector2f(70, 70);
 
 			labelPaused.Color = labelGameOver.Color = commonTextColor;
@@ -994,7 +1006,8 @@ namespace SpiritPurger
 
 		public void SetScore(long val)
 		{
-			labelScore = new Text("Score: " + val.ToString(), menuFont, 12);
+			labelScore = new Text("Score: " + val.ToString(),
+                menuFont, commonFontSize);
 			labelScore.Position = labelScorePos;
 			labelScore.Color = commonTextColor;
 		}
@@ -1002,7 +1015,7 @@ namespace SpiritPurger
 		public void SetLives(int val)
 		{
 			String livesString = "Lives: " + val;
-			labelLives = new Text(livesString, menuFont, 12);
+			labelLives = new Text(livesString, menuFont, commonFontSize);
 			labelLives.Position = labelLivesPos;
 			labelLives.Color = commonTextColor;
 		}
@@ -1010,7 +1023,7 @@ namespace SpiritPurger
 		public void SetBombs(int val)
 		{
 			String bombsString = "Bombs: " + val;
-			labelBombs = new Text(bombsString, menuFont, 12);
+			labelBombs = new Text(bombsString, menuFont, commonFontSize);
 			labelBombs.Position = labelBombsPos;
 			labelBombs.Color = commonTextColor;
 		}
@@ -1021,7 +1034,7 @@ namespace SpiritPurger
 			{
 				labelBombCombo = new Text(
 					combo.ToString() + " Bomb Combo! Score + " + score.ToString(),
-					menuFont, 12);
+					menuFont, 16);
 				labelBombCombo.Position = labelBombComboPos;
 				labelBombCombo.Color = commonTextColor;
 			}
@@ -1029,7 +1042,8 @@ namespace SpiritPurger
 
 		public void SetBullets(int val)
 		{
-			labelBullets = new Text("Bullets: " + val.ToString(), menuFont, 12);
+			labelBullets = new Text("Bullets: " + val.ToString(),
+                menuFont, commonFontSize);
 			labelBullets.Position = labelBulletsPos;
 			labelBullets.Color = commonTextColor;
 		}
@@ -1038,7 +1052,8 @@ namespace SpiritPurger
 		{
 			if (gameRenderer.IsInBossPattern)
 			{
-				labelPatternTime = new Text("Time: " + val.ToString(), menuFont, 12);
+				labelPatternTime = new Text("Time: " + val.ToString(),
+                    menuFont, 16);
 				labelPatternTime.Position = labelPatternTimePos;
 				labelPatternTime.Color = commonTextColor;
 			}
@@ -1051,7 +1066,9 @@ namespace SpiritPurger
 			labelPatternResult = new Text((success ? "Pattern Success! Score + " :
 				"Survival Failure... Score + ") + score.ToString(), menuFont, 16);
 			labelPatternResult.Color = commonTextColor;
-			labelPatternResult.Position = labelPatternResultPos;
+            labelPatternResult.Position = new Vector2f(
+                FIELD_CENTER_X - labelPatternResult.GetLocalBounds().Width / 2,
+                labelPatternResultPos.Y);
 		}
 
 		public void NextFrame(double dt)

@@ -32,7 +32,7 @@ namespace SpiritPurger
         {
             switch ((PURPOSE)purpose)
             {
-                case PURPOSE.REVIVING_TIMEOUT: return 4.0;
+                case PURPOSE.REVIVING_TIMEOUT: return 1.2;
                 default: return 0;
             }
         }
@@ -82,9 +82,8 @@ namespace SpiritPurger
 	{
 		// After dying, this is how long the player automatically moves back
 		// up to the playfield.
-		public const int REENTRY_FRAMES = 50;
 		public const int POST_DEATH_INVINC_FRAMES =
-			REENTRY_FRAMES + Player.DEATH_SEQUENCE_FRAMES + 40;
+			50 + Player.DEATH_SEQUENCE_FRAMES + 40;
 		// Refers to when a boss pattern has completed. It's the time to wait
 		// until initiating the next pattern.
 		public const int PATTERN_TRANSITION_PAUSE = 80;
@@ -270,10 +269,9 @@ namespace SpiritPurger
 		public void Reset()
 		{
 			player.Location = new Vector2f(Renderer.FIELD_WIDTH / 2,
-				Renderer.FIELD_WIDTH / 4 * 3);
+				Renderer.FIELD_WIDTH / 10 * 9);
 			player.UpdateDisplayPos();
 			player.deathCountdown = 0;
-			player.reentryCountdown = 0;
 			player.invincibleCountdown = 0;
 			boss.Location = new Vector2f(Renderer.FIELD_WIDTH / 2,
 				Renderer.FIELD_HEIGHT / 4);
@@ -301,7 +299,7 @@ namespace SpiritPurger
 			Lives = 2;
 			Bombs = 3;
             IsInFocusedMovement = false;
-			PlayerTimer.Repurporse((int)PlayerTimerPurpose.PURPOSE.NONE);
+            PlayerTimer.Repurporse((int)PlayerTimerPurpose.PURPOSE.REVIVING_TIMEOUT);
 			GameTimer.Repurporse((int)GameTimerPurpose.PURPOSE.NONE);
 		}
 
@@ -329,7 +327,8 @@ namespace SpiritPurger
                         ChangeState(REACTION.LOST_ALL_LIVES);
                     }
                     ChangeState(REACTION.REFRESH_LIVES);
-                    player.reentryCountdown = GameplayManager.REENTRY_FRAMES;
+                    PlayerTimer.Repurporse((int)PlayerTimerPurpose.
+                        PURPOSE.REVIVING_TIMEOUT);
                     player.Location = new Vector2f(145.0F, 320.0F);
                     player.UpdateDisplayPos();
                 }
@@ -338,11 +337,20 @@ namespace SpiritPurger
             }
             if (Lives < 0)
 				return;
-			if (player.reentryCountdown > 0)
+			if (PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVING_TIMEOUT))
 			{
-				player.Move(0, -Player.LO_SPEED);
-				player.UpdateDisplayPos();
-				return;
+                if (PlayerTimer.TimeIsUp())
+                {
+                    PlayerTimer.Repurporse(
+                        (int)PlayerTimerPurpose.PURPOSE.NONE);
+                }
+                else
+                {
+                    player.Move(0, -Player.LO_SPEED);
+                    player.UpdateDisplayPos();
+                    return;
+                }
 			}
 
             IsInFocusedMovement = keys.slow > 0;
@@ -778,7 +786,8 @@ namespace SpiritPurger
 		protected void ShootPlayerBullet()
 		{
 			if (keys.shoot > 0 && player.deathCountdown <= 0 &&
-					player.reentryCountdown <= 0)
+                (PlayerTimer.TimeIsUp() || !PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVING_TIMEOUT)))
 			{
 				if (player.TryShoot())
 				{
@@ -803,8 +812,9 @@ namespace SpiritPurger
 		protected void ShootPlayerBomb()
 		{
 			if (keys.bomb == 2 && bombBlast.IsGone() && (godMode ||
-					Bombs > 0 && player.reentryCountdown <= 0 &&
-					player.deathCountdown <= 0))
+                Bombs > 0 && (PlayerTimer.TimeIsUp() || !PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVING_TIMEOUT)) &&
+                player.deathCountdown <= 0))
 			{
 				// Fire a bomb.
 				player.invincibleCountdown = Bomb.LIFETIME_ACTIVE;
@@ -857,8 +867,8 @@ namespace SpiritPurger
 
 		public void NextFrame(object sender, double ticks)
 		{
+            // The GameTimer affects the entire game, so tick it first.
 			GameTimer.Tick(ticks);
-			PlayerTimer.Tick(ticks);
 			if (GameTimer.SamePurpose(
 				GameTimerPurpose.PURPOSE.FADE_IN_FROM_MENU))
 			{
@@ -894,6 +904,9 @@ namespace SpiritPurger
 				GameTimer.Repurporse(
 					(int)GameTimerPurpose.PURPOSE.FADE_OUT_TO_MENU);
 			}
+
+            // Tick all gameplay related timers now.
+            PlayerTimer.Tick(ticks);
 
 			if (Paused)
 			{
