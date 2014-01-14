@@ -301,9 +301,9 @@ namespace SpiritPurger
 			gameRenderer.IsPaused = gameManager.Paused;
 			gameRenderer.IsGameOver = false;
 			gameRenderer.SetPatternTime(0);
-            gameRenderer.SetScore(gameManager.score);
-			gameRenderer.SetLives(gameManager.lives);
-			gameRenderer.SetBombs(gameManager.bombs);
+            gameRenderer.SetScore(gameManager.Score);
+			gameRenderer.SetLives(gameManager.Lives);
+			gameRenderer.SetBombs(gameManager.Bombs);
 			gameRenderer.Reset();
         }
 
@@ -573,7 +573,7 @@ namespace SpiritPurger
 			switch (gameManager.State)
 			{
 				case GAMEREACTION.REFRESH_BOMBS:
-					gameRenderer.SetBombs(gameManager.bombs);
+					gameRenderer.SetBombs(gameManager.Bombs);
 					gameManager.StateHandled();
 					break;
 				case GAMEREACTION.BOMB_MADE_COMBO:
@@ -623,7 +623,7 @@ namespace SpiritPurger
 					gameManager.StateHandled();
 					break;
 				case GAMEREACTION.REFRESH_SCORE:
-					gameRenderer.SetScore(gameManager.score);
+					gameRenderer.SetScore(gameManager.Score);
 					gameManager.StateHandled();
 					break;
 				case GAMEREACTION.REFRESH_BULLET_COUNT:
@@ -636,7 +636,7 @@ namespace SpiritPurger
 					gameManager.StateHandled();
 					break;
 				case GAMEREACTION.REFRESH_LIVES:
-					gameRenderer.SetLives(gameManager.lives);
+					gameRenderer.SetLives(gameManager.Lives);
 					gameManager.StateHandled();
 					break;
 				case GAMEREACTION.RESET_GAME:
@@ -683,12 +683,7 @@ namespace SpiritPurger
         {
 			RenderWindow app = (RenderWindow)sender;
 
-			// Tell the renderer about any new positions.
-			app.Draw(gameRenderer.bgSprite);
-			gameManager.PaintGame(sender, ticks);
-
-			// Draw the HUD.
-			gameRenderer.Paint(sender);
+			gameRenderer.Paint(sender, ticks);
         }
     }
 }

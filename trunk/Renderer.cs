@@ -66,6 +66,8 @@ namespace SpiritPurger
 		public const uint FIELD_LEFT = 50;
 		public const uint FIELD_WIDTH = 300;
 		public const uint FIELD_HEIGHT = 380;
+        public const uint FIELD_RIGHT = FIELD_LEFT + FIELD_WIDTH;
+        public const uint FIELD_DOWN = FIELD_TOP + FIELD_HEIGHT;
 		public const uint FIELD_CENTER_X = FIELD_LEFT + FIELD_WIDTH / 2;
 		public const uint FIELD_CENTER_Y = FIELD_TOP + FIELD_HEIGHT / 2;
 		// Easy access members for other areas of the program.
@@ -673,6 +675,7 @@ namespace SpiritPurger
 		private readonly string[] PNG_FILENAMES =
 		{
 			"bg",
+            "bg-floorboard",
 			"border",
 		};
 
@@ -838,9 +841,53 @@ namespace SpiritPurger
 			}
 		}
 
-		public void Paint(object sender)
+		public void Paint(object sender, double ticks=0.0)
 		{
 			RenderWindow app = (RenderWindow)sender;
+
+            // Draw the background.
+            app.Draw(bgSprite);
+
+            // Draw all aspects related to the gameplay.
+            if (!gameManager.bombBlast.IsGone())
+            {
+                app.Draw(gameManager.bombBlast.Sprite);
+            }
+            // Draw the player, boss, and enemies.
+            if (gameManager.Lives >= 0)
+                gameManager.player.Draw(app);
+            gameManager.boss.Draw(app);
+            /*
+            if (gameManager.bossState == BossState.Active)
+                gameManager.boss.Draw(app);
+            else if (gameManager.bossState == BossState.Intro &&
+                     bossIntroTime > GameplayManager.BOSS_PRE_INTRO_FRAMES)
+            {
+                // The boss is invisible unless it has waited more than
+                // BOSS_PRE_INTRO_FRAMES at which it then fades-in gradually.
+                // The visibility is the proprtion of time waited compared
+                // to BOSS_INTRO_FRAMES.
+                //*
+                boss.Draw(e.Graphics,
+                    (int)((bossIntroTime - BOSS_PRE_INTRO_FRAMES) /
+                    (float)BOSS_INTRO_FRAMES * 255.0F));
+                //
+                // TODO: Temporary code is below. Swap for the above.
+                boss.Draw(app);
+            }*/
+
+            // Draw the bullets and hitsparks.
+            foreach (Bullet spark in gameManager.hitSparks)
+                app.Draw(spark.Sprite);
+            foreach (Bullet bullet in gameManager.playerBullets)
+                app.Draw(bullet.Sprite);
+            foreach (Bullet bullet in gameManager.enemyBullets)
+                app.Draw(bullet.Sprite);
+
+            if (gameManager.IsInFocusedMovement)
+                app.Draw(gameManager.player.hitBoxSprite);
+
+            // Draw the overhead elements like the HUD and border.
 			app.Draw(borderSprite);
 			hud.Paint(sender);
 			if (isInBossPattern && !IsGameComplete)
@@ -917,7 +964,8 @@ namespace SpiritPurger
 			labelBulletsPos = new Vector2f(rightmost + 50, FIELD_TOP + 40);
 			labelBombComboPos = new Vector2f(FIELD_LEFT + 15F, FIELD_TOP + 35F);
 			labelBossHealthPos = new Vector2f(FIELD_LEFT + 30F, FIELD_TOP + 5F);
-			labelPatternTimePos = new Vector2f(FIELD_LEFT + 200, FIELD_TOP + 5F);
+			labelPatternTimePos = new Vector2f(FIELD_RIGHT - 80,
+                FIELD_TOP + 23F);
 			labelPatternResultPos = new Vector2f(FIELD_LEFT + FIELD_WIDTH / 6,
 				FIELD_TOP + FIELD_HEIGHT / 3);
 

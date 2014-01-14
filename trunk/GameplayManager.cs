@@ -179,7 +179,7 @@ namespace SpiritPurger
 		protected ArrayList enemies = new ArrayList();
 		public ArrayList enemyBullets = new ArrayList();
 		public ArrayList playerBullets = new ArrayList();
-		protected ArrayList hitSparks = new ArrayList();
+		public ArrayList hitSparks = new ArrayList();
 
 		// Boss-related variables.
 		public enum BossState { NotArrived, Intro, Active, Killed };
@@ -206,9 +206,26 @@ namespace SpiritPurger
 		// The accumulated score of the current bomb combo.
 		public int bombComboScore;
 		public Bomb bombBlast;
-		public long score;
-		public short lives;
-		public short bombs;
+        public long Score
+        {
+            get;
+            protected set;
+        }
+        public short Lives
+        {
+            get;
+            protected set;
+        }
+        public short Bombs
+        {
+            get;
+            protected set;
+        }
+        public bool IsInFocusedMovement
+        {
+            get;
+            protected set;
+        }
 
 		public GameplayManager(ImageManager imageManager, SoundManager sndManager,
 			KeyHandler keyHandler, Dictionary<string, object> settings)
@@ -280,9 +297,10 @@ namespace SpiritPurger
 			bombComboTimeCountdown = 0;
 			bombComboScore = 0;
 			grazeCount = 0;
-			score = 0;
-			lives = 2;
-			bombs = 3;
+			Score = 0;
+			Lives = 2;
+			Bombs = 3;
+            IsInFocusedMovement = false;
 			PlayerTimer.Repurporse((int)PlayerTimerPurpose.PURPOSE.NONE);
 			GameTimer.Repurporse((int)GameTimerPurpose.PURPOSE.NONE);
 		}
@@ -299,23 +317,26 @@ namespace SpiritPurger
 		public void MovePlayer()
 		{
 			// Act on states that disable player movement first.
-			if (player.deathCountdown > 0)
-				if (player.deathCountdown == 1)
-				{
-					lives--;
-					if (lives < 0)
-					{
-						gameOver = true;
-						ChangeState(REACTION.LOST_ALL_LIVES);
-					}
-					ChangeState(REACTION.REFRESH_LIVES);
-					player.reentryCountdown = GameplayManager.REENTRY_FRAMES;
-					player.Location = new Vector2f(145.0F, 320.0F);
-					player.UpdateDisplayPos();
-				}
-				else
-					return;
-			if (lives < 0)
+            IsInFocusedMovement = false;
+            if (player.deathCountdown > 0)
+            {
+                if (player.deathCountdown == 1)
+                {
+                    Lives--;
+                    if (Lives < 0)
+                    {
+                        gameOver = true;
+                        ChangeState(REACTION.LOST_ALL_LIVES);
+                    }
+                    ChangeState(REACTION.REFRESH_LIVES);
+                    player.reentryCountdown = GameplayManager.REENTRY_FRAMES;
+                    player.Location = new Vector2f(145.0F, 320.0F);
+                    player.UpdateDisplayPos();
+                }
+                else
+                    return;
+            }
+            if (Lives < 0)
 				return;
 			if (player.reentryCountdown > 0)
 			{
@@ -324,18 +345,19 @@ namespace SpiritPurger
 				return;
 			}
 
+            IsInFocusedMovement = keys.slow > 0;
 			if (keys.Horizontal() != 0)
 			{
 				if (keys.left > 0)
 				{
-					player.Move(keys.slow > 0 || !bombBlast.IsGone() ?
+                    player.Move(IsInFocusedMovement || !bombBlast.IsGone() ?
 						-Player.LO_SPEED : -Player.HI_SPEED, 0);
 					if (player.Location.X - player.HalfSize.X < 0)
 						player.Location = new Vector2f(player.HalfSize.X, player.Location.Y);
 				}
 				else
 				{
-					player.Move(keys.slow > 0 || !bombBlast.IsGone() ?
+                    player.Move(IsInFocusedMovement || !bombBlast.IsGone() ?
 						Player.LO_SPEED : Player.HI_SPEED, 0);
 					if (player.Location.X + player.HalfSize.X > Renderer.FIELD_WIDTH)
 						player.Location = new Vector2f(Renderer.FIELD_WIDTH - player.HalfSize.X,
@@ -348,14 +370,14 @@ namespace SpiritPurger
 			{
 				if (keys.up > 0)
 				{
-					player.Move(0, keys.slow > 0 || !bombBlast.IsGone() ?
+                    player.Move(0, IsInFocusedMovement || !bombBlast.IsGone() ?
 						-Player.LO_SPEED : -Player.HI_SPEED);
 					if (player.Location.Y - player.HalfSize.Y < 0)
 						player.Location = new Vector2f(player.Location.X, player.HalfSize.Y);
 				}
 				else
 				{
-					player.Move(0, keys.slow > 0 || !bombBlast.IsGone() ?
+                    player.Move(0, IsInFocusedMovement || !bombBlast.IsGone() ?
 						Player.LO_SPEED : Player.HI_SPEED);
 					if (player.Location.Y + player.HalfSize.Y > Renderer.FIELD_HEIGHT)
 						player.Location = new Vector2f(player.Location.X,
@@ -389,7 +411,7 @@ namespace SpiritPurger
 				}
 
 				if (player.invincibleCountdown <= 0 && !godMode &&
-					lives >= 0 && Physics.Touches(player, enemy))
+					Lives >= 0 && Physics.Touches(player, enemy))
 				{
 					// The player took damage.
 					player.invincibleCountdown = GameplayManager.POST_DEATH_INVINC_FRAMES;
@@ -407,7 +429,7 @@ namespace SpiritPurger
 			if (bossState == BossState.Active)
 			{
 				if (player.invincibleCountdown <= 0 && !godMode &&
-					lives >= 0 && Physics.Touches(player, boss))
+					Lives >= 0 && Physics.Touches(player, boss))
 				{
 					// The player took damage.
 					player.invincibleCountdown = GameplayManager.POST_DEATH_INVINC_FRAMES;
@@ -475,7 +497,7 @@ namespace SpiritPurger
 		{
 			enemyBullets.Clear();
 			long addScore = success ? 30000 : 5000;
-			score += addScore;
+			Score += addScore;
 			if (success)
 			{
 				ChangeState(REACTION.BOSS_PATTERN_SUCCESS);
@@ -508,7 +530,7 @@ namespace SpiritPurger
 						// Just remove everything in the blast radius.
 						toRemove.Add(i);
 						bombCombo++;
-						score += 5;
+						Score += 5;
 						bombComboScore += 5;
 						continue;
 					}
@@ -521,7 +543,7 @@ namespace SpiritPurger
 						// It's within the center of the bomb.
 						toRemove.Add(i);
 						bombCombo++;
-						score += 5;
+						Score += 5;
 						bombComboScore += 5;
 						soundManager.QueueToPlay(SoundManager.SFX.BOMB_ATE_BULLET);
 						continue;
@@ -617,7 +639,7 @@ namespace SpiritPurger
 				if (bullet.IsOutside(Renderer.FieldSize, 30))
 					// Build a list of "dead" bullets.
 					toRemove.Add(i);
-				else if (player.invincibleCountdown <= 0 && lives >= 0 &&
+				else if (player.invincibleCountdown <= 0 && Lives >= 0 &&
 						 Math.Abs(player.Location.Y - bullet.location.Y) <=
 						 player.Size.X + bullet.Radius)
 				{
@@ -648,7 +670,7 @@ namespace SpiritPurger
 									5.0));
 								h.Lifetime = Bullet.LIFETIME_PARTICLE;
 								hitSparks.Add(h);
-								score += 50;
+								Score += 50;
 							}
 							bullet.grazed = true;
 						}
@@ -706,7 +728,7 @@ namespace SpiritPurger
 								hitSparks.Add(h);
 							}
 							soundManager.QueueToPlay(SoundManager.SFX.FOE_TOOK_DAMAGE);
-							score += 20;
+							Score += 20;
 							scoreUp = true;
 						}
 					}
@@ -735,7 +757,7 @@ namespace SpiritPurger
 							h.Lifetime = Bullet.LIFETIME_PARTICLE;
 							hitSparks.Add(h);
 						}
-						score += 20;
+						Score += 20;
 						scoreUp = true;
 					}
 					if (scoreUp)
@@ -781,7 +803,7 @@ namespace SpiritPurger
 		protected void ShootPlayerBomb()
 		{
 			if (keys.bomb == 2 && bombBlast.IsGone() && (godMode ||
-					bombs > 0 && player.reentryCountdown <= 0 &&
+					Bombs > 0 && player.reentryCountdown <= 0 &&
 					player.deathCountdown <= 0))
 			{
 				// Fire a bomb.
@@ -789,7 +811,7 @@ namespace SpiritPurger
 				bombBlast.Renew(player.Location);
 				bombCombo = 0;
 				bombComboTimeCountdown = GameplayManager.BOMB_COMBO_DISPLAY_FRAMES;
-				bombs--;
+				Bombs--;
 				beatThisPattern = false;
 				ChangeState(REACTION.REFRESH_BOMBS);
 				soundManager.QueueToPlay(SoundManager.SFX.PLAYER_SHOT_BOMB);
@@ -915,47 +937,6 @@ namespace SpiritPurger
 			UpdateEnemies();
 			UpdateBoss();
 			player.Update();
-		}
-
-		public void PaintGame(object sender, double ticks)
-		{
-			RenderWindow app = (RenderWindow)sender;
-
-			if (!bombBlast.IsGone())
-			{
-				app.Draw(bombBlast.Sprite);
-			}
-			// Draw the player, boss, and enemies.
-			if (lives >= 0)
-				player.Draw(app);
-			if (bossState == BossState.Active)
-				boss.Draw(app);
-			else if (bossState == BossState.Intro &&
-					 bossIntroTime > GameplayManager.BOSS_PRE_INTRO_FRAMES)
-			{
-				// The boss is invisible unless it has waited more than
-				// BOSS_PRE_INTRO_FRAMES at which it then fades-in gradually.
-				// The visibility is the proprtion of time waited compared
-				// to BOSS_INTRO_FRAMES.
-				/*
-				boss.Draw(e.Graphics,
-					(int)((bossIntroTime - BOSS_PRE_INTRO_FRAMES) /
-					(float)BOSS_INTRO_FRAMES * 255.0F));
-				 */
-				// TODO: Temporary code is below. Swap for the above.
-				boss.Draw(app);
-			}
-
-			// Draw the bullets and hitsparks.
-			foreach (Bullet spark in hitSparks)
-				app.Draw(spark.Sprite);
-			foreach (Bullet bullet in playerBullets)
-				app.Draw(bullet.Sprite);
-			foreach (Bullet bullet in enemyBullets)
-				app.Draw(bullet.Sprite);
-
-			if (keys.slow > 0)
-				app.Draw(player.hitBoxSprite);
 		}
 	}
 }
