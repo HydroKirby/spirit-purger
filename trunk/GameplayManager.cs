@@ -37,8 +37,8 @@ namespace SpiritPurger
             switch ((PURPOSE)purpose)
             {
                 case PURPOSE.REVIVING_TIMEOUT: return 1.2;
-                case PURPOSE.REVIVAL_FLASH_SHOWING: return 1.0;
-                case PURPOSE.REVIVAL_FLASH_LEAVING: return 1.0;
+                case PURPOSE.REVIVAL_FLASH_SHOWING: return 0.7;
+                case PURPOSE.REVIVAL_FLASH_LEAVING: return 0.7;
                 default: return 0;
             }
         }
@@ -366,6 +366,10 @@ namespace SpiritPurger
                     float scale =(float) (1.0 - PlayerTimer.Frame /
                         PlayerTimerPurpose.GetTime(
                         (int)PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING));
+                    scale = (float)(LerpLogic.SlowAccel(PlayerTimer.Frame,
+                        PlayerTimerPurpose.GetTime(
+                        (int)PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING),
+                        0, 1));
                     revivalFlashSprite.Scale = new Vector2f(scale, scale);
                     return;
                 }
@@ -384,6 +388,10 @@ namespace SpiritPurger
                     float scale = (float)(PlayerTimer.Frame /
                         PlayerTimerPurpose.GetTime(
                         (int)PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING));
+                    scale = (float)(1.0 - LerpLogic.SlowDecel(PlayerTimer.Frame,
+                        PlayerTimerPurpose.GetTime(
+                        (int)PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING),
+                        0, 1));
                     revivalFlashSprite.Scale = new Vector2f(scale, scale);
                     return;
                 }

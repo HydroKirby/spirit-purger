@@ -170,4 +170,43 @@ namespace SpiritPurger
 			v.Y /= (float)magnitude;
 		}
 	}
+
+    /// <summary>
+    /// Provides logic for doing linear interpolations.
+    /// Code based on http://sol.gfxile.net/interpolation/
+    /// </summary>
+    public static class LerpLogic
+    {
+        /// <summary>
+        /// Lerps so that the output slowly accelerates.
+        /// </summary>
+        /// <param name="atTime">The current time within the animation.</param>
+        /// <param name="endTime">The final time of the animation.</param>
+        /// <param name="minVal">The smallest value the animation can be.</param>
+        /// <param name="maxVal">The largest value the animation can be.</param>
+        /// <returns>A value between minVal and maxVal based on the time.</returns>
+        public static double SlowAccel(double atTime, double endTime,
+            double minVal, double maxVal)
+        {
+            double fraction = atTime / endTime;
+            fraction = fraction * fraction;
+            return (minVal * fraction) + (maxVal * (1.0 - fraction));
+        }
+
+        /// <summary>
+        /// Lerps so that the output slowly decellerates.
+        /// </summary>
+        /// <param name="atTime">The current time within the animation.</param>
+        /// <param name="endTime">The final time of the animation.</param>
+        /// <param name="minVal">The smallest value the animation can be.</param>
+        /// <param name="maxVal">The largest value the animation can be.</param>
+        /// <returns>A value between minVal and maxVal based on the time.</returns>
+        public static double SlowDecel(double atTime, double endTime,
+            double minVal, double maxVal)
+        {
+            double fraction = atTime / endTime;
+            fraction = 1.0 - (1.0 - fraction) * (1.0 - fraction);
+            return (minVal * fraction) + (maxVal * (1.0 - fraction));
+        }
+    }
 }
