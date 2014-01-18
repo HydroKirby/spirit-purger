@@ -17,6 +17,18 @@ namespace SpiritPurger
 		protected ArrayList bulletImages;
 		// Stores distinct bullets based on radius, sprite, etc.
 		protected ArrayList bulletTypes;
+        protected string[] filenames =
+		{
+			"b_4", // Indexes 0-4
+			"b_8", // 5-9
+			"b_16", // 10-14
+			"hitbox", // 15
+			"bomb", // 16
+			"spark_graze", // 17
+			"spark_nailed_foe", // 18
+			"b_player", // 19
+            "reentry", // 20
+		};
 
 		public BulletCreator(ImageManager imageManager)
 		{
@@ -31,17 +43,6 @@ namespace SpiritPurger
 		/// </summary>
 		private void LoadBulletImages(ImageManager imageManager)
 		{
-			string[] filenames =
-			{
-				"b_4", // Indexes 0-4
-				"b_8", // 5-9
-				"b_16", // 10-14
-				"hitbox", // 15
-				"bomb", // 16
-				"spark_graze", // 17
-				"spark_nailed_foe", // 18
-				"b_player" // 19
-			};
 			for (int i = 0; i < filenames.Length; ++i)
 			{
 				imageManager.LoadPNG(filenames[i]);
@@ -409,6 +410,16 @@ namespace SpiritPurger
 			: base(sprite, radius, loc, dir, speed)
 		{ }
 	}
+
+    /// <summary>
+    /// When the player revives, this appears around her.
+    /// </summary>
+    public class RevivalFlash : Bullet
+    {
+        public RevivalFlash(CenterSprite sprite, Vector2f loc)
+            : base(sprite, 0, loc, new Vector2f(0, 0), 0)
+        { }
+    }
 
 	public class Bomb : Bullet {
 		// The time the bomb lasts at full power.

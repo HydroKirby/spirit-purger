@@ -854,8 +854,21 @@ namespace SpiritPurger
                 app.Draw(gameManager.bombBlast.Sprite);
             }
             // Draw the player, boss, and enemies.
-            if (gameManager.Lives >= 0)
+            if (gameManager.Lives >= 0 &&
+                !gameManager.PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING))
+            {
                 gameManager.player.Draw(app);
+            }
+
+            if (gameManager.PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING) ||
+                gameManager.PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_LEAVING))
+            {
+                app.Draw(gameManager.revivalFlash.Sprite);
+            }
+
             gameManager.boss.Draw(app);
             /*
             if (gameManager.bossState == BossState.Active)

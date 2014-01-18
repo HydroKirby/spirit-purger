@@ -18,6 +18,10 @@ namespace SpiritPurger
 			NONE,
 			// The time the player must wait before reviving and being able to act.
 			REVIVING_TIMEOUT,
+            // The revival flash is appearing. The player can't act and is not shown.
+            REVIVAL_FLASH_SHOWING,
+            // The revival flash is disappearing. The player can't act, but is shown.
+            REVIVAL_FLASH_LEAVING,
 		}
 
 		public PlayerTimerPurpose() { }
@@ -33,6 +37,8 @@ namespace SpiritPurger
             switch ((PURPOSE)purpose)
             {
                 case PURPOSE.REVIVING_TIMEOUT: return 1.2;
+                case PURPOSE.REVIVAL_FLASH_SHOWING: return 1.0;
+                case PURPOSE.REVIVAL_FLASH_LEAVING: return 1.0;
                 default: return 0;
             }
         }
@@ -179,6 +185,12 @@ namespace SpiritPurger
 		public ArrayList enemyBullets = new ArrayList();
 		public ArrayList playerBullets = new ArrayList();
 		public ArrayList hitSparks = new ArrayList();
+        public RevivalFlash revivalFlash;
+        // This is a temporary hack until BulletManager can allow someone
+        // to access bullet type IDs and BulletManager could hold the
+        // sprite itself.
+        protected Texture revivalFlashImage;
+        public CenterSprite revivalFlashSprite;
 
 		// Boss-related variables.
 		public enum BossState { NotArrived, Intro, Active, Killed };
@@ -250,6 +262,11 @@ namespace SpiritPurger
 			boss.UpdateDisplayPos();
 			bombBlast = new Bomb(bulletCreator.GetSprite(16), 0, new Vector2f(),
 				new Vector2f(), 0.0);
+            imageManager.LoadPNG("reentry");
+            revivalFlashImage = imageManager.GetImage("reentry");
+            revivalFlashSprite = new CenterSprite(revivalFlashImage);
+            revivalFlash = new RevivalFlash(revivalFlashSprite,
+                new Vector2f(player.Location.X, player.Location.Y));
 		}
 
 		private void ChangeState(REACTION newState)
@@ -268,8 +285,6 @@ namespace SpiritPurger
 
 		public void Reset()
 		{
-			player.Location = new Vector2f(Renderer.FIELD_WIDTH / 2,
-				Renderer.FIELD_WIDTH / 10 * 9);
 			player.UpdateDisplayPos();
 			player.deathCountdown = 0;
 			player.invincibleCountdown = 0;
@@ -299,7 +314,7 @@ namespace SpiritPurger
 			Lives = 2;
 			Bombs = 3;
             IsInFocusedMovement = false;
-            PlayerTimer.Repurporse((int)PlayerTimerPurpose.PURPOSE.REVIVING_TIMEOUT);
+            StartRevival();
 			GameTimer.Repurporse((int)GameTimerPurpose.PURPOSE.NONE);
 		}
 
@@ -326,20 +341,38 @@ namespace SpiritPurger
                         gameOver = true;
                         ChangeState(REACTION.LOST_ALL_LIVES);
                     }
-                    ChangeState(REACTION.REFRESH_LIVES);
-                    PlayerTimer.Repurporse((int)PlayerTimerPurpose.
-                        PURPOSE.REVIVING_TIMEOUT);
-                    player.Location = new Vector2f(145.0F, 320.0F);
-                    player.UpdateDisplayPos();
+                    else
+                    {
+                        ChangeState(REACTION.REFRESH_LIVES);
+                        StartRevival();
+                    }
                 }
                 else
                     return;
             }
             if (Lives < 0)
 				return;
-			if (PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVING_TIMEOUT))
-			{
+            if (PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING))
+            {
+                if (PlayerTimer.TimeIsUp())
+                {
+                    PlayerTimer.Repurporse(
+                        (int)PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_LEAVING);
+                }
+                else
+                {
+                    // Animate the revival flash.
+                    float scale =(float) (1.0 - PlayerTimer.Frame /
+                        PlayerTimerPurpose.GetTime(
+                        (int)PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING));
+                    revivalFlashSprite.Scale = new Vector2f(scale, scale);
+                    return;
+                }
+            }
+            else if (PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_LEAVING))
+            {
                 if (PlayerTimer.TimeIsUp())
                 {
                     PlayerTimer.Repurporse(
@@ -347,11 +380,14 @@ namespace SpiritPurger
                 }
                 else
                 {
-                    player.Move(0, -Player.LO_SPEED);
-                    player.UpdateDisplayPos();
+                    // Animate the revival flash.
+                    float scale = (float)(PlayerTimer.Frame /
+                        PlayerTimerPurpose.GetTime(
+                        (int)PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING));
+                    revivalFlashSprite.Scale = new Vector2f(scale, scale);
                     return;
                 }
-			}
+            }
 
             IsInFocusedMovement = keys.slow > 0;
 			if (keys.Horizontal() != 0)
@@ -394,6 +430,32 @@ namespace SpiritPurger
 				player.UpdateDisplayPos();
 			}
 		}
+
+        /// <summary>
+        /// Begins the sequence of events that causes the revival of the player.
+        /// </summary>
+        protected void StartRevival()
+        {
+            PlayerTimer.Repurporse((int)PlayerTimerPurpose.
+                PURPOSE.REVIVAL_FLASH_SHOWING);
+            // Recall that the player's position is already offsetted
+            // by the gameplay frame.
+            player.Location = new Vector2f(Renderer.FIELD_WIDTH / 2,
+                Renderer.FIELD_HEIGHT / 6 * 5);
+            player.UpdateDisplayPos();
+
+            // Create the revival effect's "bullet".
+            revivalFlash.location = player.Location;
+            // Set the revival flash to be the same position as the player,
+            // but it must be offsetted to be within the gameplay frame.
+            revivalFlashSprite.setPosition(new Vector2f(
+                player.Location.X + Renderer.FIELD_LEFT,
+                player.Location.Y + Renderer.FIELD_TOP));
+            revivalFlashSprite.Scale = new Vector2f(0, 0);
+            // Make sure the revival flash is not removed before the event ends.
+            // Add a little time before the bullet itself is killed.
+            revivalFlash.Lifetime = (uint) (PlayerTimer.Frame + 1.0);
+        }
 
 		public void UpdateEnemies()
 		{
@@ -786,8 +848,13 @@ namespace SpiritPurger
 		protected void ShootPlayerBullet()
 		{
 			if (keys.shoot > 0 && player.deathCountdown <= 0 &&
-                (PlayerTimer.TimeIsUp() || !PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVING_TIMEOUT)))
+                (PlayerTimer.TimeIsUp() || !(PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVING_TIMEOUT) ||
+                PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_LEAVING) ||
+                PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING))
+                ))
 			{
 				if (player.TryShoot())
 				{
@@ -812,8 +879,13 @@ namespace SpiritPurger
 		protected void ShootPlayerBomb()
 		{
 			if (keys.bomb == 2 && bombBlast.IsGone() && (godMode ||
-                Bombs > 0 && (PlayerTimer.TimeIsUp() || !PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVING_TIMEOUT)) &&
+                Bombs > 0 && (PlayerTimer.TimeIsUp() || !(PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVING_TIMEOUT) ||
+                PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_LEAVING) ||
+                PlayerTimer.SamePurpose(
+                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING))
+                ) &&
                 player.deathCountdown <= 0))
 			{
 				// Fire a bomb.
