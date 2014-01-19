@@ -99,8 +99,8 @@ namespace SpiritPurger
 			// ver 1.04
 			options["title bgm loop start"] = 3.18;
 			options["title bgm loop end"] = 33.8;
-			options["game bgm loop start"] = 3.18;
-			options["game bgm loop end"] = 33.8;
+			options["game bgm loop start"] = 0.0;
+			options["game bgm loop end"] = 99999.9;
 			// ver 1.05
 		}
 
