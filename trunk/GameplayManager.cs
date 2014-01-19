@@ -11,34 +11,38 @@ namespace SpiritPurger
 	/// <summary>
 	/// Makes the meaning of a timer be related to the Player's inputs.
 	/// </summary>
-	public class PlayerTimerPurpose : TimerPurpose
+	public class PlayerDuty : TimerDuty
 	{
-		public new enum PURPOSE
+		public new enum DUTY
 		{
 			NONE,
-			// The time the player must wait before reviving and being able to act.
-			REVIVING_TIMEOUT,
             // The revival flash is appearing. The player can't act and is not shown.
             REVIVAL_FLASH_SHOWING,
             // The revival flash is disappearing. The player can't act, but is shown.
             REVIVAL_FLASH_LEAVING,
+            // Invinciblity time after revival.
+            INVINCIBLE,
 		}
 
-		public PlayerTimerPurpose() { }
+        private DUTY _duty;
+        public override void SetDuty(object duty) { _duty = (DUTY)duty; }
+        public override object GetDuty() { return _duty; }
+
+		public PlayerDuty() { }
 
 		public override double GetTime()
 		{
-			// Interpret Purpose as the local variant of PURPOSE in this class.
-            return GetTime((int)SpecificPurpose);
+			// Interpret Purpose as the local variant of DUTY in this class.
+            return GetTime((int)GetDuty());
 		}
 
         public static new double GetTime(int purpose)
         {
-            switch ((PURPOSE)purpose)
+            switch ((DUTY)purpose)
             {
-                case PURPOSE.REVIVING_TIMEOUT: return 1.2;
-                case PURPOSE.REVIVAL_FLASH_SHOWING: return 0.7;
-                case PURPOSE.REVIVAL_FLASH_LEAVING: return 0.7;
+                case DUTY.REVIVAL_FLASH_SHOWING: return 0.3;
+                case DUTY.REVIVAL_FLASH_LEAVING: return 0.3;
+                case DUTY.INVINCIBLE: return 2.0;
                 default: return 0;
             }
         }
@@ -47,9 +51,9 @@ namespace SpiritPurger
 	/// <summary>
 	/// Makes the meaning of a timer be related to the gameplay.
 	/// </summary>
-	public class GameTimerPurpose : TimerPurpose
+	public class GameDuty : TimerDuty
 	{
-		public new enum PURPOSE
+		public new enum DUTY
 		{
 			NONE,
 			FADE_IN_FROM_MENU,
@@ -63,22 +67,26 @@ namespace SpiritPurger
 			WAIT_AFTER_BEAT_GAME,
 		}
 
-		public GameTimerPurpose() { }
+        private DUTY _duty;
+        public override void SetDuty(object duty) { _duty = (DUTY)duty; }
+        public override object GetDuty() { return _duty; }
+
+		public GameDuty() { }
 
 		public override double GetTime()
 		{
-			// Interpret Purpose as the local variant of PURPOSE in this class.
-            return GetTime((int)SpecificPurpose);
+			// Interpret Purpose as the local variant of DUTY in this class.
+            return GetTime((int)GetDuty());
 		}
 
         public static new double GetTime(int purpose)
         {
-            switch ((PURPOSE)purpose)
+            switch ((DUTY)purpose)
             {
-                case PURPOSE.FADE_IN_FROM_MENU: return 0.4;
-                case PURPOSE.FADE_OUT_TO_MENU: return 0.4;
-                case PURPOSE.PAUSE_BOMB_HELD: return 1.0;
-                case PURPOSE.WAIT_AFTER_BEAT_GAME: return 4.0;
+                case DUTY.FADE_IN_FROM_MENU: return 0.4;
+                case DUTY.FADE_OUT_TO_MENU: return 0.4;
+                case DUTY.PAUSE_BOMB_HELD: return 1.0;
+                case DUTY.WAIT_AFTER_BEAT_GAME: return 4.0;
                 default: return 0;
             }
         }
@@ -114,6 +122,8 @@ namespace SpiritPurger
 			FADE_COMPLETE,
 			// Tell the renderer to refresh something.
 			REFRESH_SCORE, REFRESH_BULLET_COUNT, REFRESH_LIVES, REFRESH_BOMBS,
+            // Tell the renderer that the player's invincibility status has changed.
+            PLAYER_GOT_INV, PLAYER_LOST_INV,
 			// Bomb-related reactions.
 			BOMB_MADE_COMBO, BOMB_LIFETIME_DECREMENT,
 			// Boss-related reactions.
@@ -161,9 +171,9 @@ namespace SpiritPurger
 			set
 			{
 				if (!GameTimer.TimeIsUp() && (GameTimer.SamePurpose(
-					GameTimerPurpose.PURPOSE.FADE_OUT_TO_MENU) ||
+					GameDuty.DUTY.FADE_OUT_TO_MENU) ||
 					GameTimer.SamePurpose(
-					GameTimerPurpose.PURPOSE.FADE_IN_FROM_MENU)))
+					GameDuty.DUTY.FADE_IN_FROM_MENU)))
 				{
 					// Input is not accepted right now,
 					// so changing Paused in not possible.
@@ -172,10 +182,10 @@ namespace SpiritPurger
 				_paused = value;
 				if (_paused)
 					GameTimer.Repurporse(
-						(int)GameTimerPurpose.PURPOSE.PAUSE_BOMB_HELD);
+						(int)GameDuty.DUTY.PAUSE_BOMB_HELD);
 				else
 					GameTimer.Repurporse(
-						(int)GameTimerPurpose.PURPOSE.NONE);
+						(int)GameDuty.DUTY.NONE);
 			}
 		}
 		public Player player;
@@ -244,8 +254,8 @@ namespace SpiritPurger
 			soundManager = sndManager;
 			keys = keyHandler;
 			bulletCreator = new BulletCreator(imageManager);
-			PlayerTimer = new DownTimer(new PlayerTimerPurpose());
-			GameTimer = new DownTimer(new GameTimerPurpose());
+			PlayerTimer = new DownTimer(new PlayerDuty());
+			GameTimer = new DownTimer(new GameDuty());
 
 			// Assign sprites.
 			player = new Player(
@@ -315,7 +325,7 @@ namespace SpiritPurger
 			Bombs = 3;
             IsInFocusedMovement = false;
             StartRevival();
-			GameTimer.Repurporse((int)GameTimerPurpose.PURPOSE.NONE);
+			GameTimer.Repurporse((int)GameDuty.DUTY.NONE);
 		}
 
 		/// <summary>
@@ -324,7 +334,7 @@ namespace SpiritPurger
 		public void StartGame()
 		{
 			ChangeState(REACTION.FADE_FROM_MENU);
-			GameTimer.Repurporse((int)GameTimerPurpose.PURPOSE.FADE_IN_FROM_MENU);
+			GameTimer.Repurporse((int)GameDuty.DUTY.FADE_IN_FROM_MENU);
 		}
 
 		public void MovePlayer()
@@ -353,48 +363,53 @@ namespace SpiritPurger
             if (Lives < 0)
 				return;
             if (PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING))
+                PlayerDuty.DUTY.REVIVAL_FLASH_SHOWING))
             {
+                // The revival flash is coming into existence.
+                // The player is not yet shown.
                 if (PlayerTimer.TimeIsUp())
                 {
                     PlayerTimer.Repurporse(
-                        (int)PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_LEAVING);
+                        (int)PlayerDuty.DUTY.REVIVAL_FLASH_LEAVING);
+                    // Show the player as invincible.
+                    ChangeState(REACTION.PLAYER_GOT_INV);
                 }
                 else
                 {
                     // Animate the revival flash.
-                    float scale =(float) (1.0 - PlayerTimer.Frame /
-                        PlayerTimerPurpose.GetTime(
-                        (int)PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING));
-                    scale = (float)(LerpLogic.SlowAccel(PlayerTimer.Frame,
-                        PlayerTimerPurpose.GetTime(
-                        (int)PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING),
+                    float scale = (float)(LerpLogic.SlowAccel(PlayerTimer.Frame,
+                        PlayerDuty.GetTime(
+                        (int)PlayerDuty.DUTY.REVIVAL_FLASH_SHOWING),
                         0, 1));
                     revivalFlashSprite.Scale = new Vector2f(scale, scale);
                     return;
                 }
             }
             else if (PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_LEAVING))
+                PlayerDuty.DUTY.REVIVAL_FLASH_LEAVING))
             {
+                // 
                 if (PlayerTimer.TimeIsUp())
                 {
                     PlayerTimer.Repurporse(
-                        (int)PlayerTimerPurpose.PURPOSE.NONE);
+                        (int)PlayerDuty.DUTY.INVINCIBLE);
                 }
                 else
                 {
                     // Animate the revival flash.
-                    float scale = (float)(PlayerTimer.Frame /
-                        PlayerTimerPurpose.GetTime(
-                        (int)PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING));
-                    scale = (float)(1.0 - LerpLogic.SlowDecel(PlayerTimer.Frame,
-                        PlayerTimerPurpose.GetTime(
-                        (int)PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING),
+                    float scale = (float)(1.0 - LerpLogic.SlowDecel(PlayerTimer.Frame,
+                        PlayerDuty.GetTime(
+                        (int)PlayerDuty.DUTY.REVIVAL_FLASH_LEAVING),
                         0, 1));
                     revivalFlashSprite.Scale = new Vector2f(scale, scale);
                     return;
                 }
+            }
+            else if (PlayerTimer.SamePurpose(PlayerDuty.DUTY.INVINCIBLE) &&
+                PlayerTimer.TimeIsUp())
+            {
+                PlayerTimer.Repurporse((int)PlayerDuty.DUTY.NONE);
+                ChangeState(REACTION.PLAYER_LOST_INV);
             }
 
             IsInFocusedMovement = keys.slow > 0;
@@ -444,8 +459,8 @@ namespace SpiritPurger
         /// </summary>
         protected void StartRevival()
         {
-            PlayerTimer.Repurporse((int)PlayerTimerPurpose.
-                PURPOSE.REVIVAL_FLASH_SHOWING);
+            PlayerTimer.Repurporse((int)PlayerDuty.
+                DUTY.REVIVAL_FLASH_SHOWING);
             // Recall that the player's position is already offsetted
             // by the gameplay frame.
             player.Location = new Vector2f(Renderer.FIELD_WIDTH / 2,
@@ -545,8 +560,8 @@ namespace SpiritPurger
 							gameOver = true;
 							soundManager.QueueToPlay(SoundManager.SFX.BOSS_DESTROYED);
 							ChangeState(REACTION.COMPLETED_GAME);
-							GameTimer.Purpose.SpecificPurpose = (int)GameTimerPurpose.
-								PURPOSE.WAIT_AFTER_BEAT_GAME;
+							GameTimer.Purpose.SetDuty(GameDuty.
+								DUTY.WAIT_AFTER_BEAT_GAME);
 						}
 						else
 						{
@@ -857,11 +872,9 @@ namespace SpiritPurger
 		{
 			if (keys.shoot > 0 && player.deathCountdown <= 0 &&
                 (PlayerTimer.TimeIsUp() || !(PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVING_TIMEOUT) ||
+                PlayerDuty.DUTY.REVIVAL_FLASH_LEAVING) ||
                 PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_LEAVING) ||
-                PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING))
+                PlayerDuty.DUTY.REVIVAL_FLASH_SHOWING))
                 ))
 			{
 				if (player.TryShoot())
@@ -888,11 +901,9 @@ namespace SpiritPurger
 		{
 			if (keys.bomb == 2 && bombBlast.IsGone() && (godMode ||
                 Bombs > 0 && (PlayerTimer.TimeIsUp() || !(PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVING_TIMEOUT) ||
+                PlayerDuty.DUTY.REVIVAL_FLASH_LEAVING) ||
                 PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_LEAVING) ||
-                PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING))
+                PlayerDuty.DUTY.REVIVAL_FLASH_SHOWING))
                 ) &&
                 player.deathCountdown <= 0))
 			{
@@ -932,7 +943,7 @@ namespace SpiritPurger
 							bossState = BossState.Killed;
 							gameOver = true;
 							GameTimer.Repurporse(
-								(int)GameTimerPurpose.PURPOSE.WAIT_AFTER_BEAT_GAME);
+								(int)GameDuty.DUTY.WAIT_AFTER_BEAT_GAME);
 						}
 						else
 						{
@@ -950,24 +961,24 @@ namespace SpiritPurger
             // The GameTimer affects the entire game, so tick it first.
 			GameTimer.Tick(ticks);
 			if (GameTimer.SamePurpose(
-				GameTimerPurpose.PURPOSE.FADE_IN_FROM_MENU))
+				GameDuty.DUTY.FADE_IN_FROM_MENU))
 			{
 				if (!GameTimer.TimeIsUp())
 					return;
-				GameTimer.Repurporse((int)GameTimerPurpose.PURPOSE.NONE);
+				GameTimer.Repurporse((int)GameDuty.DUTY.NONE);
 				ChangeState(REACTION.FADE_COMPLETE);
 			}
 			else if (GameTimer.SamePurpose(
-				GameTimerPurpose.PURPOSE.FADE_OUT_TO_MENU))
+				GameDuty.DUTY.FADE_OUT_TO_MENU))
 			{
 				if (!GameTimer.TimeIsUp())
 					return;
-				GameTimer.Repurporse((int)GameTimerPurpose.PURPOSE.NONE);
+				GameTimer.Repurporse((int)GameDuty.DUTY.NONE);
 				ChangeState(REACTION.FADE_COMPLETE);
 				ChangeState(REACTION.RESET_GAME);
 			}
 			else if (GameTimer.SamePurpose(
-				GameTimerPurpose.PURPOSE.PAUSE_BOMB_HELD))
+				GameDuty.DUTY.PAUSE_BOMB_HELD))
 			{
 				if (!GameTimer.TimeIsUp())
 				{
@@ -982,7 +993,7 @@ namespace SpiritPurger
 				// has requested to go to the main menu.
 				ChangeState(REACTION.FADE_TO_MENU);
 				GameTimer.Repurporse(
-					(int)GameTimerPurpose.PURPOSE.FADE_OUT_TO_MENU);
+					(int)GameDuty.DUTY.FADE_OUT_TO_MENU);
 			}
 
             // Tick all gameplay related timers now.
@@ -1008,7 +1019,7 @@ namespace SpiritPurger
 				if (keys.shoot == 2)
 				{
 					ChangeState(REACTION.FADE_FROM_MENU);
-					GameTimer.Repurporse((int)GameTimerPurpose.PURPOSE.FADE_OUT_TO_MENU);
+					GameTimer.Repurporse((int)GameDuty.DUTY.FADE_OUT_TO_MENU);
 					return;
 				}
 			}

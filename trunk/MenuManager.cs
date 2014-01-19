@@ -8,9 +8,9 @@ namespace SpiritPurger
 	/// <summary>
 	/// Makes the meaning of a timer be related to the Player's inputs.
 	/// </summary>
-	public class MenuTimerPurpose : TimerPurpose
+	public class MenuDuty : TimerDuty
 	{
-		public new enum PURPOSE
+		public new enum DUTY
 		{
 			NONE,
 			FADE_IN,
@@ -18,16 +18,20 @@ namespace SpiritPurger
 			FADE_OUT_TO_EXIT,
 		}
 
-		public MenuTimerPurpose() { }
+        private DUTY _duty;
+        public override void SetDuty(object duty) { _duty = (DUTY)duty; }
+        public override object GetDuty() { return _duty; }
+
+		public MenuDuty() { }
 
 		public override double GetTime()
 		{
-			// Interpret Purpose as the local variant of PURPOSE in this class.
-			switch ((PURPOSE)SpecificPurpose)
+			// Interpret Purpose as the local variant of DUTY in this class.
+			switch ((DUTY)GetDuty())
 			{
-				case PURPOSE.FADE_IN: return 0.4;
-				case PURPOSE.FADE_OUT_TO_GAMEPLAY: return 0.4;
-				case PURPOSE.FADE_OUT_TO_EXIT: return 0.4;
+				case DUTY.FADE_IN: return 0.4;
+				case DUTY.FADE_OUT_TO_GAMEPLAY: return 0.4;
+				case DUTY.FADE_OUT_TO_EXIT: return 0.4;
 				default: return 0;
 			}
 		}
@@ -152,7 +156,7 @@ namespace SpiritPurger
 			selectedItem = 0;
 			state = REACTION.NONE;
 			newOptions = new Options(options);
-			MenuTimer = new DownTimer(new MenuTimerPurpose());
+			MenuTimer = new DownTimer(new MenuDuty());
 
 			// Allocate memory for the layout of the menu and submenus.
 			// The number of menu items is hard coded for speed of development.
@@ -191,7 +195,7 @@ namespace SpiritPurger
 		public void StartMenu()
 		{
 			ChangeState(REACTION.FADE_IN);
-			MenuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.FADE_IN);
+			MenuTimer.Repurporse((int)MenuDuty.DUTY.FADE_IN);
 		}
 
 		public MENUITEM[] GetSubmenuLayout(SUBMENU submenu)
@@ -355,7 +359,7 @@ namespace SpiritPurger
 				// Top Menu submenu
 				case MENUITEM.START_GAME:
 					ChangeState(REACTION.FADE_OUT_TO_GAMEPLAY);
-					MenuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.FADE_OUT_TO_GAMEPLAY);
+					MenuTimer.Repurporse((int)MenuDuty.DUTY.FADE_OUT_TO_GAMEPLAY);
 					break;
 				case MENUITEM.OPTIONS:
 					currentMenu = SUBMENU.OPTIONS;
@@ -452,28 +456,26 @@ namespace SpiritPurger
 		public void NextFrame(object sender, double ticks, KeyHandler keys)
 		{
 			MenuTimer.Tick(ticks);
-			if (MenuTimer.Purpose.SpecificPurpose ==
-				(int)MenuTimerPurpose.PURPOSE.FADE_IN)
+			if (MenuTimer.SamePurpose(MenuDuty.DUTY.FADE_IN))
 			{
 				if (MenuTimer.TimeIsUp())
 				{
 					// We have faded into the menu.
 					ChangeState(REACTION.FADE_COMPLETED);
-					MenuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.NONE);
+					MenuTimer.Repurporse((int)MenuDuty.DUTY.NONE);
                     // Do not allow a button press during this transition.
                     return;
 				}
 				else
 					return;
 			}
-			else if (MenuTimer.Purpose.SpecificPurpose ==
-				(int)MenuTimerPurpose.PURPOSE.FADE_OUT_TO_GAMEPLAY)
+			else if (MenuTimer.SamePurpose(MenuDuty.DUTY.FADE_OUT_TO_GAMEPLAY))
 			{
 				if (MenuTimer.TimeIsUp())
 				{
 					// We have faded into the gameplay from the menu.
 					ChangeState(REACTION.FADE_COMPLETED);
-					MenuTimer.Repurporse((int)MenuTimerPurpose.PURPOSE.NONE);
+					MenuTimer.Repurporse((int)MenuDuty.DUTY.NONE);
 					ChangeState(REACTION.PLAY_GAME);
                     // Do not allow a button press during this transition.
                     return;

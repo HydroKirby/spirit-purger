@@ -15,12 +15,15 @@ namespace SpiritPurger
 	/// Provides the meaning of a timer and the values of its timings.
 	/// Based on the meaning, an appropriate frame count will be retrievable from GetTime.
 	/// </summary>
-	public abstract class TimerPurpose
+	public abstract class TimerDuty
 	{
 		// Override this using the "new" keyword.
-		public enum PURPOSE { }
+		public enum DUTY { }
 
-		public int SpecificPurpose { get; set; }
+        // Any derivitive class should implement this DUTY variable.
+        //private DUTY _duty;
+        public abstract void SetDuty(object duty);
+        public abstract object GetDuty();
 
 		/// <summary>
 		/// Gets the amount of time needed to serve a particular purpose.
@@ -37,29 +40,33 @@ namespace SpiritPurger
 	/// looping point. The set interval to check for that is done with
 	/// this timer purpose.
 	/// </summary>
-	public class MusicTimerPurpose : TimerPurpose
+	public class MusicDuty : TimerDuty
 	{
-		public new enum PURPOSE
+		public new enum DUTY
 		{
 			NONE,
 			// When the timer goes off, see if we must loop the music.
 			LOOP_TRACKER,
 		}
 
-		public MusicTimerPurpose() { }
+        private DUTY _duty;
+        public override void SetDuty(object duty) { _duty = (DUTY)duty; }
+        public override object GetDuty() { return _duty; }
+
+		public MusicDuty() { }
 
 		public override double GetTime()
 		{
 			// Interpret SpecificPurpose as the local variant
-			// of PURPOSE in this class.
-            return GetTime((int)SpecificPurpose);
+			// of DUTY in this class.
+            return GetTime((int)GetDuty());
 		}
 
         public static new double GetTime(int purpose)
         {
-            switch ((PURPOSE)purpose)
+            switch ((DUTY)purpose)
             {
-                case PURPOSE.LOOP_TRACKER: return 1.0;
+                case DUTY.LOOP_TRACKER: return 1.0;
                 default: return 0.0;
             }
         }
@@ -73,9 +80,9 @@ namespace SpiritPurger
 	{
 		// The frame the timer is on in MILLISECONDS. Multiply by 1000 for SECONDS.
 		public double Frame { get; set; }
-		public TimerPurpose Purpose { get; set; }
+		public TimerDuty Purpose { get; set; }
 
-		public DownTimer(TimerPurpose purpose)
+		public DownTimer(TimerDuty purpose)
 		{
 			Frame = 0;
 			Purpose = purpose;
@@ -107,7 +114,7 @@ namespace SpiritPurger
 		/// <param name="purpose">The new specific purpose as an int.</param>
 		public void Repurporse(int purpose)
 		{
-			Purpose.SpecificPurpose = (int)purpose;
+			Purpose.SetDuty(purpose);
 			Reset();
 		}
 
@@ -118,7 +125,7 @@ namespace SpiritPurger
 		/// <returns>True if the purposes are the same</returns>
 		public bool SamePurpose(object purpose)
 		{
-			return Purpose.SpecificPurpose == (int)purpose;
+			return (int)Purpose.GetDuty() == (int)purpose;
 		}
 	}
 
@@ -226,7 +233,7 @@ namespace SpiritPurger
 				icon.CopyToImage().Pixels);
 
             // Prepare the game to be run.
-			musicTimer = new DownTimer(new MusicTimerPurpose());
+			musicTimer = new DownTimer(new MusicDuty());
 			isPlaying = true;
             Reset();
             gameState = GameState.MainMenu;
@@ -234,7 +241,7 @@ namespace SpiritPurger
 			musicManager.ChangeMusic(MusicManager.MUSIC_LIST.TITLE);
 
 			AssignOptions(options);
-			musicTimer.Repurporse((int)MusicTimerPurpose.PURPOSE.LOOP_TRACKER);
+			musicTimer.Repurporse((int)MusicDuty.DUTY.LOOP_TRACKER);
 			menuManager.StartMenu();
 			MainLoop();
 		}

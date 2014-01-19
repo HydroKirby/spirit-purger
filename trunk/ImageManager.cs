@@ -282,12 +282,15 @@ namespace SpiritPurger
 			if (_forwardAni == null)
 				_forwardAni = new Animation(imgMan, ImageManager.PLAYER_FORWARD,
 					style, anim_speed);
-			if (false && _leftAni == null)
+            // If left-and-right movement animations are added, uncomment these.
+            /*
+			if (_leftAni == null)
 				_leftAni = new Animation(imgMan, ImageManager.PLAYER_LEFT,
 					style, anim_speed);
-			if (false && _rightAni == null)
+			if (_rightAni == null)
 				_rightAni = new Animation(imgMan, ImageManager.PLAYER_RIGHT,
 					style, anim_speed);
+             * */
 			State = ANI_STATE.FORWARD;
 		}
 
@@ -341,12 +344,15 @@ namespace SpiritPurger
 			if (_forwardAni == null)
 				_forwardAni = new Animation(imgMan, ImageManager.BOSS_FORWARD,
 					style, anim_speed);
-			if (false && _leftAni == null)
+            // If left-and-right movement animations are added, uncomment these.
+            /*
+			if (_leftAni == null)
 				_leftAni = new Animation(imgMan, ImageManager.BOSS_LEFT,
 					style, anim_speed);
-			if (false && _rightAni == null)
+			if (_rightAni == null)
 				_rightAni = new Animation(imgMan, ImageManager.BOSS_RIGHT,
 					style, anim_speed);
+             * */
 			State = ANI_STATE.FORWARD;
 		}
 

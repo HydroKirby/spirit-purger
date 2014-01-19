@@ -107,28 +107,32 @@ namespace SpiritPurger
 
 	public class MenuRenderer : Renderer
 	{
-        class MenuRendererTimerPurpose : TimerPurpose
+        class MenuRenderDuty : TimerDuty
         {
-            public new enum PURPOSE
+            public new enum DUTY
             {
                 NONE,
                 FOCUS_HALO_FADE_TO_OPAQUE,
                 FOCUS_HALO_FADE_TO_TRANSPARENT,
             }
 
-            public MenuRendererTimerPurpose() { }
+            private DUTY _duty;
+            public override void SetDuty(object duty) { _duty = (DUTY)duty; }
+            public override object GetDuty() { return _duty; }
+
+            public MenuRenderDuty() { }
 
             public override double GetTime()
             {
-                return GetTime((int)SpecificPurpose);
+                return GetTime((int)GetDuty());
             }
 
             public static new double GetTime(int purpose)
             {
-                switch ((PURPOSE)purpose)
+                switch ((DUTY)purpose)
                 {
-                    case PURPOSE.FOCUS_HALO_FADE_TO_OPAQUE: return 1.2;
-                    case PURPOSE.FOCUS_HALO_FADE_TO_TRANSPARENT: return 1.2;
+                    case DUTY.FOCUS_HALO_FADE_TO_OPAQUE: return 1.2;
+                    case DUTY.FOCUS_HALO_FADE_TO_TRANSPARENT: return 1.2;
                     default: return 0.0;
                 }
             }
@@ -178,9 +182,9 @@ namespace SpiritPurger
 			fullscreenFade = new RectangleShape(
 				new Vector2f(APP_BASE_WIDTH, APP_BASE_HEIGHT));
 			fullscreenFade.FillColor = new Color(0, 0, 0, 0);
-            focusHaloTimer = new DownTimer(new MenuRendererTimerPurpose());
-            focusHaloTimer.Repurporse((int)MenuRendererTimerPurpose.
-                PURPOSE.FOCUS_HALO_FADE_TO_TRANSPARENT);
+            focusHaloTimer = new DownTimer(new MenuRenderDuty());
+            focusHaloTimer.Repurporse((int)MenuRenderDuty.
+                DUTY.FOCUS_HALO_FADE_TO_TRANSPARENT);
 
 			submenuLabels = new List<List<Text>>();
 			MENUITEM[] tempMenuItems;
@@ -524,34 +528,34 @@ namespace SpiritPurger
             focusHaloTimer.Tick(ticks);
             if (focusHaloTimer.TimeIsUp())
             {
-                if (focusHaloTimer.SamePurpose(MenuRendererTimerPurpose.
-                    PURPOSE.FOCUS_HALO_FADE_TO_OPAQUE))
+                if (focusHaloTimer.SamePurpose(MenuRenderDuty.
+                    DUTY.FOCUS_HALO_FADE_TO_OPAQUE))
                 {
-                    focusHaloTimer.Repurporse((int)MenuRendererTimerPurpose.
-                        PURPOSE.FOCUS_HALO_FADE_TO_TRANSPARENT);
+                    focusHaloTimer.Repurporse((int)MenuRenderDuty.
+                        DUTY.FOCUS_HALO_FADE_TO_TRANSPARENT);
                 }
                 else
                 {
-                    focusHaloTimer.Repurporse((int)MenuRendererTimerPurpose.
-                        PURPOSE.FOCUS_HALO_FADE_TO_OPAQUE);
+                    focusHaloTimer.Repurporse((int)MenuRenderDuty.
+                        DUTY.FOCUS_HALO_FADE_TO_OPAQUE);
                 }
             }
 
             // Recreate the focus halo.
             Color c = new Color(focusCircle.FillColor);
-            if (focusHaloTimer.SamePurpose(MenuRendererTimerPurpose.
-                PURPOSE.FOCUS_HALO_FADE_TO_TRANSPARENT))
+            if (focusHaloTimer.SamePurpose(MenuRenderDuty.
+                DUTY.FOCUS_HALO_FADE_TO_TRANSPARENT))
             {
                 c.A = (byte)(180 + 75 * focusHaloTimer.Frame /
-                    MenuRendererTimerPurpose.GetTime((int)
-                    MenuRendererTimerPurpose.PURPOSE.
+                    MenuRenderDuty.GetTime((int)
+                    MenuRenderDuty.DUTY.
                     FOCUS_HALO_FADE_TO_TRANSPARENT));
             }
             else
             {
                 c.A = (byte)(180 + 75 * (1.0 - focusHaloTimer.Frame /
-                    MenuRendererTimerPurpose.GetTime((int)
-                    MenuRendererTimerPurpose.PURPOSE.
+                    MenuRenderDuty.GetTime((int)
+                    MenuRenderDuty.DUTY.
                     FOCUS_HALO_FADE_TO_TRANSPARENT)));
             }
             focusCircle.FillColor = c;
@@ -638,16 +642,14 @@ namespace SpiritPurger
 			}
 
 			// If we are doing a fade, render the fader.
-			if (menuManager.MenuTimer.Purpose.SpecificPurpose ==
-				(int)MenuTimerPurpose.PURPOSE.FADE_IN)
+			if (menuManager.MenuTimer.SamePurpose(MenuDuty.DUTY.FADE_IN))
 			{
 				double maxTime = menuManager.MenuTimer.Purpose.GetTime();
 				double fraction = menuManager.MenuTimer.Frame / maxTime;
 				fullscreenFade.FillColor = new Color(0, 0, 0, (byte)(255 * fraction));
 				app.Draw(fullscreenFade);
 			}
-			else if (menuManager.MenuTimer.Purpose.SpecificPurpose ==
-				(int)MenuTimerPurpose.PURPOSE.FADE_OUT_TO_GAMEPLAY)
+			else if (menuManager.MenuTimer.SamePurpose(MenuDuty.DUTY.FADE_OUT_TO_GAMEPLAY))
 			{
 				double maxTime = menuManager.MenuTimer.Purpose.GetTime();
 				double fraction = menuManager.MenuTimer.Frame / maxTime;
@@ -659,10 +661,47 @@ namespace SpiritPurger
 
 	public class GameRenderer : Renderer
 	{
+        /// <summary>
+        /// This TimerDuty is for flashing the character during invincibility.
+        /// </summary>
+        class InvincDuty : TimerDuty
+        {
+            public new enum DUTY
+            {
+                NONE,
+                FADE_IN,
+                FADE_OUT,
+            }
+
+            private DUTY _duty;
+            public override void SetDuty(object duty) { _duty = (DUTY)duty; }
+            public override object GetDuty() { return _duty; }
+
+            public InvincDuty() { }
+
+            public override double GetTime()
+            {
+                // Interpret SpecificPurpose as the local variant
+                // of DUTY in this class.
+                return GetTime((int)GetDuty());
+            }
+
+            public static new double GetTime(int purpose)
+            {
+                switch ((DUTY)purpose)
+                {
+                    case DUTY.FADE_IN: return 1.0;
+                    case DUTY.FADE_OUT: return 1.0;
+                    default: return 0.0;
+                }
+            }
+        }
+
 		// A reference to the engine's manager.
 		// Used for responding to events and querying for data.
 		protected GameplayManager gameManager;
 		protected HUD hud;
+        protected DownTimer invincTimer;
 
 		protected bool isPaused;
 		protected bool isInBossPattern;
@@ -704,6 +743,8 @@ namespace SpiritPurger
 		{
 			this.gameManager = gameManager;
 			hud = new HUD(imageManager, this);
+            invincTimer = new DownTimer(new InvincDuty());
+            invincTimer.Repurporse((int)InvincDuty.DUTY.NONE);
 			
 			// Create images.
 			textures = new Dictionary<string, Texture>(StringComparer.Ordinal);
@@ -817,9 +858,14 @@ namespace SpiritPurger
 			hud.SetPatternResult(success, score);
 		}
 
+        public void SetPlayerInvincibility(bool invincible)
+        {
+        }
+
 		public void NextFrame(double dt)
 		{
 			hud.NextFrame(dt);
+            invincTimer.Tick(dt);
 			bgSprite.Rotation += (float)bgRotSpeed;
 			if (bgSprite.Rotation >= 360)
 				bgSprite.Rotation -= 360;
@@ -838,6 +884,14 @@ namespace SpiritPurger
 					IsGameComplete = true;
 					gameManager.StateHandled();
 					break;
+                case GAMEREACTION.PLAYER_GOT_INV:
+                    invincTimer.Repurporse((int)InvincDuty.DUTY.FADE_OUT);
+                    gameManager.StateHandled();
+                    break;
+                case GAMEREACTION.PLAYER_LOST_INV:
+                    invincTimer.Repurporse((int)InvincDuty.DUTY.NONE);
+                    gameManager.StateHandled();
+                    break;
 			}
 		}
 
@@ -856,15 +910,15 @@ namespace SpiritPurger
             // Draw the player, boss, and enemies.
             if (gameManager.Lives >= 0 &&
                 !gameManager.PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING))
+                PlayerDuty.DUTY.REVIVAL_FLASH_SHOWING))
             {
                 gameManager.player.Draw(app);
             }
 
             if (gameManager.PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_SHOWING) ||
+                PlayerDuty.DUTY.REVIVAL_FLASH_SHOWING) ||
                 gameManager.PlayerTimer.SamePurpose(
-                PlayerTimerPurpose.PURPOSE.REVIVAL_FLASH_LEAVING))
+                PlayerDuty.DUTY.REVIVAL_FLASH_LEAVING))
             {
                 app.Draw(gameManager.revivalFlash.Sprite);
             }
@@ -908,7 +962,7 @@ namespace SpiritPurger
 
 			// If the game is in the middle of a fade, render the fader.
 			if (gameManager.GameTimer.SamePurpose(
-				GameTimerPurpose.PURPOSE.FADE_IN_FROM_MENU) &&
+				GameDuty.DUTY.FADE_IN_FROM_MENU) &&
 				!gameManager.GameTimer.TimeIsUp())
 			{
 				double maxTime = gameManager.GameTimer.Purpose.GetTime();
@@ -918,7 +972,7 @@ namespace SpiritPurger
 				app.Draw(fullscreenFade);
 			}
 			else if (gameManager.GameTimer.SamePurpose(
-				GameTimerPurpose.PURPOSE.FADE_OUT_TO_MENU) &&
+				GameDuty.DUTY.FADE_OUT_TO_MENU) &&
 				!gameManager.GameTimer.TimeIsUp())
 			{
 				double maxTime = gameManager.GameTimer.Purpose.GetTime();
