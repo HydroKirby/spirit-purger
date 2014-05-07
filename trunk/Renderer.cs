@@ -730,7 +730,8 @@ namespace SpiritPurger
 
 		// Game Sprites. Let the objects have (not own) the sprites so that
 		// the objects can request drawing, swapping, and alterations of sprites.
-		public Sprite bgSprite;
+        protected Texture bgImg;
+		public Sprite bgSpriteBottom, bgSpriteTop;
 		public Sprite borderSprite;
 		public Healthbar bossHealthbar;
 		// This image is generated on the fly. It is shown to fade in and out the screen.
@@ -765,10 +766,26 @@ namespace SpiritPurger
 			}
 
 			// Instantiate various sprites and other renderables.
-			bgSprite = imageManager.GetSprite("bg");
-			bgSprite.Origin = new Vector2f(bgSprite.TextureRect.Width / 2,
-				bgSprite.TextureRect.Height / 2);
-			bgSprite.Position = FieldUpperLeft + FieldSize / 2;
+            // First, generate the background which must be copied twice vertically
+            // into a new sprite we make.
+            bgImg = imageManager.GetImage("bg");
+            //duplicatedBgRenderTexture = new RenderTexture(bgImg.Size.X, bgImg.Size.Y * 2);
+            bgSpriteBottom = new Sprite(bgImg);
+            bgSpriteTop = new Sprite(bgImg);
+
+            //duplicatedBgRenderTexture.Draw(tempSprite);
+            //duplicatedBgRenderTexture.Draw(new Sprite(bgImg, new IntRect(0, (int)bgImg.Size.Y, (int)bgImg.Size.X, (int)bgImg.Size.Y)));
+            //duplicatedBg = duplicatedBgRenderTexture.Texture;
+            //Sprite bgTempSprite = new Sprite(duplicatedBg);
+            //duplicatedBgRenderTexture.Draw(bgTempSprite);
+            //bgTempSprite.Position = new Vector2f(0F, bgImg.Size.Y);
+            //duplicatedBgRenderTexture.Draw(bgTempSprite);
+            //duplicatedBg = duplicatedBgRenderTexture.Texture;
+			//bgSprite = new Sprite(duplicatedBgRenderTexture.Texture);
+            //bgSprite = imageManager.GetSprite("bg");
+			//bgSprite.Origin = new Vector2f(bgSprite.TextureRect.Width / 2,
+				//bgSprite.TextureRect.Height / 2);
+			//bgSprite.Position = FieldUpperLeft + FieldSize / 2;
 			borderSprite = imageManager.GetSprite("border");
 			bossHealthbar = new Healthbar(imageManager);
 			fullscreenFade = new RectangleShape(
@@ -876,9 +893,20 @@ namespace SpiritPurger
 		{
 			hud.NextFrame(dt);
             invincTimer.Tick(dt);
-			bgSprite.Rotation += (float)bgRotSpeed;
-			if (bgSprite.Rotation >= 360)
-				bgSprite.Rotation -= 360;
+            /*
+			bgSprite.Position = new Vector2f(bgSprite.Position.X, bgSprite.Position.Y + (float)bgRotSpeed * 10);
+			if (bgSprite.Position.Y >= bgSprite.TextureRect.Height)
+                bgSprite.Position = new Vector2f(bgSprite.Position.X, bgSprite.Position.Y - bgSprite.TextureRect.Height);
+             * */
+            bgSpriteBottom.Position = new Vector2f(bgSpriteBottom.Position.X,
+                bgSpriteBottom.Position.Y + (float)bgRotSpeed * 10);
+            if (bgSpriteBottom.Position.Y >= bgSpriteBottom.TextureRect.Height)
+            {
+                bgSpriteBottom.Position = new Vector2f(bgSpriteBottom.Position.X,
+                    bgSpriteBottom.Position.Y - bgSpriteBottom.TextureRect.Height);
+            }
+            bgSpriteTop.Position = new Vector2f(bgSpriteBottom.Position.X,
+                bgSpriteBottom.Position.Y + (float)bgRotSpeed * 10 - bgSpriteBottom.TextureRect.Height);
 		}
 
 		public void UpdatePlayer(ref Player p)
@@ -910,7 +938,8 @@ namespace SpiritPurger
 			RenderWindow app = (RenderWindow)sender;
 
             // Draw the background.
-            app.Draw(bgSprite);
+            app.Draw(bgSpriteBottom);
+            app.Draw(bgSpriteTop);
 
             // Draw all aspects related to the gameplay.
             if (!gameManager.bombBlast.IsGone())

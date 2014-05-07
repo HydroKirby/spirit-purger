@@ -176,7 +176,7 @@ namespace SpiritPurger
 				case MUSIC_LIST.SILENT:
 					ret = "silence.ogg"; break;
 				case MUSIC_LIST.TITLE:
-					ret = "title.ogg"; break;
+					ret = "game.ogg"; break;
 				case MUSIC_LIST.GAME:
 					ret = "game.ogg"; break;
 				default:
