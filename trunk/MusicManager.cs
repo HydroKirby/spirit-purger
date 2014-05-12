@@ -107,9 +107,11 @@ namespace SpiritPurger
 					return;
 
 				String filename = GetMusicFilename(value);
-				if (filename.CompareTo("") == 0)
+				if (filename.CompareTo("") == 0 ||
+                    filename.CompareTo(GetMusicFilename(choiceNowPlaying)) == 0)
 				{
-					// There is no music to load.
+					// There is no music to load,
+                    // or the music to load is already playing.
 					// What was requested was an invalid music selection.
 				}
 				else
