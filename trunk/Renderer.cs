@@ -874,21 +874,26 @@ namespace SpiritPurger
 		public void NextFrame(double dt)
 		{
 			hud.NextFrame(dt);
-            invincTimer.Tick(dt);
 
-            // Increment the bgSprite placement.
-            bgSpriteBottom.Position = new Vector2f(bgSpriteBottom.Position.X,
-                bgSpriteBottom.Position.Y + (float)bgRotSpeed * 10);
-            if (bgSpriteBottom.Position.Y >= bgSpriteBottom.TextureRect.Height)
+            if (!IsPaused)
             {
-                // The bgSprite has moved further than its own height, so move
-                // backwards the size of one length of itself.
+                // Update all game rendering things.
+                invincTimer.Tick(dt);
+
+                // Increment the bgSprite placement.
                 bgSpriteBottom.Position = new Vector2f(bgSpriteBottom.Position.X,
+                    bgSpriteBottom.Position.Y + (float)(bgRotSpeed * 300 * dt));
+                if (bgSpriteBottom.Position.Y >= bgSpriteBottom.TextureRect.Height)
+                {
+                    // The bgSprite has moved further than its own height, so move
+                    // backwards the size of one length of itself.
+                    bgSpriteBottom.Position = new Vector2f(bgSpriteBottom.Position.X,
+                        bgSpriteBottom.Position.Y - bgSpriteBottom.TextureRect.Height);
+                }
+                // Draw the bgSprite again exactly one bgSprite's height above bgSprite.
+                bgSpriteTop.Position = new Vector2f(bgSpriteBottom.Position.X,
                     bgSpriteBottom.Position.Y - bgSpriteBottom.TextureRect.Height);
             }
-            // Draw the bgSprite again exactly one bgSprite's height above bgSprite.
-            bgSpriteTop.Position = new Vector2f(bgSpriteBottom.Position.X,
-                bgSpriteBottom.Position.Y + (float)bgRotSpeed * 10 - bgSpriteBottom.TextureRect.Height);
 		}
 
 		public void UpdatePlayer(ref Player p)
