@@ -724,7 +724,6 @@ namespace SpiritPurger
 		private readonly string[] PNG_FILENAMES =
 		{
 			"bg",
-            "bg-floorboard",
 			"border",
 		};
 
@@ -766,26 +765,9 @@ namespace SpiritPurger
 			}
 
 			// Instantiate various sprites and other renderables.
-            // First, generate the background which must be copied twice vertically
-            // into a new sprite we make.
             bgImg = imageManager.GetImage("bg");
-            //duplicatedBgRenderTexture = new RenderTexture(bgImg.Size.X, bgImg.Size.Y * 2);
             bgSpriteBottom = new Sprite(bgImg);
             bgSpriteTop = new Sprite(bgImg);
-
-            //duplicatedBgRenderTexture.Draw(tempSprite);
-            //duplicatedBgRenderTexture.Draw(new Sprite(bgImg, new IntRect(0, (int)bgImg.Size.Y, (int)bgImg.Size.X, (int)bgImg.Size.Y)));
-            //duplicatedBg = duplicatedBgRenderTexture.Texture;
-            //Sprite bgTempSprite = new Sprite(duplicatedBg);
-            //duplicatedBgRenderTexture.Draw(bgTempSprite);
-            //bgTempSprite.Position = new Vector2f(0F, bgImg.Size.Y);
-            //duplicatedBgRenderTexture.Draw(bgTempSprite);
-            //duplicatedBg = duplicatedBgRenderTexture.Texture;
-			//bgSprite = new Sprite(duplicatedBgRenderTexture.Texture);
-            //bgSprite = imageManager.GetSprite("bg");
-			//bgSprite.Origin = new Vector2f(bgSprite.TextureRect.Width / 2,
-				//bgSprite.TextureRect.Height / 2);
-			//bgSprite.Position = FieldUpperLeft + FieldSize / 2;
 			borderSprite = imageManager.GetSprite("border");
 			bossHealthbar = new Healthbar(imageManager);
 			fullscreenFade = new RectangleShape(
@@ -893,18 +875,18 @@ namespace SpiritPurger
 		{
 			hud.NextFrame(dt);
             invincTimer.Tick(dt);
-            /*
-			bgSprite.Position = new Vector2f(bgSprite.Position.X, bgSprite.Position.Y + (float)bgRotSpeed * 10);
-			if (bgSprite.Position.Y >= bgSprite.TextureRect.Height)
-                bgSprite.Position = new Vector2f(bgSprite.Position.X, bgSprite.Position.Y - bgSprite.TextureRect.Height);
-             * */
+
+            // Increment the bgSprite placement.
             bgSpriteBottom.Position = new Vector2f(bgSpriteBottom.Position.X,
                 bgSpriteBottom.Position.Y + (float)bgRotSpeed * 10);
             if (bgSpriteBottom.Position.Y >= bgSpriteBottom.TextureRect.Height)
             {
+                // The bgSprite has moved further than its own height, so move
+                // backwards the size of one length of itself.
                 bgSpriteBottom.Position = new Vector2f(bgSpriteBottom.Position.X,
                     bgSpriteBottom.Position.Y - bgSpriteBottom.TextureRect.Height);
             }
+            // Draw the bgSprite again exactly one bgSprite's height above bgSprite.
             bgSpriteTop.Position = new Vector2f(bgSpriteBottom.Position.X,
                 bgSpriteBottom.Position.Y + (float)bgRotSpeed * 10 - bgSpriteBottom.TextureRect.Height);
 		}
