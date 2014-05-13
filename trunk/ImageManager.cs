@@ -176,7 +176,6 @@ namespace SpiritPurger
 		public Animation(ImageManager imgMan, String filename, ANIM_STYLE style, int speed)
 		{
 			_spriteTransitionBackwards = false;
-			_currentSprite = 0;
 			_imageName = filename;
 			AniSpeed = speed;
 			Style = style;
@@ -185,7 +184,14 @@ namespace SpiritPurger
 			_sprites = imgMan.GetSpriteSheet(filename);
 			if (_sprites.Count == 1)
 				Style = ANIM_STYLE.UNANIMATED;
+            Reset();
 		}
+
+        public void Reset()
+        {
+            _currentSprite = 0;
+            Update(1);
+        }
 
 		public static ANIM_STYLE GetStyleFromString(String str)
 		{
@@ -236,7 +242,8 @@ namespace SpiritPurger
 					}
 				}
 				// Give the old position to the new sprite.
-				_sprites[_currentSprite].Position = oldPos;
+				_sprites[_currentSprite].Position =
+                    new Vector2f(oldPos.X, oldPos.Y);
 				_frame = _anim_speed;
 			}
 		}
@@ -249,7 +256,7 @@ namespace SpiritPurger
 		public void Update(int elapsed, Vector2f pos)
 		{
 			Update(elapsed);
-			_sprites[_currentSprite].Position = pos;
+			_sprites[_currentSprite].Position = new Vector2f(pos.X, pos.Y);
 		}
 
 		public void Draw(RenderWindow app)
@@ -303,6 +310,11 @@ namespace SpiritPurger
 			else if (_state == ANI_STATE.RIGHT)
 				_currAni = _rightAni;
 		}
+
+        public void Reset()
+        {
+            _currAni.Reset();
+        }
 
 		public void Update(int elapsed)
 		{
@@ -358,13 +370,13 @@ namespace SpiritPurger
 
 		protected void SetCurrentAnimation()
 		{
-			if (_state == ANI_STATE.FORWARD)
-				_currAni = _forwardAni;
-			else if (_state == ANI_STATE.LEFT)
-				_currAni = _leftAni;
-			else if (_state == ANI_STATE.RIGHT)
-				_currAni = _rightAni;
+			_currAni = _forwardAni;
 		}
+
+        public void Reset()
+        {
+            _currAni.Reset();
+        }
 
 		public void Update(int elapsed)
 		{

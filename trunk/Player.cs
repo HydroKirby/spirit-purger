@@ -133,6 +133,11 @@ namespace SpiritPurger {
 			Size = new Vector2u(20, 20);
 		}
 
+        public void Reset()
+        {
+            animation.Reset();
+        }
+
 		public void SetHitboxSprite(CenterSprite s)
 		{
 			s.setPosition(Location + Renderer.FieldUpperLeft);
@@ -167,8 +172,9 @@ namespace SpiritPurger {
 			return false;
 		}
 
-		public void Update() {
-			animation.Update(1);
+		public void Update(double ticks=1.0) {
+            if (invincibleCountdown <= 0 && deathCountdown <= 0)
+                animation.Update((int)ticks);
 			timeSinceLastFire++;
 			if (invincibleCountdown > 0)
 				invincibleCountdown--;
@@ -227,12 +233,13 @@ namespace SpiritPurger {
 
     public class Boss : Entity
     {
+        public enum EntityState { NotArrived, Intro, Active, Killed };
         public enum MoveStyle { NoMove, Accel, Decel, Constant }
         protected int updateCount = 0;
         // Ideally, I imagine the next 4 parameters would be in a single
         // script or structure because they each relate to a pattern.
         // This is how much health the boss has during a pattern.
-		public static int[] fullHealth = { 400, 500, 350, 350 };
+		public static int[] fullHealth = { 40, 50, 35, 35 };
         // This is where the boss begins firing from. If the boss is not in
         // this point when the pattern begins, the boss rushes to there.
         // If the point is null, then the boss keeps its position.
@@ -273,12 +280,19 @@ namespace SpiritPurger {
         // Refers to moving towards aimFor.
         protected MoveStyle moveStyle = MoveStyle.NoMove;
 		protected AniBoss animation;
+        protected EntityState _state;
 
         public Boss(AniBoss anim)
-            : base(new Vector2f(), new Vector2u(25, 25))
+            : base(new Vector2f(), new Vector2u(35, 25))
         {
-            health = fullHealth[0];
-			animation = anim;
+            animation = anim;
+            Reset(Location);
+        }
+
+        public EntityState State
+        {
+            get { return _state; }
+            protected set { _state = value; }
         }
 
         public double Speed
@@ -300,6 +314,23 @@ namespace SpiritPurger {
                 VectorLogic.Normalize(direction);
                 this.RefreshVelocity();
             }
+        }
+
+        public void Reset(Vector2f newPos)
+        {
+            Location = newPos;
+            UpdateDisplayPos();
+            animation.Reset();
+            State = EntityState.Intro;
+            currentPattern = -1;
+            NextPattern();
+            health = fullHealth[0];
+        }
+
+        public void DoneWithIntro()
+        {
+            if (State == EntityState.Intro)
+                State = EntityState.Active;
         }
 
         /// <summary>
@@ -332,8 +363,11 @@ namespace SpiritPurger {
             startedPattern = false;
             currentPattern++;
             if (currentPattern >= fullHealth.Length)
+            {
                 // No more patterns are available.
+                State = EntityState.Killed;
                 return false;
+            }
             health = fullHealth[currentPattern];
             moveStyle = MoveStyle.NoMove;
             if (startPoints[currentPattern].X != 0 && startPoints[currentPattern].Y != 0)
@@ -732,7 +766,11 @@ namespace SpiritPurger {
 
 		public void Update(int elapsed)
 		{
-			animation.Update(elapsed);
+            if (State == EntityState.Active)
+                animation.Update(elapsed);
+            else if (State == EntityState.Intro)
+                animation.Update(0);
+            UpdateDisplayPos();
 		}
 
 		public void UpdateDisplayPos()

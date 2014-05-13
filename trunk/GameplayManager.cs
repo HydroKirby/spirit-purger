@@ -203,9 +203,7 @@ namespace SpiritPurger
         public CenterSprite revivalFlashSprite;
 
 		// Boss-related variables.
-		public enum BossState { NotArrived, Intro, Active, Killed };
 		public Boss boss;
-		protected BossState bossState = BossState.Intro;
 		// How long the boss has been doing the intro sequence.
 		public int bossIntroTime;
 
@@ -298,13 +296,10 @@ namespace SpiritPurger
 			player.UpdateDisplayPos();
 			player.deathCountdown = 0;
 			player.invincibleCountdown = 0;
-			boss.Location = new Vector2f(Renderer.FIELD_WIDTH / 2,
-				Renderer.FIELD_HEIGHT / 4);
-			boss.UpdateDisplayPos();
-			boss.currentPattern = -1;
-			boss.NextPattern();
-			patternTime = Boss.patternDuration[boss.currentPattern];
-			bossState = BossState.Intro;
+            player.Reset();
+			boss.Reset(new Vector2f(Renderer.FIELD_WIDTH / 2,
+				Renderer.FIELD_HEIGHT / 4));
+            patternTime = Boss.patternDuration[0];
 			playerBullets.Clear();
 			enemyBullets.Clear();
 			hitSparks.Clear();
@@ -519,7 +514,7 @@ namespace SpiritPurger
 		{
 			List<BulletProp> newBullets;
 
-			if (bossState == BossState.Active)
+			if (boss.State == Boss.EntityState.Active)
 			{
 				if (player.invincibleCountdown <= 0 && !godMode &&
 					Lives >= 0 && Physics.Touches(player, boss))
@@ -556,7 +551,6 @@ namespace SpiritPurger
 						beatThisPattern = true;
 						if (!boss.NextPattern())
 						{
-							bossState = BossState.Killed;
 							gameOver = true;
 							soundManager.QueueToPlay(SoundManager.SFX.BOSS_DESTROYED);
 							ChangeState(REACTION.COMPLETED_GAME);
@@ -573,16 +567,17 @@ namespace SpiritPurger
 					}
 				}
 			}
-			else if (bossState == BossState.Intro)
+			else if (boss.State == Boss.EntityState.Intro)
 			{
 				bossIntroTime++;
 				if (bossIntroTime > GameplayManager.BOSS_INTRO_FRAMES +
 					GameplayManager.BOSS_PRE_INTRO_FRAMES)
 				{
 					// The boss is no longer in the intro sequence.
-					bossState = BossState.Active;
+                    boss.DoneWithIntro();
 					ChangeState(REACTION.BOSS_REFRESH_MAX_HEALTH);
 				}
+                boss.UpdateDisplayPos();
 			}
 		}
 
@@ -826,7 +821,7 @@ namespace SpiritPurger
 						}
 					}
 					// See if bullets hit the boss.
-					if (bossState == BossState.Active && Physics.Touches(boss, bullet))
+					if (boss.State == Boss.EntityState.Active && Physics.Touches(boss, bullet))
 					{
 						hitBoss = true;
 						if (boss.health >= 75)
@@ -940,7 +935,6 @@ namespace SpiritPurger
 						beatThisPattern = true;
 						if (!boss.NextPattern())
 						{
-							bossState = BossState.Killed;
 							gameOver = true;
 							GameTimer.Repurporse(
 								(int)GameDuty.DUTY.WAIT_AFTER_BEAT_GAME);
