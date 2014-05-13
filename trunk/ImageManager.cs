@@ -190,7 +190,7 @@ namespace SpiritPurger
         public void Reset()
         {
             _currentSprite = 0;
-            Update(1);
+            _frame = 0;
         }
 
 		public static ANIM_STYLE GetStyleFromString(String str)

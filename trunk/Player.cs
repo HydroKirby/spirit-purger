@@ -239,7 +239,7 @@ namespace SpiritPurger {
         // Ideally, I imagine the next 4 parameters would be in a single
         // script or structure because they each relate to a pattern.
         // This is how much health the boss has during a pattern.
-		public static int[] fullHealth = { 40, 50, 35, 35 };
+		public static int[] fullHealth = { 400, 500, 350, 350 };
         // This is where the boss begins firing from. If the boss is not in
         // this point when the pattern begins, the boss rushes to there.
         // If the point is null, then the boss keeps its position.
