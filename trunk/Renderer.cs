@@ -949,7 +949,9 @@ namespace SpiritPurger
                 app.Draw(gameManager.revivalFlash.Sprite);
             }
 
-            gameManager.boss.Draw(app);
+            if (gameManager.BossTimer.SamePurpose((int)BossDuty.DUTY.ALIVE) ||
+                gameManager.BossTimer.SamePurpose(BossDuty.DUTY.PATTERN_TRANSITION_PAUSE))
+                gameManager.boss.Draw(app);
             /*
             if (gameManager.bossState == BossState.Active)
                 gameManager.boss.Draw(app);
