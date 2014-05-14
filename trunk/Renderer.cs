@@ -142,6 +142,8 @@ namespace SpiritPurger
         protected DownTimer focusHaloTimer;
 		protected Sprite bg;
 		protected Color commonTextColor;
+        // This appears in the Main Menu to tell the player how to use the menu.
+        protected Text menuUsageLabel;
 		protected List<List<Text>> submenuLabels;
 		protected List<Text> creditsLabels;
         protected List<Text> tutorialLabels;
@@ -186,6 +188,16 @@ namespace SpiritPurger
             focusHaloTimer = new DownTimer(new MenuRenderDuty());
             focusHaloTimer.Repurporse((int)MenuRenderDuty.
                 DUTY.FOCUS_HALO_FADE_TO_TRANSPARENT);
+
+            // Create all labels.
+            menuUsageLabel = new Text(
+                "Press Up/Down to navigate, Left/Right for Options, Z to select, and X to go back.",
+                menuFont, 14);
+            // Center this label horizontally.
+            // Move it up from the bottom of the app screen a little.
+            menuUsageLabel.Position = new Vector2f(
+                (APP_BASE_WIDTH - menuUsageLabel.GetLocalBounds().Width) / 2,
+                APP_BASE_HEIGHT - 20);
 
 			submenuLabels = new List<List<Text>>();
 			MENUITEM[] tempMenuItems;
@@ -620,6 +632,7 @@ namespace SpiritPurger
 		{
 			RenderWindow app = (RenderWindow)sender;
 			app.Draw(bg);
+            app.Draw(menuUsageLabel);
             if (menuManager.CurrentMenu != SUBMENU.TUTORIAL)
                 app.Draw(focusCircle);
 			if (menuManager.CurrentMenu == SUBMENU.OPTIONS)
