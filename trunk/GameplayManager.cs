@@ -92,8 +92,8 @@ namespace SpiritPurger
         {
             switch ((DUTY)purpose)
             {
-                case DUTY.PATTERN_TRANSITION_PAUSE: return 50.0;
-                case DUTY.BOSS_PRE_INTRO_FRAMES: return 1.5;
+                case DUTY.PATTERN_TRANSITION_PAUSE: return 2.0;
+                case DUTY.BOSS_PRE_INTRO_FRAMES: return 1.3;
                 case DUTY.BOSS_INTRO_FRAMES: return 0.5;
                 default: return 0;
             }
@@ -173,7 +173,7 @@ namespace SpiritPurger
 			BOMB_MADE_COMBO, BOMB_LIFETIME_DECREMENT,
 			// Boss-related reactions.
 			BOSS_TOOK_DAMAGE, BOSS_REFRESH_MAX_HEALTH, BOSS_PATTERN_SUCCESS, BOSS_PATTERN_FAIL,
-				BOSS_REFRESH_PATTERN_TIME, BOSS_PATTERN_TIMEOUT,
+				BOSS_REFRESH_PATTERN_TIME, BOSS_PATTERN_STARTED_NEW,
 			// Game-clearing-related reactions.
 			LOST_ALL_LIVES, COMPLETED_GAME, RESET_GAME,
 			// End of list of REACTIONS.
@@ -343,13 +343,16 @@ namespace SpiritPurger
 
 		public void Reset()
 		{
+            PlayerTimer.Repurporse((int)PlayerDuty.DUTY.NONE);
+            GameTimer.Repurporse((int)GameDuty.DUTY.NONE);
+            BossTimer.Repurporse((int)BossDuty.DUTY.NONE);
 			player.UpdateDisplayPos();
 			player.deathCountdown = 0;
 			player.invincibleCountdown = 0;
             player.Reset();
 			boss.Reset(new Vector2f(Renderer.FIELD_WIDTH / 2,
 				Renderer.FIELD_HEIGHT / 4));
-            patternTime = Boss.patternDuration[0];
+            patternTime = 0;
 			playerBullets.Clear();
 			enemyBullets.Clear();
 			hitSparks.Clear();
@@ -369,9 +372,7 @@ namespace SpiritPurger
 			Bombs = 3;
             IsInFocusedMovement = false;
             StartRevival();
-            PlayerTimer.Repurporse((int)PlayerDuty.DUTY.NONE);
-			GameTimer.Repurporse((int)GameDuty.DUTY.NONE);
-            BossTimer.Repurporse((int)BossDuty.DUTY.NONE);
+            StartNextPattern();
 		}
 
 		/// <summary>
@@ -600,8 +601,7 @@ namespace SpiritPurger
                         BossTimer.TimeIsUp())
 					{
 						// Reset the transition frames for the next time.
-                        BossTimer.Repurporse((int)BossDuty.DUTY.ALIVE);
-						beatThisPattern = true;
+                        beatThisPattern = true;
 						if (!boss.NextPattern())
 						{
                             // There are no more boss patterns. The boss is defeated.
@@ -620,6 +620,7 @@ namespace SpiritPurger
 							patternTime =
 								Boss.patternDuration[boss.currentPattern];
 							ChangeState(REACTION.BOSS_REFRESH_MAX_HEALTH);
+                            BossTimer.Repurporse((int)BossDuty.DUTY.ALIVE);
 						}
 					}
 				}
@@ -660,27 +661,48 @@ namespace SpiritPurger
 				soundManager.QueueToPlay(SoundManager.SFX.FANFARE_PATTERN_FAILURE);
 			}
 			ChangeState(REACTION.BOSS_REFRESH_MAX_HEALTH);
-
-            beatThisPattern = true;
-            if (!boss.NextPattern())
-            {
-                // There are no more patterns. The boss was defeated.
-                gameOver = true;
-                GameTimer.Repurporse(
-                    (int)GameDuty.DUTY.WAIT_AFTER_BEAT_GAME);
-                BossTimer.Repurporse(
-                    (int)BossDuty.DUTY.NONE);
-            }
-            else
-            {
-                // Select the next pattern.
-                patternTime = 1 +
-                    Boss.patternDuration[boss.currentPattern];
-                ChangeState(REACTION.BOSS_PATTERN_TIMEOUT);
-                BossTimer.Repurporse(
-                    (int)BossDuty.DUTY.PATTERN_TRANSITION_PAUSE);
-            }
+            BossTimer.Repurporse((int)BossDuty.DUTY.PATTERN_TRANSITION_PAUSE);
+            patternTime = 0;
 		}
+
+        /// <summary>
+        /// Upon beating a boss' pattern, activate the next pattern.
+        /// </summary>
+        protected void ActivateNextPattern()
+        {
+            // Check if we were waiting between patterns.
+            if (BossTimer.SamePurpose(BossDuty.DUTY.PATTERN_TRANSITION_PAUSE) &&
+                BossTimer.TimeIsUp())
+            {
+                // Load the next pattern.
+                beatThisPattern = true;
+                if (!boss.NextPattern())
+                {
+                    // There are no more patterns. The boss was defeated.
+                    gameOver = true;
+                    GameTimer.Repurporse(
+                        (int)GameDuty.DUTY.WAIT_AFTER_BEAT_GAME);
+                    BossTimer.Repurporse(
+                        (int)BossDuty.DUTY.NONE);
+                }
+                else
+                {
+                    StartNextPattern();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Make the boss begin the next pattern.
+        /// </summary>
+        private void StartNextPattern()
+        {
+            patternTime = 1 +
+                Boss.patternDuration[boss.currentPattern];
+            ChangeState(REACTION.BOSS_PATTERN_STARTED_NEW);
+            BossTimer.Repurporse(
+                (int)BossDuty.DUTY.ALIVE);
+        }
 
 		protected void UpdateBomb(ArrayList toRemove)
 		{
@@ -999,9 +1021,7 @@ namespace SpiritPurger
 
 		protected void UpdateBossPatternTime(double ticks)
 		{
-			if (patternTime > 0 && !(
-                BossTimer.SamePurpose((int)BossDuty.DUTY.PATTERN_TRANSITION_PAUSE) &&
-                BossTimer.TimeIsUp()))
+			if (patternTime > 0)
 			{
 				prevSecondUpdateFraction += ticks;
 				if (prevSecondUpdateFraction >= 1.0)
@@ -1104,6 +1124,7 @@ namespace SpiritPurger
             // Update the boss' timer.
             BossTimer.Tick(ticks);
 			UpdateBossPatternTime(ticks);
+            ActivateNextPattern();
 			MovePlayer();
 
 			if (bombComboTimeCountdown >= 0)

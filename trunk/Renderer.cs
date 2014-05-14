@@ -949,9 +949,17 @@ namespace SpiritPurger
                 app.Draw(gameManager.revivalFlash.Sprite);
             }
 
-            if (gameManager.BossTimer.SamePurpose((int)BossDuty.DUTY.ALIVE) ||
-                gameManager.BossTimer.SamePurpose(BossDuty.DUTY.PATTERN_TRANSITION_PAUSE))
+            if (gameManager.BossTimer.SamePurpose(BossDuty.DUTY.ALIVE))
+            {
                 gameManager.boss.Draw(app);
+            }
+            else if (gameManager.BossTimer.SamePurpose(BossDuty.DUTY.PATTERN_TRANSITION_PAUSE))
+            {
+                if ((gameManager.BossTimer.Frame * 1000) % 4 != 0)
+                {
+                    gameManager.boss.Draw(app);
+                }
+            }
             /*
             if (gameManager.bossState == BossState.Active)
                 gameManager.boss.Draw(app);

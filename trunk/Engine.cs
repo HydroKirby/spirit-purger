@@ -112,9 +112,9 @@ namespace SpiritPurger
 		/// Gives the timer a new meaning and resets the timer.
 		/// </summary>
 		/// <param name="purpose">The new specific purpose as an int.</param>
-		public void Repurporse(int purpose)
+		public void Repurporse(object purpose)
 		{
-			Purpose.SetDuty(purpose);
+			Purpose.SetDuty((int)purpose);
 			Reset();
 		}
 
@@ -122,11 +122,23 @@ namespace SpiritPurger
 		/// Verifies that the passed purpose is the same one the Timer is set to.
 		/// </summary>
 		/// <param name="purpose">The queried purpose.</param>
-		/// <returns>True if the purposes are the same</returns>
+		/// <returns>True if the purposes are the same.</returns>
 		public bool SamePurpose(object purpose)
 		{
 			return (int)Purpose.GetDuty() == (int)purpose;
 		}
+
+        /// <summary>
+        /// Verifies that the passed purpose is the same one the Timer is set to.
+        /// Checks if the timer's duty is the intended duty and if its time is up.
+        /// It is the same as calling SamePurpose() && TimeIsUp().
+        /// </summary>
+        /// <param name="purpose">The queried purpose.</param>
+        /// <returns>True if the purposes are the same and the time is up.</returns>
+        public bool DidDuty(object purpose)
+        {
+            return SamePurpose(purpose) && TimeIsUp();
+        }
 	}
 
     /// <summary>
@@ -620,7 +632,7 @@ namespace SpiritPurger
 					gameRenderer.SetPatternResult(false, 5000);
 					gameManager.StateHandled();
 					break;
-				case GAMEREACTION.BOSS_PATTERN_TIMEOUT:
+				case GAMEREACTION.BOSS_PATTERN_STARTED_NEW:
 					gameRenderer.bossHealthbar.MaxHealth =
 						gameManager.boss.health;
 					gameManager.StateHandled();
@@ -630,7 +642,8 @@ namespace SpiritPurger
 					gameManager.StateHandled();
 					break;
 				case GAMEREACTION.REFRESH_SCORE:
-					gameRenderer.SetScore(gameManager.Score);
+					//gameRenderer.SetScore(gameManager.Score);
+                    gameRenderer.SetScore((int)gameManager.BossTimer.Purpose.GetDuty());
 					gameManager.StateHandled();
 					break;
 				case GAMEREACTION.REFRESH_BULLET_COUNT:
