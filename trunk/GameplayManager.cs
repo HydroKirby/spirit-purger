@@ -984,7 +984,7 @@ namespace SpiritPurger
 						player.Location.X - 4,
 						player.Location.Y),
 						VectorLogic.AngleToVector(VectorLogic.Radians(270)),
-						9.0);
+						20.0);
 					Bullet bullet = bulletCreator.MakeBullet(prop);
 					playerBullets.Add(bullet);
 					prop.Renew();

@@ -239,15 +239,15 @@ namespace SpiritPurger {
         // Ideally, I imagine the next 4 parameters would be in a single
         // script or structure because they each relate to a pattern.
         // This is how much health the boss has during a pattern.
-		public static int[] fullHealth = { 400, 500, 350, 350 };
+        public static int[] fullHealth = { 500, 350, 350, 550, };
         // This is where the boss begins firing from. If the boss is not in
         // this point when the pattern begins, the boss rushes to there.
         // If the point is null, then the boss keeps its position.
         public static Vector2f[] startPoints = {
-			new Vector2f(145.0F, 72.5F),
 			new Vector2f(145.0F, 120.0F),
 			new Vector2f(145.0F, 72.5F),
 			new Vector2f(),
+            new Vector2f(145.0F, 72.5F),
 		};
         // This is how long the boss waits before initiating a pattern's
         // attack. During this time, the assigned startPoints may be reached.
@@ -449,7 +449,7 @@ namespace SpiritPurger {
         /// the player. The line has a half-dozen pairs of adjacent bullets
         /// to punish reckless running around.
         /// </summary>
-		protected bool UpdatePtrn0(out List<BulletProp> newBullets,
+		protected bool UpdatePtrn3(out List<BulletProp> newBullets,
             Vector2f playerPos, Random rand)
         {
 			newBullets = new List<BulletProp>();
@@ -491,7 +491,7 @@ namespace SpiritPurger {
                     // Store the angle towards the player in vard1.
                     vard1 = VectorLogic.GetDirection(playerPos, Location);
                 // Make a line of bullets aimed at the player.
-				prop = new BulletProp(6, Location,
+				prop = new BulletProp(10, Location,
 					VectorLogic.AngleToVector(vard1), 1.7);
 				newBullets.Add(prop);
                 if (updateCount % 10 == 3)
@@ -517,7 +517,7 @@ namespace SpiritPurger {
         /// Stays in place and fires everywhere randomly. Occasionally shoots
         /// a line of large bullets aimed at the player.
         /// </summary>
-		protected bool UpdatePtrn1(out List<BulletProp> newBullets,
+		protected bool UpdatePtrn0(out List<BulletProp> newBullets,
             Vector2f playerPos, Random rand)
         {
 			newBullets = new List<BulletProp>();
@@ -557,7 +557,7 @@ namespace SpiritPurger {
         /// player's safety zone. A twisting cross of bullets is made
         /// continuously.
         /// </summary>
-		protected bool UpdatePtrn2(out List<BulletProp> newBullets,
+		protected bool UpdatePtrn1(out List<BulletProp> newBullets,
             Vector2f playerPos, Random rand)
         {
 			newBullets = new List<BulletProp>();
@@ -610,11 +610,11 @@ namespace SpiritPurger {
 			{
 				double towardsPlayer = VectorLogic.GetDirection(playerPos,
 															 Location);
-				// Make a ring of 10 bullets. One bullet is aimed at the player.
-				for (int i = 0; i < 11; i++)
+				// Make a ring of 25 bullets. One bullet is aimed at the player.
+				for (int i = 0; i < 26; i++)
 				{
 					Vector2f v = VectorLogic.AngleToVector(towardsPlayer +
-						VectorLogic.Radians(i / 10.0 * 360));
+						VectorLogic.Radians(i / 25.0 * 360));
 					newBullets.Add(new BulletProp(13, Location, v, 3.0));
 				}
 			}
@@ -649,7 +649,7 @@ namespace SpiritPurger {
         /// angles. Upon stopping, a string of bullets is aimed at the player.
         /// While idle, a cross of slow, tiny bullets are fired continuously.
         /// </summary>
-		protected bool UpdatePtrn3(out List<BulletProp> newBullets,
+		protected bool UpdatePtrn2(out List<BulletProp> newBullets,
             Vector2f playerPos, Random rand)
         {
 			newBullets = new List<BulletProp>();
@@ -686,11 +686,11 @@ namespace SpiritPurger {
 				{
 					// vari1 types 0 and 1 have colorIndex 0.
 					// vari1 type 2 has a colorIndex of 1.
-					prop = new BulletProp((int)Math.Max(vari1 - 1, 0) + 5,
+					prop = new BulletProp((int)Math.Max(vari1 * 2, 0) + 5,
 						Location, VectorLogic.AngleToVector(angle), i + 0.5);
 					newBullets.Add(prop);
 					// Make a small trailing bullet.
-					prop = new BulletProp((int)Math.Max(vari1 - 1, 0),
+					prop = new BulletProp((int)Math.Max(vari1 * 2, 0),
 						Location, VectorLogic.AngleToVector(angle), i + 1);
 					newBullets.Add(prop);
 				}
@@ -710,14 +710,14 @@ namespace SpiritPurger {
                 if (vari1 >= 3)
                     vari1 = 0;
             }
-            if (updateCount == 30)
+            if (updateCount == 20)
                 moveStyle = MoveStyle.NoMove;
             if (moveStyle == MoveStyle.NoMove)
             {
                 // Shoot a cross of bullets - something to tease the player
                 //   into grazing.
-				prop = new BulletProp(4, Location,
-					VectorLogic.AngleToVector(0), 1.5);
+				prop = new BulletProp(10, Location,
+					VectorLogic.AngleToVector(0), 3.0);
 				newBullets.Add(prop);
 				// Aimed down.
 				prop = new BulletProp(prop, VectorLogic.AngleToVector(Math.PI / 2.0));
@@ -730,7 +730,7 @@ namespace SpiritPurger {
 				newBullets.Add(prop);
             }
 
-            if (updateCount >= 51)
+            if (updateCount >= 40)
                 updateCount = 1;
             return movedToDest;
         }
