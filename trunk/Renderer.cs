@@ -1080,7 +1080,10 @@ namespace SpiritPurger
             foreach (Bullet bullet in gameManager.enemyBullets)
                 app.Draw(bullet.Sprite);
 
-            if (gameManager.IsInFocusedMovement)
+            if (gameManager.IsInFocusedMovement && (
+                gameManager.PlayerTimer.SamePurpose(PlayerDuty.DUTY.DURING_BOMB_INVINCIBLE) ||
+                gameManager.PlayerTimer.SamePurpose(PlayerDuty.DUTY.NONE) ||
+                gameManager.PlayerTimer.SamePurpose(PlayerDuty.DUTY.INVINCIBLE)) )
                 app.Draw(gameManager.player.hitBoxSprite);
 
             // Draw the overhead elements like the HUD and border.
