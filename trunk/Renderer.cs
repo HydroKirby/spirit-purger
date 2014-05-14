@@ -998,7 +998,9 @@ namespace SpiritPurger
             }
             else if (gameManager.BossTimer.SamePurpose(BossDuty.DUTY.PATTERN_TRANSITION_PAUSE))
             {
-                gameManager.boss.Animate.Draw(app);
+                // Cause the boss to flash during pattern transitions.
+                if ((int)(gameManager.BossTimer.Frame * 30) % 2 == 0)
+                    gameManager.boss.Animate.Draw(app);
             }
             else if (gameManager.BossTimer.SamePurpose(BossDuty.DUTY.BOSS_INTRO_FRAMES))
             {
