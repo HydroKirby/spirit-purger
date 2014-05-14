@@ -819,6 +819,10 @@ namespace SpiritPurger
 		public void Reset()
 		{
 			IsGameComplete = false;
+            IsGameOver = false;
+            IsPaused = false;
+            BombComboTimeCountdown = 0;
+            hud.Reset();
 		}
 
 		public Sprite GetSprite(string key)
@@ -1120,7 +1124,6 @@ namespace SpiritPurger
 			SetBombCombo(0, 0);
 			SetPatternTime(0);
 			SetPatternResult(false, 0);
-			timeLeftToShowPatternResult = 0;
 
 			// Create the labels that are only created once.
 			labelGameOver = new Text("Game Over... Press Shoot", menuFont, 16);
@@ -1143,7 +1146,14 @@ namespace SpiritPurger
                     (int)(FIELD_CENTER_Y + 15 * i));
                 pauseLabels[i].Color = commonTextColor;
             }
+
+            Reset();
 		}
+
+        public void Reset()
+        {
+            timeLeftToShowPatternResult = 0;
+        }
 
 		public void SetScore(long val)
 		{
