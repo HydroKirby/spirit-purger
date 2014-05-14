@@ -144,6 +144,7 @@ namespace SpiritPurger
 		protected Color commonTextColor;
 		protected List<List<Text>> submenuLabels;
 		protected List<Text> creditsLabels;
+        protected List<Text> tutorialLabels;
 		// Separate the volume labels because they are generated separately.
 		protected Text musicVolLabel, soundVolLabel;
 		protected const int MENU_FONT_SIZE = 24;
@@ -260,24 +261,23 @@ namespace SpiritPurger
 
 			// Add the names of all developers as labels.
 			creditsLabels = new List<Text>();
-			label = MakeTextInstance(MENUITEM.CREDIT_PROGRAMMER, 0);
-			creditsLabels.Add(label);
-			label = MakeTextInstance(MENUITEM.CREDIT_LARRY, 0);
-			creditsLabels.Add(label);
-			label = MakeTextInstance(MENUITEM.CREDIT_ART, 1);
-			creditsLabels.Add(label);
-			label = MakeTextInstance(MENUITEM.CREDIT_LUCY, 1);
-			creditsLabels.Add(label);
-			label = MakeTextInstance(MENUITEM.CREDIT_SFX, 2);
-			creditsLabels.Add(label);
-			label = MakeTextInstance(MENUITEM.CREDIT_SOUND_JAY, 2);
-			creditsLabels.Add(label);
-            label = MakeTextInstance(MENUITEM.CREDIT_MUSIC, 3);
-            creditsLabels.Add(label);
-            label = MakeTextInstance(MENUITEM.CREDIT_CAREY, 3);
-            creditsLabels.Add(label);
-			label = MakeTextInstance(MENUITEM.CREDIT_BITSTREAM_VERA, 4);
-			creditsLabels.Add(label);
+			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_PROGRAMMER, 0));
+            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_LARRY, 0));
+			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_ART, 1));
+			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_LUCY, 1));
+			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_SFX, 2));
+			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_SOUND_JAY, 2));
+            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_MUSIC, 3));
+            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_CAREY, 3));
+			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_BITSTREAM_VERA, 4));
+
+            // Add the descriptions for each button as labels.
+            tutorialLabels = new List<Text>();
+            tutorialLabels.Add(MakeTextInstance(MENUITEM.TUTORIAL_MOVE, 0));
+            tutorialLabels.Add(MakeTextInstance(MENUITEM.TUTORIAL_SLOW, 1));
+            tutorialLabels.Add(MakeTextInstance(MENUITEM.TUTORIAL_SHOOT, 2));
+            tutorialLabels.Add(MakeTextInstance(MENUITEM.TUTORIAL_BOMB, 3));
+            tutorialLabels.Add(MakeTextInstance(MENUITEM.TUTORIAL_PAUSE, 4));
 			
 			// Make the volume labels separately. They are generated specially, so they
 			// are not part of the full list of labels.
@@ -514,6 +514,26 @@ namespace SpiritPurger
                 case MENUITEM.CREDIT_CAREY:
                     ret = MakeTextInstance("MATT CAREY", depth, MENU_ITEM_POSITION.CREDIT_RIGHT);
                     break;
+                case MENUITEM.TUTORIAL_MOVE:
+                    ret = MakeTextInstance("ARROW KEYS: MOVE AROUND GAME FIELD",
+                        depth, MENU_ITEM_POSITION.CREDIT_LEFT);
+                    break;
+                case MENUITEM.TUTORIAL_SLOW:
+                    ret = MakeTextInstance("SHIFT: HOLD TO MOVE SLOWLY",
+                        depth, MENU_ITEM_POSITION.CREDIT_LEFT);
+                    break;
+                case MENUITEM.TUTORIAL_SHOOT:
+                    ret = MakeTextInstance("Z KEY: HOLD TO SHOOT",
+                        depth, MENU_ITEM_POSITION.CREDIT_LEFT);
+                    break;
+                case MENUITEM.TUTORIAL_BOMB:
+                    ret = MakeTextInstance("X KEY: PRESS TO USE A BOMB",
+                        depth, MENU_ITEM_POSITION.CREDIT_LEFT);
+                    break;
+                case MENUITEM.TUTORIAL_PAUSE:
+                    ret = MakeTextInstance("ESCAPE: PRESS TO TOGGLE PAUSE",
+                        depth, MENU_ITEM_POSITION.CREDIT_LEFT);
+                    break;
 				case MENUITEM.EXIT_ABOUT: ret = MakeTextInstance("RETURN", depth); break;
 				case MENUITEM.EXIT_TUTORIAL: ret = MakeTextInstance("RETURN", depth); break;
 				case MENUITEM.EXIT_CREDITS: ret = MakeTextInstance("RETURN", depth); break;
@@ -600,7 +620,8 @@ namespace SpiritPurger
 		{
 			RenderWindow app = (RenderWindow)sender;
 			app.Draw(bg);
-			app.Draw(focusCircle);
+            if (menuManager.CurrentMenu != SUBMENU.TUTORIAL)
+                app.Draw(focusCircle);
 			if (menuManager.CurrentMenu == SUBMENU.OPTIONS)
 			{
 				// Draw the Options menu in a special way.
@@ -638,32 +659,41 @@ namespace SpiritPurger
 			}
 			else if (menuManager.CurrentMenu == SUBMENU.CREDITS)
 			{
+                // Draw only the labels for the credits.
 				foreach (Text label in creditsLabels)
 				{
 					app.Draw(label);
 				}
 			}
-			else
-			{
-				foreach (Text label in submenuLabels[(int)menuManager.CurrentMenu])
-				{
-					app.Draw(label);
-				}
-			}
+            else if (menuManager.CurrentMenu == SUBMENU.TUTORIAL)
+            {
+                // Draw only the labels for the tutorial.
+                foreach (Text label in tutorialLabels)
+                    app.Draw(label);
+            }
+            else
+            {
+                foreach (Text label in submenuLabels[(int)menuManager.CurrentMenu])
+                {
+                    app.Draw(label);
+                }
+            }
 
 			// If we are doing a fade, render the fader.
 			if (menuManager.MenuTimer.SamePurpose(MenuDuty.DUTY.FADE_IN))
 			{
 				double maxTime = menuManager.MenuTimer.Purpose.GetTime();
 				double fraction = menuManager.MenuTimer.Frame / maxTime;
-				fullscreenFade.FillColor = new Color(0, 0, 0, (byte)(255 * fraction));
+				fullscreenFade.FillColor = new Color(0, 0, 0, (byte)(255 *
+                    menuManager.MenuTimer.PercentRemaining()));
 				app.Draw(fullscreenFade);
 			}
 			else if (menuManager.MenuTimer.SamePurpose(MenuDuty.DUTY.FADE_OUT_TO_GAMEPLAY))
 			{
 				double maxTime = menuManager.MenuTimer.Purpose.GetTime();
 				double fraction = menuManager.MenuTimer.Frame / maxTime;
-				fullscreenFade.FillColor = new Color(0, 0, 0, (byte)(255 * (1.0 - fraction)));
+				fullscreenFade.FillColor = new Color(0, 0, 0, (byte)(255 *
+                    menuManager.MenuTimer.PercentCompleted()));
 				app.Draw(fullscreenFade);
 			}
 		}
