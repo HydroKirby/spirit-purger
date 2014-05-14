@@ -92,12 +92,6 @@ namespace SpiritPurger {
 		// It is not related to the player's width or height.
 		public Hitbox hitbox;
 		protected uint radius = 2;
-		// How many frames to be waited after being hit. It stays 0 when not in
-		// use and counts down from DEATH_SEQUENCE_FRAMES when initiated.
-		// The player can't move during the death sequence. The death sequence
-		// transitions immediately into the reentry sequence.
-		public int deathCountdown = 0;
-		public int invincibleCountdown = 0;
 		protected AniPlayer animation;
 		public CenterSprite hitBoxSprite;
 		protected STATE _state;
@@ -173,62 +167,13 @@ namespace SpiritPurger {
 		}
 
 		public void Update(double ticks=1.0) {
-            if (invincibleCountdown <= 0 && deathCountdown <= 0)
-                animation.Update((int)ticks);
 			timeSinceLastFire++;
-			if (invincibleCountdown > 0)
-				invincibleCountdown--;
-			if (deathCountdown > 0)
-				deathCountdown--;
 		}
 
 		public void Draw(RenderWindow app)
 		{
 			animation.Draw(app);
 		}
-
-        /*
-		public override void Draw(Graphics g) {
-            g.DrawImage(sprite, DrawLocation);
-            return;
-
-			SolidBrush solidBrush;
-			if (deathCountdown != 0) {
-				// Half of the time it takes to do the death sequence.
-				double halfFrames = DEATH_SEQUENCE_FRAMES / 2.0;
-				// The color goes from normal to black. Beyond the halfway
-				// point, the alpha goes from fully visible to invisible.
-				if (deathCountdown > halfFrames)
-					solidBrush = new SolidBrush(Color.FromArgb(
-						255, 0, 0, (int) ((deathCountdown - halfFrames) /
-						                  halfFrames * 255)));
-				else
-					// Be pitch black. Go from visible to invisible.
-					solidBrush = new SolidBrush(Color.FromArgb(
-						(int) ((double) deathCountdown / halfFrames * 255),
-						0, 0, 0));
-			} else if (invincibleCountdown != 0) {
-				// Fade in and out of green a bit. This formula circulates
-				// every 10 frames.
-
-				// This is the ones-digit of invincibleCountdown.
-				int framePortion = (int) (invincibleCountdown % 10);
-				int val;
-				if (framePortion <= 5)
-					// Fade-out gradually.
-					val = 255 - framePortion * 30;
-				else
-					// Fade-in gradually. num + max - 2 * num is a formula that
-					// makes smaller output as num gets bigger.
-					val = 255 - (framePortion + 10 - 2 * framePortion) * 30;
-				solidBrush = new SolidBrush(Color.FromArgb(
-					val, 0, 255 - val, 255));
-			} else
-				solidBrush = new SolidBrush(Color.Blue);
-			g.FillRectangle(solidBrush, new Rectangle(DrawLocation, Size));
-			solidBrush.Dispose();
-		}
-         */
 	}
 
     public class Boss : Entity

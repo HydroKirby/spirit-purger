@@ -1183,7 +1183,9 @@ namespace SpiritPurger
 
 			// Create the labels that are only created once.
 			labelGameOver = new Text("Game Over... Press Shoot", menuFont, 16);
-			labelGameOver.Position = new Vector2f(70, 70);
+			labelGameOver.Position = new Vector2f(
+                (int)(FIELD_CENTER_X - labelGameOver.GetLocalBounds().Width / 2),
+                FIELD_TOP + 40);
             labelGameOver.Color = commonTextColor;
 
             pauseLabels = new List<Text>(3);

@@ -625,6 +625,11 @@ namespace SpiritPurger
 						gameManager.bombComboTimeCountdown;
 					gameManager.StateHandled();
 					break;
+                case GAMEREACTION.PLAYER_GOT_HIT:
+                    gameManager.PlayerTimer.Repurporse(PlayerDuty.DUTY.DEATH_SEQUENCE_FRAMES);
+                    gameManager.beatThisPattern = false;
+                    soundManager.QueueToPlay(SoundManager.SFX.PLAYER_TOOK_DAMAGE);
+                    break;
 				case GAMEREACTION.BOSS_REFRESH_MAX_HEALTH:
 					// Tell the renderer the new health value.
 					gameRenderer.bossHealthbar.MaxHealth =

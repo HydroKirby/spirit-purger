@@ -22,6 +22,10 @@ namespace SpiritPurger
             REVIVAL_FLASH_LEAVING,
             // Invinciblity time after revival.
             INVINCIBLE,
+            // Time after revival where the player is still invincible.
+            POST_DEATH_INVINC_FRAMES,
+            // The player was hit. Animate that, but don't allow movement.
+            DEATH_SEQUENCE_FRAMES,
 		}
 
         private DUTY _duty;
@@ -30,12 +34,21 @@ namespace SpiritPurger
 
 		public PlayerDuty() { }
 
+        /// <summary>
+        /// Gets how long this timer is intended to run for.
+        /// </summary>
+        /// <returns>The time based on the assigned Duty.</returns>
 		public override double GetTime()
 		{
 			// Interpret Purpose as the local variant of DUTY in this class.
             return GetTime((int)GetDuty());
 		}
 
+        /// <summary>
+        /// Gets how long the timer would run for based on the passed Duty.
+        /// </summary>
+        /// <param name="purpose">Which duty to give the timer.</param>
+        /// <returns>The time based on the assigned Duty.</returns>
         public static new double GetTime(int purpose)
         {
             switch ((DUTY)purpose)
@@ -43,6 +56,8 @@ namespace SpiritPurger
                 case DUTY.REVIVAL_FLASH_SHOWING: return 0.3;
                 case DUTY.REVIVAL_FLASH_LEAVING: return 0.3;
                 case DUTY.INVINCIBLE: return 2.0;
+                case DUTY.POST_DEATH_INVINC_FRAMES: return 1.0;
+                case DUTY.DEATH_SEQUENCE_FRAMES: return 0.5;
                 default: return 0;
             }
         }
@@ -141,10 +156,6 @@ namespace SpiritPurger
 
 	public class GameplayManager : Subject
 	{
-		// After dying, this is how long the player automatically moves back
-		// up to the playfield.
-		public const int POST_DEATH_INVINC_FRAMES =
-			50 + Player.DEATH_SEQUENCE_FRAMES + 40;
         // The time to show the bomb combo score after a bomb wears off.
         public const int BOMB_COMBO_DISPLAY_FRAMES = 270;
 
@@ -164,6 +175,8 @@ namespace SpiritPurger
 			REFRESH_SCORE, REFRESH_BULLET_COUNT, REFRESH_LIVES, REFRESH_BOMBS,
             // Tell the renderer that the player's invincibility status has changed.
             PLAYER_GOT_INV, PLAYER_LOST_INV,
+            // The player either touched a bullet or touched an enemy.
+            PLAYER_GOT_HIT,
 			// Bomb-related reactions.
 			BOMB_MADE_COMBO, BOMB_LIFETIME_DECREMENT,
 			// Boss-related reactions.
@@ -339,10 +352,8 @@ namespace SpiritPurger
             PlayerTimer.Repurporse((int)PlayerDuty.DUTY.NONE);
             GameTimer.Repurporse((int)GameDuty.DUTY.NONE);
             BossTimer.Repurporse((int)BossDuty.DUTY.NONE);
-			player.UpdateDisplayPos();
-			player.deathCountdown = 0;
-			player.invincibleCountdown = 0;
-            player.Reset();
+			player.Reset();
+            player.UpdateDisplayPos();
 			boss.Reset(new Vector2f(Renderer.FIELD_WIDTH / 2,
 				Renderer.FIELD_HEIGHT / 4));
             patternTime = 0;
@@ -380,10 +391,11 @@ namespace SpiritPurger
 		{
 			// Act on states that disable player movement first.
             IsInFocusedMovement = false;
-            if (player.deathCountdown > 0)
+            if (PlayerTimer.SamePurpose(PlayerDuty.DUTY.DEATH_SEQUENCE_FRAMES))
             {
-                if (player.deathCountdown == 1)
+                if (PlayerTimer.TimeIsUp())
                 {
+                    // Death animating is over with. Reduce lives and revive.
                     Lives--;
                     if (Lives < 0)
                     {
@@ -397,10 +409,16 @@ namespace SpiritPurger
                     }
                 }
                 else
+                {
+                    // We are still animating death, so disallow movement.
                     return;
+                }
             }
+
             if (Lives < 0)
-				return;
+                // Game Over. Disallow movement.
+                return;
+
             if (PlayerTimer.SamePurpose(
                 PlayerDuty.DUTY.REVIVAL_FLASH_SHOWING))
             {
@@ -427,7 +445,6 @@ namespace SpiritPurger
             else if (PlayerTimer.SamePurpose(
                 PlayerDuty.DUTY.REVIVAL_FLASH_LEAVING))
             {
-                // 
                 if (PlayerTimer.TimeIsUp())
                 {
                     PlayerTimer.Repurporse(
@@ -451,6 +468,7 @@ namespace SpiritPurger
                 ChangeState(REACTION.PLAYER_LOST_INV);
             }
 
+            // Move due to player input.
             IsInFocusedMovement = keys.slow > 0;
 			if (keys.Horizontal() != 0)
 			{
@@ -469,7 +487,6 @@ namespace SpiritPurger
 						player.Location = new Vector2f(Renderer.FIELD_WIDTH - player.HalfSize.X,
 							player.Location.Y);
 				}
-				player.UpdateDisplayPos();
 			}
 
 			if (keys.Vertical() != 0)
@@ -489,7 +506,6 @@ namespace SpiritPurger
 						player.Location = new Vector2f(player.Location.X,
 							Renderer.FIELD_HEIGHT - player.HalfSize.Y);
 				}
-				player.UpdateDisplayPos();
 			}
 		}
 
@@ -504,7 +520,6 @@ namespace SpiritPurger
             // by the gameplay frame.
             player.Location = new Vector2f(Renderer.FIELD_WIDTH / 2,
                 Renderer.FIELD_HEIGHT / 6 * 5);
-            player.UpdateDisplayPos();
 
             // Create the revival effect's "bullet".
             revivalFlash.location = player.Location;
@@ -542,14 +557,12 @@ namespace SpiritPurger
 					newBullets.Clear();
 				}
 
-				if (player.invincibleCountdown <= 0 && !godMode &&
-					Lives >= 0 && Physics.Touches(player, enemy))
+                // Check if the player touched an enemy.
+				if (!godMode && Lives >= 0 && Physics.Touches(player, enemy) &&
+                    PlayerTimer.SamePurpose(PlayerDuty.DUTY.NONE))
 				{
 					// The player took damage.
-					player.invincibleCountdown = GameplayManager.POST_DEATH_INVINC_FRAMES;
-					player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
-					beatThisPattern = false;
-					soundManager.QueueToPlay(SoundManager.SFX.PLAYER_TOOK_DAMAGE);
+                    ChangeState(REACTION.PLAYER_GOT_HIT);
 				}
 			}
 		}
@@ -561,14 +574,11 @@ namespace SpiritPurger
 			if (boss.State == Boss.EntityState.Active)
 			{
                 // Check if the player touched the boss.
-				if (player.invincibleCountdown <= 0 && !godMode &&
-					Lives >= 0 && Physics.Touches(player, boss))
+                if (!godMode && Lives >= 0 && Physics.Touches(player, boss) &&
+                    PlayerTimer.SamePurpose(PlayerDuty.DUTY.NONE))
 				{
 					// The player took damage.
-					player.invincibleCountdown = GameplayManager.POST_DEATH_INVINC_FRAMES;
-					player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
-					beatThisPattern = false;
-					soundManager.QueueToPlay(SoundManager.SFX.PLAYER_TOOK_DAMAGE);
+                    ChangeState(REACTION.PLAYER_GOT_HIT);
 				}
 
                 // Check if the boss is still alive.
@@ -784,7 +794,7 @@ namespace SpiritPurger
 				// Disable the bomb.
 				bombBlast.Kill();
 				// Give the player a little leeway after the blast.
-				player.invincibleCountdown = 20;
+                PlayerTimer.Repurporse(PlayerDuty.DUTY.INVINCIBLE);
 			}
 
 			ChangeState(REACTION.REFRESH_SCORE);
@@ -831,7 +841,7 @@ namespace SpiritPurger
 				if (bullet.IsOutside(Renderer.FieldSize, 30))
 					// Build a list of "dead" bullets.
 					toRemove.Add(i);
-				else if (player.invincibleCountdown <= 0 && Lives >= 0 &&
+				else if (PlayerTimer.SamePurpose(PlayerDuty.DUTY.NONE) && Lives >= 0 &&
 						 Math.Abs(player.Location.Y - bullet.location.Y) <=
 						 player.Size.X + bullet.Radius)
 				{
@@ -871,11 +881,7 @@ namespace SpiritPurger
 							Physics.Touches(bullet, player.hitbox))
 						{
 							// The player was hit by a bullet.
-							player.invincibleCountdown =
-								GameplayManager.POST_DEATH_INVINC_FRAMES;
-							player.deathCountdown = Player.DEATH_SEQUENCE_FRAMES;
-							beatThisPattern = false;
-							soundManager.QueueToPlay(SoundManager.SFX.PLAYER_TOOK_DAMAGE);
+                            ChangeState(REACTION.PLAYER_GOT_HIT);
 						}
 					}
 				}
@@ -969,12 +975,8 @@ namespace SpiritPurger
 
 		protected void ShootPlayerBullet()
 		{
-			if (keys.shoot > 0 && player.deathCountdown <= 0 &&
-                (PlayerTimer.TimeIsUp() || !(PlayerTimer.SamePurpose(
-                PlayerDuty.DUTY.REVIVAL_FLASH_LEAVING) ||
-                PlayerTimer.SamePurpose(
-                PlayerDuty.DUTY.REVIVAL_FLASH_SHOWING))
-                ))
+			if ( keys.shoot > 0 && (PlayerTimer.SamePurpose(PlayerDuty.DUTY.NONE) ||
+                PlayerTimer.SamePurpose(PlayerDuty.DUTY.INVINCIBLE)) )
 			{
 				if (player.TryShoot())
 				{
@@ -1004,10 +1006,10 @@ namespace SpiritPurger
                 PlayerTimer.SamePurpose(
                 PlayerDuty.DUTY.REVIVAL_FLASH_SHOWING))
                 ) &&
-                player.deathCountdown <= 0))
+                PlayerTimer.SamePurpose(PlayerDuty.DUTY.NONE)))
 			{
 				// Fire a bomb.
-				player.invincibleCountdown = Bomb.LIFETIME_ACTIVE;
+                PlayerTimer.Repurporse(PlayerDuty.DUTY.INVINCIBLE);
 				bombBlast.Renew(player.Location);
 				bombCombo = 0;
 				bombComboTimeCountdown = GameplayManager.BOMB_COMBO_DISPLAY_FRAMES;
@@ -1136,6 +1138,7 @@ namespace SpiritPurger
 			UpdateEnemies();
 			UpdateBoss(ticks);
 			player.Update();
+            player.UpdateDisplayPos();
 		}
 	}
 }

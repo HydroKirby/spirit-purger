@@ -29,6 +29,7 @@ namespace SpiritPurger
 		public const String PLAYER_FORWARD = "p_forward";
 		public const String PLAYER_LEFT = "p_left";
 		public const String PLAYER_RIGHT = "p_right";
+        public const String PLAYER_DYING = "p_dying";
 		public const String HEALTHBAR_BORDER = "healthbar";
         public const String BOSS_DYING = "boss_dying";
 
@@ -273,12 +274,12 @@ namespace SpiritPurger
 
 	public class AniPlayer
 	{
-		public enum ANI_STATE { FORWARD, LEFT, RIGHT };
+		public enum ANI_STATE { FORWARD, LEFT, RIGHT, DYING, };
 		protected ANI_STATE _state;
 		protected static Animation _forwardAni = null;
 		protected static Animation _leftAni = null;
 		protected static Animation _rightAni = null;
-		protected Animation _currAni;
+        protected static Animation _dyingAni = null;
 
 		public ANI_STATE State
 		{
@@ -287,45 +288,67 @@ namespace SpiritPurger
 			{
 				_state = value;
 				SetCurrentAnimation();
+                CurrentAnimation.Reset();
 			}
 		}
+
+        public Animation CurrentAnimation
+        {
+            get;
+            protected set;
+        }
 
 		public AniPlayer(ImageManager imgMan, Animation.ANIM_STYLE style, int anim_speed)
 		{
 			if (_forwardAni == null)
 				_forwardAni = new Animation(imgMan, ImageManager.PLAYER_FORWARD,
 					style, anim_speed);
+            if (_dyingAni == null)
+                _dyingAni = new Animation(imgMan, ImageManager.PLAYER_DYING,
+                    style, anim_speed);
 			State = ANI_STATE.FORWARD;
 		}
 
 		protected void SetCurrentAnimation()
 		{
-			if (_state == ANI_STATE.FORWARD)
-				_currAni = _forwardAni;
-			else if (_state == ANI_STATE.LEFT)
-				_currAni = _leftAni;
-			else if (_state == ANI_STATE.RIGHT)
-				_currAni = _rightAni;
+            switch (State)
+            {
+                case ANI_STATE.FORWARD:
+                    CurrentAnimation = _forwardAni;
+                    break;
+                case ANI_STATE.LEFT:
+                    CurrentAnimation = _leftAni;
+                    break;
+                case ANI_STATE.RIGHT:
+                    CurrentAnimation = _rightAni;
+                    break;
+                case ANI_STATE.DYING:
+                    CurrentAnimation = _dyingAni;
+                    break;
+                default:
+                    CurrentAnimation = _forwardAni;
+                    break;
+            }
 		}
 
         public void Reset()
         {
-            _currAni.Reset();
+            CurrentAnimation.Reset();
         }
 
 		public void Update(int elapsed)
 		{
-			_currAni.Update(elapsed);
+            CurrentAnimation.Update(elapsed);
 		}
 
 		public void Update(int elapsed, Vector2f pos)
 		{
-			_currAni.Update(elapsed, pos);
+            CurrentAnimation.Update(elapsed, pos);
 		}
 
 		public void Draw(RenderWindow app)
 		{
-			_currAni.Draw(app);
+            CurrentAnimation.Draw(app);
 		}
 	}
 
