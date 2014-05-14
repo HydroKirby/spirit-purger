@@ -981,7 +981,20 @@ namespace SpiritPurger
                 !gameManager.PlayerTimer.SamePurpose(
                 PlayerDuty.DUTY.REVIVAL_FLASH_SHOWING))
             {
-                gameManager.player.Draw(app);
+                // We are not reviving, so determine how to render the player.
+                if (gameManager.PlayerTimer.SamePurpose(PlayerDuty.DUTY.INVINCIBLE))
+                {
+                    // The player is invincible. Make her flash.
+                    if ((int)(gameManager.PlayerTimer.Frame * 30) % 2 == 0)
+                    {
+                        gameManager.player.Draw(app);
+                    }
+                }
+                else
+                {
+                    // Nothing unusual about the player status. Just draw her.
+                    gameManager.player.Draw(app);
+                }
             }
 
             if (gameManager.PlayerTimer.SamePurpose(
