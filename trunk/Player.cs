@@ -240,6 +240,8 @@ namespace SpiritPurger {
         // script or structure because they each relate to a pattern.
         // This is how much health the boss has during a pattern.
         public static int[] fullHealth = { 500, 350, 350, 550, };
+        // Use these health values instead to debug game-clearing stuff.
+        //public static int[] fullHealth = { 1, 1, 1, 1, };
         // This is where the boss begins firing from. If the boss is not in
         // this point when the pattern begins, the boss rushes to there.
         // If the point is null, then the boss keeps its position.
@@ -319,14 +321,18 @@ namespace SpiritPurger {
         public AniBoss Animate
         {
             get { return animation; }
-            private set { animation = value; }
+            private set
+            {
+                animation = value;
+                UpdateDisplayPos();
+                animation.Reset();
+            }
         }
 
         public void Reset(Vector2f newPos)
         {
             Location = newPos;
-            UpdateDisplayPos();
-            animation.Reset();
+            animation.State = AniBoss.ANI_STATE.FORWARD;
             State = EntityState.Intro;
             currentPattern = -1;
             NextPattern();

@@ -53,15 +53,6 @@ namespace SpiritPurger
     /// </summary>
     public class BossDuty : TimerDuty
     {
-        /*
-         * // Refers to when a boss pattern has completed. It's the time to wait
-		// until initiating the next pattern.
-		public const int PATTERN_TRANSITION_PAUSE = 80;
-		// The time to wait before the boss begins the intro sequence.
-		public const int BOSS_PRE_INTRO_FRAMES = 20;
-		// The time to wait during the boss' fade-in sequence.
-		public const int BOSS_INTRO_FRAMES = 50;
-         */
         public new enum DUTY
         {
             NONE,
@@ -72,6 +63,9 @@ namespace SpiritPurger
             BOSS_PRE_INTRO_FRAMES,
             // The time to wait during the boss' fade-in sequence.
             BOSS_INTRO_FRAMES,
+            // The boss lost all health and has no more patterns.
+            // Animate its death.
+            DYING,
             // This just means the boss is alive and visible. No time involved.
             ALIVE,
         }
@@ -95,6 +89,7 @@ namespace SpiritPurger
                 case DUTY.PATTERN_TRANSITION_PAUSE: return 2.0;
                 case DUTY.BOSS_PRE_INTRO_FRAMES: return 1.3;
                 case DUTY.BOSS_INTRO_FRAMES: return 0.5;
+                case DUTY.DYING: return 2.0;
                 default: return 0;
             }
         }
@@ -255,8 +250,6 @@ namespace SpiritPurger
 
 		// Boss-related variables.
 		public Boss boss;
-		// How long the boss has been doing the intro sequence.
-		public int bossIntroTime;
 
 		// Current-game variables.
 		protected BulletCreator bulletCreator;
@@ -361,7 +354,6 @@ namespace SpiritPurger
 			gameOver = false;
 			Paused = false;
 			prevSecondUpdateFraction = 0.0;
-			bossIntroTime = 0;
 			bombBlast.Kill();
 			bombCombo = 0;
 			bombComboTimeCountdown = 0;
@@ -643,6 +635,11 @@ namespace SpiritPurger
 				}
                 boss.UpdateDisplayPos();
 			}
+            else if (BossTimer.DidDuty(BossDuty.DUTY.DYING))
+            {
+                // The boss has finished its death animation.
+                BossTimer.Repurporse(BossDuty.DUTY.NONE);
+            }
 		}
 
 		protected void BossPatternEnded(bool success)
@@ -683,7 +680,9 @@ namespace SpiritPurger
                     GameTimer.Repurporse(
                         (int)GameDuty.DUTY.WAIT_AFTER_BEAT_GAME);
                     BossTimer.Repurporse(
-                        (int)BossDuty.DUTY.NONE);
+                        (int)BossDuty.DUTY.DYING);
+                    boss.Animate.State = AniBoss.ANI_STATE.DYING;
+                    boss.UpdateDisplayPos();
                 }
                 else
                 {

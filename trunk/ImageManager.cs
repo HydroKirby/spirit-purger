@@ -30,6 +30,7 @@ namespace SpiritPurger
 		public const String PLAYER_LEFT = "p_left";
 		public const String PLAYER_RIGHT = "p_right";
 		public const String HEALTHBAR_BORDER = "healthbar";
+        public const String BOSS_DYING = "boss_dying";
 
 		public ImageManager()
 		{
@@ -294,15 +295,6 @@ namespace SpiritPurger
 			if (_forwardAni == null)
 				_forwardAni = new Animation(imgMan, ImageManager.PLAYER_FORWARD,
 					style, anim_speed);
-            // If left-and-right movement animations are added, uncomment these.
-            /*
-			if (_leftAni == null)
-				_leftAni = new Animation(imgMan, ImageManager.PLAYER_LEFT,
-					style, anim_speed);
-			if (_rightAni == null)
-				_rightAni = new Animation(imgMan, ImageManager.PLAYER_RIGHT,
-					style, anim_speed);
-             * */
 			State = ANI_STATE.FORWARD;
 		}
 
@@ -339,19 +331,21 @@ namespace SpiritPurger
 
 	public class AniBoss
 	{
-		public enum ANI_STATE { FORWARD, LEFT, RIGHT };
+		public enum ANI_STATE { FORWARD, LEFT, RIGHT, DYING, };
 		protected ANI_STATE _state;
 		protected static Animation _forwardAni = null;
 		protected static Animation _leftAni = null;
 		protected static Animation _rightAni = null;
+        protected static Animation _dyingAni = null;
 
 		public ANI_STATE State
 		{
 			get { return _state; }
 			set
 			{
-				_state = value;
-				SetCurrentAnimation();
+                _state = value;
+                SetCurrentAnimation();
+                CurrentAnimation.Reset();
 			}
 		}
 
@@ -366,15 +360,9 @@ namespace SpiritPurger
 			if (_forwardAni == null)
 				_forwardAni = new Animation(imgMan, ImageManager.BOSS_FORWARD,
 					style, anim_speed);
-            // If left-and-right movement animations are added, uncomment these.
-            /*
-			if (_leftAni == null)
-				_leftAni = new Animation(imgMan, ImageManager.BOSS_LEFT,
-					style, anim_speed);
-			if (_rightAni == null)
-				_rightAni = new Animation(imgMan, ImageManager.BOSS_RIGHT,
-					style, anim_speed);
-             * */
+            if (_dyingAni == null)
+                _dyingAni = new Animation(imgMan, ImageManager.BOSS_DYING,
+                    style, anim_speed);
 			State = ANI_STATE.FORWARD;
 		}
 
@@ -385,7 +373,18 @@ namespace SpiritPurger
 
         protected void SetCurrentAnimation()
         {
-            CurrentAnimation = _forwardAni;
+            switch (State)
+            {
+                case ANI_STATE.FORWARD:
+                    CurrentAnimation = _forwardAni;
+                    break;
+                case ANI_STATE.DYING:
+                    CurrentAnimation = _dyingAni;
+                    break;
+                default:
+                    CurrentAnimation = _forwardAni;
+                    break;
+            }
         }
 
         public void Reset()

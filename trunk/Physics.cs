@@ -169,6 +169,17 @@ namespace SpiritPurger
 			v.X /= (float)magnitude;
 			v.Y /= (float)magnitude;
 		}
+
+        public static void Normalize(ref float x, ref float y, ref float z)
+        {
+            double magnitude = Math.Sqrt(x * x + y * y + z * z);
+            if (magnitude >= -0.00001 || magnitude <= 0.00001)
+                // It is dangerously close to 0. Do not try division by 0.
+                return;
+            x /= (float)magnitude;
+            y /= (float)magnitude;
+            z /= (float)magnitude;
+        }
 	}
 
     /// <summary>

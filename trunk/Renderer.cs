@@ -1015,6 +1015,47 @@ namespace SpiritPurger
                     (byte)(255 * gameManager.BossTimer.PercentCompleted()));
                 app.Draw(fadedBoss);
             }
+            else if (gameManager.BossTimer.SamePurpose(BossDuty.DUTY.DYING))
+            {
+                // Make the boss flash through the hues of the color wheel.
+                Sprite flashingBoss = new Sprite(gameManager.boss.Animate.GetSprite());
+                flashingBoss.Position = new Vector2f(gameManager.boss.Animate.GetSprite().Position.X,
+                    gameManager.boss.Animate.GetSprite().Position.Y);
+                flashingBoss.Color = new Color(
+                    (byte)(255 * gameManager.BossTimer.PercentRemaining()),
+                    (byte)(255 * gameManager.BossTimer.PercentRemaining()),
+                    255);
+                flashingBoss.Scale = new Vector2f((float)(1.0 +
+                    5.0 * gameManager.BossTimer.PercentCompleted()),
+                    (float)(1.0 - LerpLogic.SlowAccel(gameManager.BossTimer.Frame,
+                        gameManager.BossTimer.Purpose.GetTime(), 0, 1)));
+                /*
+                // Rotate through the RGB 3D space.
+                float x, y, z, u, v, w, a, b, c, theta, cosTheta, sinTheta;
+                x = flashingBoss.Color.R;
+                y = flashingBoss.Color.G;
+                z = flashingBoss.Color.B;
+                u = 1;
+                v = 1;
+                w = 1;
+                a = 1;
+                b = 0;
+                c = 0;
+                theta = (byte)(2 * Math.PI * gameManager.BossTimer.PercentCompleted());
+                cosTheta = (float)Math.Cos(theta);
+                sinTheta = (float)Math.Sin(theta);
+                VectorLogic.Normalize(ref x, ref y, ref z);
+                VectorLogic.Normalize(ref u, ref v, ref w);
+                flashingBoss.Color = new Color(
+                    (byte)(255*((a*(v*v+w*w) - u*(-u*x-v*y-w*b)) * (1-cosTheta) + x*cosTheta +
+                    (-w*y + v*z)*sinTheta)),
+                    (byte)(255*((-v*(a*u-u*x-v*y-w*z))*(1-cosTheta) + y*cosTheta +
+                    (-a*w+w*x-u*z)*sinTheta)),
+                    (byte)(255*((-w*(a*u-u*x-v*y-w*z))*(1-cosTheta) + z*cosTheta +
+                    (a*v-v*x+u*y)*sinTheta)) );
+                // */
+                app.Draw(flashingBoss);
+            }
 
             // Draw the bullets and hitsparks.
             foreach (Bullet spark in gameManager.hitSparks)
