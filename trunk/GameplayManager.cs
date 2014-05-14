@@ -20,10 +20,10 @@ namespace SpiritPurger
             REVIVAL_FLASH_SHOWING,
             // The revival flash is disappearing. The player can't act, but is shown.
             REVIVAL_FLASH_LEAVING,
-            // Invinciblity time after revival.
+            // Invinciblity time after revival or using a bomb.
             INVINCIBLE,
             // Time after revival where the player is still invincible.
-            POST_DEATH_INVINC_FRAMES,
+            DURING_BOMB_INVINCIBLE,
             // The player was hit. Animate that, but don't allow movement.
             DEATH_SEQUENCE_FRAMES,
 		}
@@ -56,7 +56,7 @@ namespace SpiritPurger
                 case DUTY.REVIVAL_FLASH_SHOWING: return 0.3;
                 case DUTY.REVIVAL_FLASH_LEAVING: return 0.3;
                 case DUTY.INVINCIBLE: return 2.0;
-                case DUTY.POST_DEATH_INVINC_FRAMES: return 1.0;
+                case DUTY.DURING_BOMB_INVINCIBLE: return Bomb.LIFETIME_ACTIVE / 60.0;
                 case DUTY.DEATH_SEQUENCE_FRAMES: return 0.5;
                 default: return 0;
             }
@@ -976,7 +976,8 @@ namespace SpiritPurger
 		protected void ShootPlayerBullet()
 		{
 			if ( keys.shoot > 0 && (PlayerTimer.SamePurpose(PlayerDuty.DUTY.NONE) ||
-                PlayerTimer.SamePurpose(PlayerDuty.DUTY.INVINCIBLE)) )
+                PlayerTimer.SamePurpose(PlayerDuty.DUTY.INVINCIBLE) ||
+                PlayerTimer.SamePurpose(PlayerDuty.DUTY.DURING_BOMB_INVINCIBLE)))
 			{
 				if (player.TryShoot())
 				{
@@ -1009,7 +1010,7 @@ namespace SpiritPurger
                 PlayerTimer.SamePurpose(PlayerDuty.DUTY.NONE)))
 			{
 				// Fire a bomb.
-                PlayerTimer.Repurporse(PlayerDuty.DUTY.INVINCIBLE);
+                PlayerTimer.Repurporse(PlayerDuty.DUTY.DURING_BOMB_INVINCIBLE);
 				bombBlast.Renew(player.Location);
 				bombCombo = 0;
 				bombComboTimeCountdown = GameplayManager.BOMB_COMBO_DISPLAY_FRAMES;
