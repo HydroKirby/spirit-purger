@@ -144,17 +144,17 @@ namespace SpiritPurger
         /// Gets the amount of time that has passed from what needs to pass.
         /// As time passes, this number shrinks.
         /// </summary>
-        /// <returns>A double value from 0.0 to 1.0 .</returns>
+        /// <returns>A double value from 1.0 to 0.0 .</returns>
         public double PercentRemaining()
         {
-            return Purpose.GetTime() / Frame;
+            return Frame / Purpose.GetTime();
         }
 
         /// <summary>
         /// Gets the amount of time that needs to pass from what has passed.
         /// As time passes, this number grows.
         /// </summary>
-        /// <returns>A double value from 1.0 to 0.0 .</returns>
+        /// <returns>A double value from 0.0 to 1.0 .</returns>
         public double PercentCompleted()
         {
             return 1.0 - PercentRemaining();

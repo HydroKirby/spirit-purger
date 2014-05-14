@@ -963,37 +963,15 @@ namespace SpiritPurger
                 Sprite fadedBoss = new Sprite(gameManager.boss.Animate.GetSprite());
                 // Always have a scale of 1.0, but increase it by the
                 // ratio of the time spent to the time given for the animation.
-                float scaleX = (float)(1.0 + 30.0 *
-                    gameManager.BossTimer.Frame / (double)BossDuty.DUTY.BOSS_INTRO_FRAMES);
-                float scaleY = (float)(1.0 + 10.0 *
-                    gameManager.BossTimer.Frame / (double)BossDuty.DUTY.BOSS_INTRO_FRAMES);
+                float scaleX = (float)(1.0 + 10.0 *
+                    gameManager.BossTimer.PercentRemaining());
+                float scaleY = (float)(1.0 + 4.0 *
+                    gameManager.BossTimer.PercentRemaining());
                 fadedBoss.Scale = new Vector2f(scaleX, scaleY);
-                // The visibility of the boss is simply the ratio of
-                // how much time has passed versus how much time is needed to pass.
-                double maxTime = gameManager.BossTimer.Purpose.GetTime();
-                double fraction = gameManager.BossTimer.Frame / maxTime;
                 fadedBoss.Color = new Color(255, 255, 255,
-                    (byte)(255 * (1.0 - fraction)));
+                    (byte)(255 * gameManager.BossTimer.PercentCompleted()));
                 app.Draw(fadedBoss);
             }
-            /*
-            if (gameManager.bossState == BossState.Active)
-                gameManager.boss.Draw(app);
-            else if (gameManager.bossState == BossState.Intro &&
-                     bossIntroTime > GameplayManager.BOSS_PRE_INTRO_FRAMES)
-            {
-                // The boss is invisible unless it has waited more than
-                // BOSS_PRE_INTRO_FRAMES at which it then fades-in gradually.
-                // The visibility is the proprtion of time waited compared
-                // to BOSS_INTRO_FRAMES.
-                //*
-                boss.Draw(e.Graphics,
-                    (int)((bossIntroTime - BOSS_PRE_INTRO_FRAMES) /
-                    (float)BOSS_INTRO_FRAMES * 255.0F));
-                //
-                // TODO: Temporary code is below. Swap for the above.
-                boss.Draw(app);
-            }*/
 
             // Draw the bullets and hitsparks.
             foreach (Bullet spark in gameManager.hitSparks)
@@ -1017,20 +995,16 @@ namespace SpiritPurger
 				GameDuty.DUTY.FADE_IN_FROM_MENU) &&
 				!gameManager.GameTimer.TimeIsUp())
 			{
-				double maxTime = gameManager.GameTimer.Purpose.GetTime();
-				double fraction = gameManager.GameTimer.Frame / maxTime;
 				fullscreenFade.FillColor = new Color(0, 0, 0,
-					(byte)(255 * fraction));
+					(byte)(255 * gameManager.GameTimer.PercentRemaining()));
 				app.Draw(fullscreenFade);
 			}
 			else if (gameManager.GameTimer.SamePurpose(
 				GameDuty.DUTY.FADE_OUT_TO_MENU) &&
 				!gameManager.GameTimer.TimeIsUp())
 			{
-				double maxTime = gameManager.GameTimer.Purpose.GetTime();
-				double fraction = gameManager.GameTimer.Frame / maxTime;
 				fullscreenFade.FillColor = new Color(0, 0, 0,
-					(byte)(255 * (1.0 - fraction)));
+					(byte)(255 * gameManager.GameTimer.PercentCompleted()));
 				app.Draw(fullscreenFade);
 			}
 		}
