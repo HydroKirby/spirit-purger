@@ -147,7 +147,7 @@ namespace SpiritPurger
 		// Frames count DOWN from the animation speed to zero.
 		protected int _frame;
 		// Index of the sprite being used from the list of sprites.
-		protected int _currentSprite;
+		protected int _currentSpriteIdx;
 		// When using PINGPONG, go backwards through sprites.
 		protected bool _spriteTransitionBackwards;
 
@@ -173,6 +173,11 @@ namespace SpiritPurger
 			get { return _frame; }
 		}
 
+        public Sprite CurrentSprite
+        {
+            get { return _sprites[_currentSpriteIdx]; }
+        }
+
 		public Animation(ImageManager imgMan, String filename, ANIM_STYLE style, int speed)
 		{
 			_spriteTransitionBackwards = false;
@@ -189,7 +194,7 @@ namespace SpiritPurger
 
         public void Reset()
         {
-            _currentSprite = 0;
+            _currentSpriteIdx = 0;
             _frame = 0;
         }
 
@@ -213,36 +218,36 @@ namespace SpiritPurger
 			if (Frame <= 0)
 			{
 				// Save the old position to give to the new sprite.
-				Vector2f oldPos = _sprites[_currentSprite].Position;
+				Vector2f oldPos = _sprites[_currentSpriteIdx].Position;
 				if (Style == ANIM_STYLE.LOOP)
 				{
-					_currentSprite += 1;
-					if (_currentSprite >= Sprites.Count)
-						_currentSprite = 0;
+					_currentSpriteIdx += 1;
+					if (_currentSpriteIdx >= Sprites.Count)
+						_currentSpriteIdx = 0;
 				}
 				else if (Style == ANIM_STYLE.PINGPONG)
 				{
 					if (_spriteTransitionBackwards)
 					{
-						_currentSprite -= 1;
-						if (_currentSprite < 0)
+						_currentSpriteIdx -= 1;
+						if (_currentSpriteIdx < 0)
 						{
-							_currentSprite = 1;
+							_currentSpriteIdx = 1;
 							_spriteTransitionBackwards = false;
 						}
 					}
 					else
 					{
-						_currentSprite += 1;
-						if (_currentSprite >= Sprites.Count)
+						_currentSpriteIdx += 1;
+						if (_currentSpriteIdx >= Sprites.Count)
 						{
-							_currentSprite -= 2;
+							_currentSpriteIdx -= 2;
 							_spriteTransitionBackwards = true;
 						}
 					}
 				}
 				// Give the old position to the new sprite.
-				_sprites[_currentSprite].Position =
+                CurrentSprite.Position =
                     new Vector2f(oldPos.X, oldPos.Y);
 				_frame = _anim_speed;
 			}
@@ -256,12 +261,12 @@ namespace SpiritPurger
 		public void Update(int elapsed, Vector2f pos)
 		{
 			Update(elapsed);
-			_sprites[_currentSprite].Position = new Vector2f(pos.X, pos.Y);
+			CurrentSprite.Position = new Vector2f(pos.X, pos.Y);
 		}
 
 		public void Draw(RenderWindow app)
 		{
-			app.Draw(_sprites[_currentSprite]);
+			app.Draw(CurrentSprite);
 		}
 	}
 
@@ -339,7 +344,6 @@ namespace SpiritPurger
 		protected static Animation _forwardAni = null;
 		protected static Animation _leftAni = null;
 		protected static Animation _rightAni = null;
-		protected Animation _currAni;
 
 		public ANI_STATE State
 		{
@@ -350,6 +354,12 @@ namespace SpiritPurger
 				SetCurrentAnimation();
 			}
 		}
+
+        public Animation CurrentAnimation
+        {
+            get;
+            protected set;
+        }
 
 		public AniBoss(ImageManager imgMan, Animation.ANIM_STYLE style, int anim_speed)
 		{
@@ -368,29 +378,34 @@ namespace SpiritPurger
 			State = ANI_STATE.FORWARD;
 		}
 
-		protected void SetCurrentAnimation()
-		{
-			_currAni = _forwardAni;
-		}
+        public Sprite GetSprite()
+        {
+            return CurrentAnimation.CurrentSprite;
+        }
+
+        protected void SetCurrentAnimation()
+        {
+            CurrentAnimation = _forwardAni;
+        }
 
         public void Reset()
         {
-            _currAni.Reset();
+            CurrentAnimation.Reset();
         }
 
-		public void Update(int elapsed)
-		{
-			_currAni.Update(elapsed);
-		}
+        public void Update(int elapsed)
+        {
+            CurrentAnimation.Update(elapsed);
+        }
 
-		public void Update(int elapsed, Vector2f pos)
-		{
-			_currAni.Update(elapsed, pos);
-		}
+        public void Update(int elapsed, Vector2f pos)
+        {
+            CurrentAnimation.Update(elapsed, pos);
+        }
 
-		public void Draw(RenderWindow app)
-		{
-			_currAni.Draw(app);
-		}
+        public void Draw(RenderWindow app)
+        {
+            CurrentAnimation.Draw(app);
+        }
 	}
 }

@@ -316,6 +316,12 @@ namespace SpiritPurger {
             }
         }
 
+        public AniBoss Animate
+        {
+            get { return animation; }
+            private set { animation = value; }
+        }
+
         public void Reset(Vector2f newPos)
         {
             Location = newPos;

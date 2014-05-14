@@ -951,14 +951,30 @@ namespace SpiritPurger
 
             if (gameManager.BossTimer.SamePurpose(BossDuty.DUTY.ALIVE))
             {
-                gameManager.boss.Draw(app);
+                gameManager.boss.Animate.Draw(app);
             }
             else if (gameManager.BossTimer.SamePurpose(BossDuty.DUTY.PATTERN_TRANSITION_PAUSE))
             {
-                if ((gameManager.BossTimer.Frame * 1000) % 4 != 0)
-                {
-                    gameManager.boss.Draw(app);
-                }
+                gameManager.boss.Animate.Draw(app);
+            }
+            else if (gameManager.BossTimer.SamePurpose(BossDuty.DUTY.BOSS_INTRO_FRAMES))
+            {
+                // Make the boss really big as it comes in, but shrink to its real size.
+                Sprite fadedBoss = new Sprite(gameManager.boss.Animate.GetSprite());
+                // Always have a scale of 1.0, but increase it by the
+                // ratio of the time spent to the time given for the animation.
+                float scaleX = (float)(1.0 + 30.0 *
+                    gameManager.BossTimer.Frame / (double)BossDuty.DUTY.BOSS_INTRO_FRAMES);
+                float scaleY = (float)(1.0 + 10.0 *
+                    gameManager.BossTimer.Frame / (double)BossDuty.DUTY.BOSS_INTRO_FRAMES);
+                fadedBoss.Scale = new Vector2f(scaleX, scaleY);
+                // The visibility of the boss is simply the ratio of
+                // how much time has passed versus how much time is needed to pass.
+                double maxTime = gameManager.BossTimer.Purpose.GetTime();
+                double fraction = gameManager.BossTimer.Frame / maxTime;
+                fadedBoss.Color = new Color(255, 255, 255,
+                    (byte)(255 * (1.0 - fraction)));
+                app.Draw(fadedBoss);
             }
             /*
             if (gameManager.bossState == BossState.Active)

@@ -139,6 +139,26 @@ namespace SpiritPurger
         {
             return SamePurpose(purpose) && TimeIsUp();
         }
+
+        /// <summary>
+        /// Gets the amount of time that has passed from what needs to pass.
+        /// As time passes, this number shrinks.
+        /// </summary>
+        /// <returns>A double value from 0.0 to 1.0 .</returns>
+        public double PercentRemaining()
+        {
+            return Purpose.GetTime() / Frame;
+        }
+
+        /// <summary>
+        /// Gets the amount of time that needs to pass from what has passed.
+        /// As time passes, this number grows.
+        /// </summary>
+        /// <returns>A double value from 1.0 to 0.0 .</returns>
+        public double PercentCompleted()
+        {
+            return 1.0 - PercentRemaining();
+        }
 	}
 
     /// <summary>
@@ -642,8 +662,7 @@ namespace SpiritPurger
 					gameManager.StateHandled();
 					break;
 				case GAMEREACTION.REFRESH_SCORE:
-					//gameRenderer.SetScore(gameManager.Score);
-                    gameRenderer.SetScore((int)gameManager.BossTimer.Purpose.GetDuty());
+					gameRenderer.SetScore(gameManager.Score);
 					gameManager.StateHandled();
 					break;
 				case GAMEREACTION.REFRESH_BULLET_COUNT:
