@@ -196,7 +196,7 @@ namespace SpiritPurger
             // Center this label horizontally.
             // Move it up from the bottom of the app screen a little.
             menuUsageLabel.Position = new Vector2f(
-                (APP_BASE_WIDTH - menuUsageLabel.GetLocalBounds().Width) / 2,
+                (int)((APP_BASE_WIDTH - menuUsageLabel.GetLocalBounds().Width) / 2),
                 APP_BASE_HEIGHT - 20);
 
 			submenuLabels = new List<List<Text>>();
@@ -355,21 +355,13 @@ namespace SpiritPurger
 				height = (uint)(label.GetLocalBounds().Height);
 			}
 
-			if (!(menuManager.CurrentMenu == SUBMENU.CREDITS))
-			{
-                // Put the focus halo over the selected menu entry.
-                const float FATTEN_WIDTH = 25F;
-                const float FATTEN_HEIGHT = 2F;
-                focusCircle.Radius = new Vector2f(
-                    width / 2 + FATTEN_WIDTH, height / 2 + FATTEN_HEIGHT);
-                focusCircle.Position = new Vector2f(
-                    x - FATTEN_WIDTH, y + 4 - FATTEN_HEIGHT / 2);
-			}
-			else
-			{
-				// Hide the focus halo.
-				focusCircle.Radius = new Vector2f(0, 0);
-			}
+			// Put the focus halo over the selected menu entry.
+            const float FATTEN_WIDTH = 25F;
+            const float FATTEN_HEIGHT = 2F;
+            focusCircle.Radius = new Vector2f(
+                (int)(width / 2 + FATTEN_WIDTH), (int)(height / 2 + FATTEN_HEIGHT));
+            focusCircle.Position = new Vector2f(
+                (int)(x - FATTEN_WIDTH), (int)(y + 4 - FATTEN_HEIGHT / 2));
 		}
 
 		protected Text GetLabel(MenuManager menuManager)
@@ -446,7 +438,9 @@ namespace SpiritPurger
 				x = APP_BASE_WIDTH / 10 * 9 - ret.GetLocalBounds().Width;
 
 			ret.Color = commonTextColor;
-			ret.Position = new Vector2f(x, y);
+            // Convert to integers because floating point locations
+            // with fonts can produce blurry renderings.
+			ret.Position = new Vector2f((int)x, (int)y);
 
 			return ret;
 		}
@@ -633,8 +627,10 @@ namespace SpiritPurger
 			RenderWindow app = (RenderWindow)sender;
 			app.Draw(bg);
             app.Draw(menuUsageLabel);
-            if (menuManager.CurrentMenu != SUBMENU.TUTORIAL)
+            if (menuManager.CurrentMenu != SUBMENU.TUTORIAL &&
+                menuManager.CurrentMenu != SUBMENU.CREDITS)
                 app.Draw(focusCircle);
+
 			if (menuManager.CurrentMenu == SUBMENU.OPTIONS)
 			{
 				// Draw the Options menu in a special way.
@@ -1071,7 +1067,8 @@ namespace SpiritPurger
 		protected Vector2f labelLivesPos;
 		protected Text labelScore;
 		protected Vector2f labelScorePos;
-		protected Text labelPaused;
+        // When pausing the game, all of these labels appear.
+        protected List<Text> pauseLabels;
 		protected Text labelBullets;
 		protected Vector2f labelBulletsPos;
 		protected Text labelBombCombo;
@@ -1095,7 +1092,7 @@ namespace SpiritPurger
             commonFontSize = 24;
 
 			// Set the positions for constantly regenerating labels.
-			float rightmost = FIELD_LEFT + FIELD_WIDTH;
+			uint rightmost = FIELD_LEFT + FIELD_WIDTH;
 			labelScorePos = new Vector2f(rightmost + 50, FIELD_TOP + 10);
 			labelLivesPos = new Vector2f(rightmost + 50, FIELD_TOP + 20);
 			labelBombsPos = new Vector2f(rightmost + 50, FIELD_TOP + 30);
@@ -1104,21 +1101,21 @@ namespace SpiritPurger
 			labelBossHealthPos = new Vector2f(FIELD_LEFT + 30F, FIELD_TOP + 5F);
 			labelPatternTimePos = new Vector2f(FIELD_RIGHT - 80,
                 FIELD_TOP + 23F);
-			labelPatternResultPos = new Vector2f(FIELD_LEFT + FIELD_WIDTH / 6,
-				FIELD_TOP + FIELD_HEIGHT / 3);
+			labelPatternResultPos = new Vector2f((int)(FIELD_LEFT + FIELD_WIDTH / 6),
+				(int)(FIELD_TOP + FIELD_HEIGHT / 3));
 
 			// Create the labels that are constantly regenerated.
 			SetScore(0);
             // Set the y-positions of the labels based on their size.
             const float hudItemOffset = 5F;
-            labelLivesPos.Y = hudItemOffset + labelScore.GetLocalBounds().Height +
-                labelScorePos.Y;
+            labelLivesPos.Y = (int)(hudItemOffset + labelScore.GetLocalBounds().Height +
+                labelScorePos.Y);
             SetLives(0);
-            labelBombsPos.Y = hudItemOffset + labelLives.GetLocalBounds().Height +
-                labelLivesPos.Y;
+            labelBombsPos.Y = (int)(hudItemOffset + labelLives.GetLocalBounds().Height +
+                labelLivesPos.Y);
             SetBombs(0);
-            labelBulletsPos.Y = hudItemOffset + labelBombs.GetLocalBounds().Height +
-                labelBombsPos.Y;
+            labelBulletsPos.Y = (int)(hudItemOffset + labelBombs.GetLocalBounds().Height +
+                labelBombsPos.Y);
             SetBullets(0);
 			SetBombCombo(0, 0);
 			SetPatternTime(0);
@@ -1126,18 +1123,26 @@ namespace SpiritPurger
 			timeLeftToShowPatternResult = 0;
 
 			// Create the labels that are only created once.
-			labelPaused = new Text(
-				"Paused\nPress Escape to Resume\nHold Bomb to Return to Title Screen",
-				menuFont, 16);
 			labelGameOver = new Text("Game Over... Press Shoot", menuFont, 16);
-
-			// Set the positions for labels that are made only one time.
-			labelPaused.Position = new Vector2f(
-				FIELD_CENTER_X - labelPaused.GetLocalBounds().Width / 2,
-                FIELD_TOP + 100);
 			labelGameOver.Position = new Vector2f(70, 70);
+            labelGameOver.Color = commonTextColor;
 
-			labelPaused.Color = labelGameOver.Color = commonTextColor;
+            pauseLabels = new List<Text>(3);
+            pauseLabels.Add(new Text("Paused", menuFont, 16));
+            pauseLabels.Add(new Text("Press Escape to Resume Game", menuFont, 16));
+            pauseLabels.Add(new Text("Hold Bomb to Return to Main Menu", menuFont, 16));
+            for (int i = 0; i < 3; i++)
+            {
+                // Set the label to be centered horizontally inside the
+                // game field. Center it vertically in the game field, but
+                // offset each subsequent label. Note that we should turn the
+                // calculations into integers because floating point locations
+                // for fonts causes a blurry rendering.
+                pauseLabels[i].Position = new Vector2f(
+                    (int)(FIELD_CENTER_X - pauseLabels[i].GetLocalBounds().Width / 2),
+                    (int)(FIELD_CENTER_Y + 15 * i));
+                pauseLabels[i].Color = commonTextColor;
+            }
 		}
 
 		public void SetScore(long val)
@@ -1203,8 +1208,8 @@ namespace SpiritPurger
 				"Survival Failure... Score + ") + score.ToString(), menuFont, 16);
 			labelPatternResult.Color = commonTextColor;
             labelPatternResult.Position = new Vector2f(
-                FIELD_CENTER_X - labelPatternResult.GetLocalBounds().Width / 2,
-                labelPatternResultPos.Y);
+                (int)(FIELD_CENTER_X - labelPatternResult.GetLocalBounds().Width / 2),
+                (int)labelPatternResultPos.Y);
 		}
 
 		public void NextFrame(double dt)
@@ -1240,7 +1245,8 @@ namespace SpiritPurger
 			app.Draw(labelBullets);
 
 			if (gameRenderer.IsPaused)
-				app.Draw(labelPaused);
+                foreach (Text label in pauseLabels)
+                    app.Draw(label);
 			if (gameRenderer.IsGameOver)
 				app.Draw(labelGameOver);
 		}
