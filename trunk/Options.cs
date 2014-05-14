@@ -66,7 +66,7 @@ namespace SpiritPurger
 		/// <returns>The version number.</returns>
 		public double GetOptionsVersion()
 		{
-			return 1.04;
+			return 1.05;
 		}
 
 		protected void SetDefaults(out Dictionary<string, object> options)
@@ -88,6 +88,7 @@ namespace SpiritPurger
 			options["healthbar x"] = 20;
 			options["healthbar y"] = 10;
 			// ver 1.02
+            // In version 1.05, these are hidden when writing a new config file.
 			options["god mode"] = 0;
 			options["fun bomb"] = 0;
 			options["repulsive"] = 0;
@@ -167,7 +168,10 @@ namespace SpiritPurger
 					val = String.Format("{0:F2}", kvp.Value);
 				else
 					val = kvp.Value.ToString();
-				output += String.Join("", kvp.Key, "=", val, "\n");
+                // Only output the key-value pair if it is not a debug feature.
+                if (kvp.Key != "god mode" && kvp.Key != "fun bomb" &&
+                    kvp.Key != "repulsive")
+                    output += String.Join("", kvp.Key, "=", val, "\n");
 			}
 			using (System.IO.StreamWriter file = new System.IO.StreamWriter(CONFIG_FILE))
 			{
