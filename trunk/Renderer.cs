@@ -1214,9 +1214,12 @@ namespace SpiritPurger
 
 		public void NextFrame(double dt)
 		{
-			timeLeftToShowPatternResult--;
-			if (timeLeftToShowPatternResult < 0)
-				timeLeftToShowPatternResult = 0;
+            if (!gameRenderer.IsPaused)
+            {
+                timeLeftToShowPatternResult--;
+                if (timeLeftToShowPatternResult < 0)
+                    timeLeftToShowPatternResult = 0;
+            }
 		}
 
 		public override void Update()
