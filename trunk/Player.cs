@@ -100,9 +100,18 @@ namespace SpiritPurger {
 			get { return hitbox.Radius; }
 		}
 
-		public STATE State
+		public STATE EntityState
 		{
 			get { return _state; }
+            set
+            {
+                _state = value;
+                if (value == STATE.DEAD)
+                    Animate.State = AniPlayer.ANI_STATE.DYING;
+                else
+                    Animate.State = AniPlayer.ANI_STATE.FORWARD;
+                animation.Reset();
+            }
 		}
 
 		public new Vector2f Location
@@ -114,6 +123,17 @@ namespace SpiritPurger {
 				hitbox.location = location;
 			}
 		}
+
+        public AniPlayer Animate
+        {
+            get { return animation; }
+            private set
+            {
+                animation = value;
+                UpdateDisplayPos();
+                animation.Reset();
+            }
+        }
 
 		public Player(AniPlayer anim, Hitbox hitbox)
 		{
@@ -129,7 +149,7 @@ namespace SpiritPurger {
 
         public void Reset()
         {
-            animation.Reset();
+            EntityState = STATE.REVIVING;
         }
 
 		public void SetHitboxSprite(CenterSprite s)
@@ -168,6 +188,8 @@ namespace SpiritPurger {
 
 		public void Update(double ticks=1.0) {
 			timeSinceLastFire++;
+            animation.Update(1);
+            UpdateDisplayPos();
 		}
 
 		public void Draw(RenderWindow app)

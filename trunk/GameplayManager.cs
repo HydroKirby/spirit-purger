@@ -56,8 +56,8 @@ namespace SpiritPurger
                 case DUTY.REVIVAL_FLASH_SHOWING: return 0.3;
                 case DUTY.REVIVAL_FLASH_LEAVING: return 0.3;
                 case DUTY.INVINCIBLE: return 2.0;
-                case DUTY.DURING_BOMB_INVINCIBLE: return Bomb.LIFETIME_ACTIVE / 60.0;
-                case DUTY.DEATH_SEQUENCE_FRAMES: return 0.5;
+                case DUTY.DURING_BOMB_INVINCIBLE: return Bomb.LIFETIME_ACTIVE / 10.0;
+                case DUTY.DEATH_SEQUENCE_FRAMES: return 1.2;
                 default: return 0;
             }
         }
@@ -429,6 +429,7 @@ namespace SpiritPurger
                     PlayerTimer.Repurporse(
                         (int)PlayerDuty.DUTY.REVIVAL_FLASH_LEAVING);
                     // Show the player as invincible.
+                    player.EntityState = Player.STATE.REVIVING;
                     ChangeState(REACTION.PLAYER_GOT_INV);
                 }
                 else
@@ -1139,7 +1140,6 @@ namespace SpiritPurger
 			UpdateEnemies();
 			UpdateBoss(ticks);
 			player.Update();
-            player.UpdateDisplayPos();
 		}
 	}
 }

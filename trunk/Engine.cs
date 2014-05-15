@@ -628,6 +628,7 @@ namespace SpiritPurger
                 case GAMEREACTION.PLAYER_GOT_HIT:
                     gameManager.PlayerTimer.Repurporse(PlayerDuty.DUTY.DEATH_SEQUENCE_FRAMES);
                     gameManager.beatThisPattern = false;
+                    gameManager.player.EntityState = Player.STATE.DEAD;
                     soundManager.QueueToPlay(SoundManager.SFX.PLAYER_TOOK_DAMAGE);
                     break;
 				case GAMEREACTION.BOSS_REFRESH_MAX_HEALTH:

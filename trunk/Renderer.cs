@@ -982,13 +982,48 @@ namespace SpiritPurger
                 PlayerDuty.DUTY.REVIVAL_FLASH_SHOWING))
             {
                 // We are not reviving, so determine how to render the player.
-                if (gameManager.PlayerTimer.SamePurpose(PlayerDuty.DUTY.INVINCIBLE))
+                if (gameManager.PlayerTimer.SamePurpose(PlayerDuty.DUTY.INVINCIBLE) ||
+                    gameManager.PlayerTimer.SamePurpose(PlayerDuty.DUTY.DURING_BOMB_INVINCIBLE))
                 {
                     // The player is invincible. Make her flash.
                     if ((int)(gameManager.PlayerTimer.Frame * 30) % 2 == 0)
                     {
                         gameManager.player.Draw(app);
                     }
+                }
+                else if (gameManager.PlayerTimer.SamePurpose(
+                    PlayerDuty.DUTY.DEATH_SEQUENCE_FRAMES))
+                {
+                    // The player was hit.
+                    Sprite flashPlayer = new Sprite(
+                        gameManager.player.Animate.CurrentAnimation.CurrentSprite);
+                    if (gameManager.PlayerTimer.PercentCompleted() <= 0.05)
+                    {
+                        // Not much time went by. Show the player as pitch black.
+                        flashPlayer.Color = new Color(0, 0, 0);
+                    }
+                    else
+                    {
+                        if (gameManager.Lives > 0)
+                        {
+                            // The player has spare lives.
+                            // Animate death by making the player fade out.
+                            flashPlayer.Color = new Color(255, 123, 123,
+                                (byte)(255 * gameManager.PlayerTimer.PercentRemaining()));
+                        }
+                        else
+                        {
+                            // The player has lost their last life.
+                            // Animate death by making the player fade out,
+                            // be red, and shrink to half size.
+                            double fraction = gameManager.PlayerTimer.PercentCompleted();
+                            flashPlayer.Color = new Color(255, 0, 0,
+                                (byte)(255 * gameManager.PlayerTimer.PercentRemaining()));
+                            flashPlayer.Scale = new Vector2f((float)(1.0 - 0.5 * fraction),
+                                (float)(1.0 - 0.5 * fraction));
+                        }
+                    }
+                    app.Draw(flashPlayer);
                 }
                 else
                 {
