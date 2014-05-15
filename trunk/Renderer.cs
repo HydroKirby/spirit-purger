@@ -1127,6 +1127,7 @@ namespace SpiritPurger
 			if (isInBossPattern && !IsGameComplete)
 				bossHealthbar.Draw(app);
 
+            // Do all fading logic.
 			// If the game is in the middle of a fade, render the fader.
 			if (gameManager.GameTimer.SamePurpose(
 				GameDuty.DUTY.FADE_IN_FROM_MENU) &&
@@ -1144,6 +1145,15 @@ namespace SpiritPurger
 					(byte)(255 * gameManager.GameTimer.PercentCompleted()));
 				app.Draw(fullscreenFade);
 			}
+            else if (GameplayManager.BOMB_COMBO_DISPLAY_FRAMES - 15 <=
+                gameManager.bombComboTimeCountdown)
+            {
+                double ratio = (GameplayManager.BOMB_COMBO_DISPLAY_FRAMES -
+                    gameManager.bombComboTimeCountdown) / 15.0;
+                fullscreenFade.FillColor = new Color(255, 255, 255,
+                    (byte)(123 * (1.0 - ratio)));
+                app.Draw(fullscreenFade);
+            }
 		}
 	}
 
