@@ -277,11 +277,13 @@ namespace SpiritPurger
             creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_LARRY, 0));
 			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_ART, 1));
 			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_LUCY, 1));
-			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_SFX, 2));
-			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_SOUND_JAY, 2));
-            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_MUSIC, 3));
-            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_CAREY, 3));
-			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_BITSTREAM_VERA, 4));
+			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_SFX, 3));
+			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_SOUND_JAY, 3));
+            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_MUSIC, 2));
+            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_CAREY, 2));
+            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_INSPIRATION, 4));
+            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_ZUN, 4));
+			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_BITSTREAM_VERA, 5));
 
             // Add the descriptions for each button as labels.
             tutorialLabels = new List<Text>();
@@ -519,6 +521,12 @@ namespace SpiritPurger
                     break;
                 case MENUITEM.CREDIT_CAREY:
                     ret = MakeTextInstance("MATT CAREY", depth, MENU_ITEM_POSITION.CREDIT_RIGHT);
+                    break;
+                case MENUITEM.CREDIT_INSPIRATION:
+                    ret = MakeTextInstance("INSPIRATION", depth, MENU_ITEM_POSITION.CREDIT_LEFT);
+                    break;
+                case MENUITEM.CREDIT_ZUN:
+                    ret = MakeTextInstance("ZUN", depth, MENU_ITEM_POSITION.CREDIT_RIGHT);
                     break;
                 case MENUITEM.TUTORIAL_MOVE:
                     ret = MakeTextInstance("ARROW KEYS: MOVE AROUND GAME FIELD",

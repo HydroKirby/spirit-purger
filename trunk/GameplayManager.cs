@@ -178,7 +178,7 @@ namespace SpiritPurger
             // The player either touched a bullet or touched an enemy.
             PLAYER_GOT_HIT,
 			// Bomb-related reactions.
-			BOMB_MADE_COMBO, BOMB_LIFETIME_DECREMENT,
+			BOMB_USED, BOMB_MADE_COMBO, BOMB_LIFETIME_DECREMENT,
 			// Boss-related reactions.
 			BOSS_TOOK_DAMAGE, BOSS_REFRESH_MAX_HEALTH, BOSS_PATTERN_SUCCESS, BOSS_PATTERN_FAIL,
 				BOSS_REFRESH_PATTERN_TIME, BOSS_PATTERN_STARTED_NEW,
@@ -719,7 +719,7 @@ namespace SpiritPurger
 			if (bombBlast.IsGone())
 				return;
 
-			bool bombMadeCombo = true;
+			bool bombMadeCombo = false;
 			bombBlast.Update();
 			bool finalFrame = bombBlast.IsGone();
 			for (int i = 0; i < enemyBullets.Count; i++)
@@ -727,7 +727,6 @@ namespace SpiritPurger
 				if (Physics.Touches(bombBlast, (Bullet)enemyBullets[i]))
 				{
 					// Make the bullet gravitate towards the bomb's center.
-					bombMadeCombo = true;
 					if (!funBomb && finalFrame)
 					{
 						// Just remove everything in the blast radius.
@@ -735,6 +734,7 @@ namespace SpiritPurger
 						bombCombo++;
 						Score += 5;
 						bombComboScore += 5;
+                        bombMadeCombo = true;
 						continue;
 					}
 
@@ -748,7 +748,7 @@ namespace SpiritPurger
 						bombCombo++;
 						Score += 5;
 						bombComboScore += 5;
-						soundManager.QueueToPlay(SoundManager.SFX.BOMB_ATE_BULLET);
+                        bombMadeCombo = true;
 						continue;
 					}
 
@@ -779,7 +779,7 @@ namespace SpiritPurger
 							enemyBullet.Speed + 0.5);
 					}
 
-					// Alter the bullet's current trrajectory by a
+					// Alter the bullet's current trajectory by a
 					//   maximum of 0.1 radians.
 					enemyBullet.Direction = VectorLogic.AngleToVector(
 						currentAngle + Math.Max(-0.1, Math.Min(0.1,
@@ -1017,6 +1017,7 @@ namespace SpiritPurger
 				bombComboTimeCountdown = GameplayManager.BOMB_COMBO_DISPLAY_FRAMES;
 				Bombs--;
 				beatThisPattern = false;
+                ChangeState(REACTION.BOMB_USED);
 				ChangeState(REACTION.REFRESH_BOMBS);
 				soundManager.QueueToPlay(SoundManager.SFX.PLAYER_SHOT_BOMB);
 			}

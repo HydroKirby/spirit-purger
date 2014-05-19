@@ -615,7 +615,12 @@ namespace SpiritPurger
 					gameRenderer.SetBombs(gameManager.Bombs);
 					gameManager.StateHandled();
 					break;
+                case GAMEREACTION.BOMB_USED:
+                    soundManager.QueueToPlay(SoundManager.SFX.BOMB_USED);
+                    gameManager.StateHandled();
+                    break;
 				case GAMEREACTION.BOMB_MADE_COMBO:
+                    soundManager.QueueToPlay(SoundManager.SFX.BOMB_ATE_BULLET);
 					gameRenderer.SetBombCombo(gameManager.bombCombo,
 						gameManager.bombComboScore);
 					gameManager.StateHandled();

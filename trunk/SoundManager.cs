@@ -29,6 +29,7 @@ namespace SpiritPurger
 			PLAYER_BULLET_GAVE_DAMAGE,
 			PLAYER_TOOK_DAMAGE,
 			PLAYER_SHOT_BOMB,
+            BOMB_USED,
 			BOMB_ACTIVE,
 			BOMB_DEACTIVATED,
 			BOMB_ATE_BULLET,
@@ -84,18 +85,25 @@ namespace SpiritPurger
 		protected String GetSFXFilename(SFX action)
 		{
 			String ret = "";
-			if (action == SFX.MENU_MOVE)
-				ret = "button-31.wav";
-			else if (action == SFX.MENU_SELECT)
-				ret = "button-31.wav";
-			else if (action == SFX.FOE_TOOK_DAMAGE)
-				ret = "hit_foe.wav";
-			else if (action == SFX.FOE_TOOK_DAMAGED_WEAKENED)
-				ret = "hit_foe_weak.wav";
-			else if (action == SFX.PLAYER_GRAZE)
-				ret = "button-15.wav";
-			else
-				ret = "silence.wav";
+            switch (action)
+            {
+                case SFX.MENU_MOVE:
+                    ret = "button-31.wav"; break;
+                case SFX.MENU_SELECT:
+                    ret = "button-31.wav"; break;
+                case SFX.FOE_TOOK_DAMAGE:
+                    ret = "hit_foe.wav"; break;
+                case SFX.FOE_TOOK_DAMAGED_WEAKENED:
+                    ret = "hit_foe_weak.wav"; break;
+                case SFX.PLAYER_GRAZE:
+                    ret = "button-15.wav"; break;
+                case SFX.BOMB_USED:
+                    ret = "bomb_use.wav"; break;
+                case SFX.BOMB_ATE_BULLET:
+                    ret = "bomb_combo.wav"; break;
+                default:
+                    ret = "silence.wav"; break;
+            }
 			return ret;
 		}
 
