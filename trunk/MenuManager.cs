@@ -61,7 +61,8 @@ namespace SpiritPurger
             IDX_MENU_TUTORIAL, EXIT_TUTORIAL, TUTORIAL_MOVE, TUTORIAL_SLOW,
                 TUTORIAL_SHOOT, TUTORIAL_BOMB, TUTORIAL_PAUSE,
 			IDX_MENU_CREDITS, EXIT_CREDITS, CREDIT_PROGRAMMER, CREDIT_LARRY,
-				CREDIT_ART, CREDIT_LUCY, CREDIT_SFX, CREDIT_INSPIRATION, CREDIT_ZUN,
+				CREDIT_ART, CREDIT_LUCY, CREDIT_SFX, CREDIT_SFXR,
+                CREDIT_INSPIRATION, CREDIT_ZUN,
                 CREDIT_SOUND_JAY, CREDIT_BITSTREAM_VERA,
                 CREDIT_MUSIC, CREDIT_CAREY,
 			// End of list of MENUITEMs.
@@ -81,7 +82,7 @@ namespace SpiritPurger
 			FADE_OUT_TO_GAMEPLAY, FADE_OUT_TO_EXIT,
 			FADE_COMPLETED,
 			// Moved in the menu or selected a menu item.
-			MENU_SELECTION_MOVED, MENU_ITEM_SELECTED,
+			MENU_SELECTION_MOVED, MENU_ITEM_SELECTED, MENU_ITEM_CANCELLED,
 			// Start the game.
 			PLAY_GAME,
 			// Options
@@ -444,6 +445,7 @@ namespace SpiritPurger
 					}
 					break;
 			}
+            ChangeState(REACTION.MENU_ITEM_CANCELLED);
 		}
 
 		public Options GetNewOptions()
@@ -522,7 +524,6 @@ namespace SpiritPurger
 			{
 				OnCancelKey();
 				moved = true;
-				acted = true;
 			}
 
 			if (moved)

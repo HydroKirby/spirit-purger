@@ -472,6 +472,9 @@ namespace SpiritPurger
 					soundManager.QueueToPlay(SoundManager.SFX.MENU_SELECT);
 					// Hand down the reaction to the renderer.
 					break;
+                case MENUREACTION.MENU_ITEM_CANCELLED:
+                    soundManager.QueueToPlay(SoundManager.SFX.MENU_CANCEL);
+                    break;
 				case MENUREACTION.PLAY_GAME:
 					gameState = GameState.GamePlay;
 					musicManager.ChangeMusic(MusicManager.MUSIC_LIST.GAME);

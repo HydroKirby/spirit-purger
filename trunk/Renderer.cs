@@ -278,12 +278,13 @@ namespace SpiritPurger
 			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_ART, 1));
 			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_LUCY, 1));
 			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_SFX, 3));
+            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_SFXR, 4));
 			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_SOUND_JAY, 3));
             creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_MUSIC, 2));
             creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_CAREY, 2));
-            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_INSPIRATION, 4));
-            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_ZUN, 4));
-			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_BITSTREAM_VERA, 5));
+            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_INSPIRATION, 5));
+            creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_ZUN, 5));
+			creditsLabels.Add(MakeTextInstance(MENUITEM.CREDIT_BITSTREAM_VERA, 6));
 
             // Add the descriptions for each button as labels.
             tutorialLabels = new List<Text>();
@@ -513,6 +514,9 @@ namespace SpiritPurger
 				case MENUITEM.CREDIT_SOUND_JAY:
 					ret = MakeTextInstance("SOUND JAY", depth, MENU_ITEM_POSITION.CREDIT_RIGHT);
 					break;
+                case MENUITEM.CREDIT_SFXR:
+                    ret = MakeTextInstance("SFXR", depth, MENU_ITEM_POSITION.CREDIT_RIGHT);
+                    break;
 				case MENUITEM.CREDIT_BITSTREAM_VERA:
 					ret = MakeTextInstance("BITSTREAM VERA FONTS", depth, MENU_ITEM_POSITION.CENTER);
 					break;

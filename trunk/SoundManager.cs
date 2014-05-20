@@ -22,6 +22,7 @@ namespace SpiritPurger
 			// Menu SFX
 			MENU_MOVE,
 			MENU_SELECT,
+            MENU_CANCEL,
 
 			// Game SFX
 			PLAYER_GRAZE,
@@ -90,13 +91,19 @@ namespace SpiritPurger
                 case SFX.MENU_MOVE:
                     ret = "button-31.wav"; break;
                 case SFX.MENU_SELECT:
-                    ret = "button-31.wav"; break;
+                    ret = "menu_select.wav"; break;
+                case SFX.MENU_CANCEL:
+                    ret = "menu_cancel.wav"; break;
                 case SFX.FOE_TOOK_DAMAGE:
                     ret = "hit_foe.wav"; break;
                 case SFX.FOE_TOOK_DAMAGED_WEAKENED:
                     ret = "hit_foe_weak.wav"; break;
+                case SFX.FOE_SHOT_BULLET:
+                    ret = "foe_shot_bullet.wav"; break;
                 case SFX.PLAYER_GRAZE:
                     ret = "button-15.wav"; break;
+                case SFX.PLAYER_TOOK_DAMAGE:
+                    ret = "hit_player.wav"; break;
                 case SFX.BOMB_USED:
                     ret = "bomb_use.wav"; break;
                 case SFX.BOMB_ATE_BULLET:
