@@ -46,24 +46,43 @@ namespace SpiritPurger
 			for (int i = 0; i < filenames.Length; ++i)
 			{
 				imageManager.LoadPNG(filenames[i]);
-				Texture spriteSheetImage = imageManager.GetImage(filenames[i]);
-				bulletImages.Add(spriteSheetImage);
-				// The images are vertically aligned.
-				// There should be 5 images per sheet.
-				int numSubImages = (int)(spriteSheetImage.Size.Y / spriteSheetImage.Size.X);
-				for (int j = 0; j < numSubImages; ++j)
-				{
-					// Width is the same as height for a square sub-image,
-					// so use the width as a height multiplier.
-					bulletTypes.Add(new BulletType(
-						// radius is half the width
-						(int)spriteSheetImage.Size.X / 2,
-						// image index is the last element in the array.
-						bulletImages.Count - 1,
-						// The subrect is x=0, y=offset_from_top, width, height(=width)
-						new IntRect(0, (int)spriteSheetImage.Size.X * j,
-							(int)spriteSheetImage.Size.X, (int)spriteSheetImage.Size.X)));
-				}
+                // Most bullet sprite sheets are vertically aligned.
+                // For the special cases, do not split those images into parts.
+                if (filenames[i].CompareTo("b_player") == 0)
+                {
+                    // Turn this image into a bullet type.
+                    Texture sprite = imageManager.GetImage(filenames[i]);
+                    bulletImages.Add(sprite);
+                    bulletTypes.Add(new BulletType(
+                        // radius is half the width
+                        (int)sprite.Size.X / 2,
+                        // image index is the last element in the array.
+                        bulletImages.Count - 1,
+                        // The subrect is x=0, y=0, width, height
+                        new IntRect(0, 0, (int)sprite.Size.X, (int)sprite.Size.Y)));
+                }
+                else
+                {
+                    // Split the sprite sheet into many bullet types.
+                    Texture spriteSheetImage = imageManager.GetImage(filenames[i]);
+                    bulletImages.Add(spriteSheetImage);
+                    // The images are vertically aligned.
+                    // There should be 5 images per sheet.
+                    int numSubImages = (int)(spriteSheetImage.Size.Y / spriteSheetImage.Size.X);
+                    for (int j = 0; j < numSubImages; ++j)
+                    {
+                        // Width is the same as height for a square sub-image,
+                        // so use the width as a height multiplier.
+                        bulletTypes.Add(new BulletType(
+                            // radius is half the width
+                            (int)spriteSheetImage.Size.X / 2,
+                            // image index is the last element in the array.
+                            bulletImages.Count - 1,
+                            // The subrect is x=0, y=offset_from_top, width, height(=width)
+                            new IntRect(0, (int)spriteSheetImage.Size.X * j,
+                                (int)spriteSheetImage.Size.X, (int)spriteSheetImage.Size.X)));
+                    }
+                }
 			}
 		}
 

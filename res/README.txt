@@ -26,10 +26,14 @@ Lucy Halliwell-Smith
 Larry Resnik
 Lucy Halliwell-Smith
 
+> Music
+Matt Carey
+
 
 
 [ Copyright ]
-Spririt Purger is released under the New BSD licence.
+Spirit Purger is released under the New BSD licence.
+Copyright 2011-2014
 
 Bitstream Vera Fonts are licenced under the Bitstream Vera Fonts Copyright.
 The copyright can be found at this web page.
@@ -40,5 +44,4 @@ http://www.soundjay.com/tos.html
 button-15.wav
 button-31.wav
 
-hit_foe.wav is self made.
-hit_foe_weak.wav is self made.
+All the rest are made using tools like SFXR.
