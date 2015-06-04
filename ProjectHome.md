@@ -1,0 +1,1 @@
+Spirit Purger is a simple game I want to create solely to say I made a playable game. It is built with C# using SFML's .NET bindings. The game has design influences from Touhou Project, Diadra Empty, and Rosenkreuzstilette.
